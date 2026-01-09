@@ -1,9 +1,16 @@
 HELP.md
-target/
+
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
-
+!target/*.jar
+target/classes/
+target/generated-sources/
+target/generated-test-sources/
+target/test-classes/
+target/maven-status/
+target/maven-archiver/
+target/surefire-reports/
 ### STS ###
 .apt_generated
 .classpath
