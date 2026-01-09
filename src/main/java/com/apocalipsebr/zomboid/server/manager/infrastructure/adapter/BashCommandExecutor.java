@@ -19,8 +19,7 @@ public class BashCommandExecutor implements ServerCommandExecutor {
     @Override
     public void execute(ServerCommand command) {
         try {
-            String bashCommand = String.format("echo \"%s\" > %s", command.getCommand(), controlFilePath);
-            
+            String bashCommand = String.format("echo \"%s\" > %s", command.getCommand().replaceAll("\"", "\\\\\""), controlFilePath);
             ProcessBuilder processBuilder = new ProcessBuilder("/bin/bash", "-c", bashCommand);
             processBuilder.redirectErrorStream(true);
             
