@@ -38,7 +38,9 @@ if (-not (Test-Path $resourcesPath)) {
 
 $scriptContent = @"
 #!/bin/bash
-java -jar $jarName
+cd ~/pzmanager
+git pull
+java -jar target/$jarName
 "@
 
 Set-Content -Path $scriptPath -Value $scriptContent -Encoding UTF8
