@@ -73,7 +73,7 @@ public class ServerRestartService {
 
     private void sendWarning(String time) {
         try {
-            String command = "servermsg \"[TESTE SIMULADO] Servidor reiniciando em " + time + "\"";
+            String command = "servermsg \"Servidor reiniciando em " + time + "\"";
             logger.info("Sending warning: " + command);
             commandService.sendCommand(command);
             
@@ -101,7 +101,7 @@ public class ServerRestartService {
             commandService.sendCommand("quit");
 
             // Wait a bit for server to shut down gracefully
-            Thread.sleep(5000);
+            Thread.sleep(25000);
 
             // Execute the restart script
             executeRestartScript();

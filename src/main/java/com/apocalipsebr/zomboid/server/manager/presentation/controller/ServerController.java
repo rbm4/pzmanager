@@ -2,20 +2,27 @@ package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
 import com.apocalipsebr.zomboid.server.manager.application.service.ServerCommandService;
 import com.apocalipsebr.zomboid.server.manager.application.service.ServerRestartService;
+import com.apocalipsebr.zomboid.server.manager.application.service.ScheduledRestartService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/server")
 public class ServerController {
     private final ServerCommandService serverCommandService;
     private final ServerRestartService serverRestartService;
+    private final ScheduledRestartService scheduledRestartService;
 
     public ServerController(ServerCommandService serverCommandService, 
-                          ServerRestartService serverRestartService) {
+                          ServerRestartService serverRestartService,
+                          ScheduledRestartService scheduledRestartService) {
         this.serverCommandService = serverCommandService;
         this.serverRestartService = serverRestartService;
+        this.scheduledRestartService = scheduledRestartService;
     }
 
     @PostMapping("/command")
@@ -54,6 +61,23 @@ public class ServerController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to initiate restart: " + e.getMessage());
         }
+    }
+
+    @GetMapping("/restart/scheduled")
+    public ResponseEntity<Map<String, Object>> getScheduledRestartInfo() {
+        if (!scheduledRestartService.isScheduledRestartEnabled()) {
+            return ResponseEntity.ok(Map.of(
+                "enabled", false,
+                "message", "Scheduled automatic restart is disabled"
+            ));
+        }
+
+        LocalDateTime nextRestart = scheduledRestartService.getNextScheduledRestart();
+        return ResponseEntity.ok(Map.of(
+            "enabled", true,
+            "nextRestart", nextRestart.toString(),
+            "message", "Next automatic restart scheduled for: " + nextRestart
+        ));
     }
 
     public static class RestartRequest {
