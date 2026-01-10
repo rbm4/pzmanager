@@ -40,6 +40,11 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.glavo</groupId>
+			<artifactId>rcon-java</artifactId>
+			<version>3.0</version>
+		</dependency>
 	</dependencies>
 
 	<build>

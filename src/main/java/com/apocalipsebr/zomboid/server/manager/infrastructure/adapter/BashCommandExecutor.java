@@ -3,6 +3,9 @@ package com.apocalipsebr.zomboid.server.manager.infrastructure.adapter;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.ServerCommand;
 import com.apocalipsebr.zomboid.server.manager.domain.exception.ServerCommandException;
 import com.apocalipsebr.zomboid.server.manager.domain.port.ServerCommandExecutor;
+
+import org.glavo.rcon.AuthenticationException;
+import org.glavo.rcon.Rcon;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -16,26 +19,23 @@ public class BashCommandExecutor implements ServerCommandExecutor {
     @Value("${zomboid.control.file:/opt/pzserver/zomboid.control}")
     private String controlFilePath;
 
+    //
+
     @Override
     public void execute(ServerCommand command) {
         try {
-            String bashCommand = String.format("echo \"%s\" > %s", command.getCommand().replaceAll("\"", "\\\\\""), controlFilePath);
-            ProcessBuilder processBuilder = new ProcessBuilder("/bin/bash", "-c", bashCommand);
-            processBuilder.redirectErrorStream(true);
-            
-            Process process = processBuilder.start();
-            int exitCode = process.waitFor();
-            
-            if (exitCode != 0) {
-                throw new ServerCommandException("Command execution failed with exit code: " + exitCode);
-            }
+            var rcon = new Rcon("72.62.137.60", 27015,"PzRconPaswd44@key");
+
+            String result = rcon.command(command.getCommand());
             
             logger.info("Command executed successfully: " + command);
+            logger.info(result);
+            rcon.close();
         } catch (IOException e) {
             throw new ServerCommandException("Failed to execute command: " + e.getMessage(), e);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new ServerCommandException("Command execution was interrupted: " + e.getMessage(), e);
+        } catch (AuthenticationException e) {
+            e.printStackTrace();
+            throw new ServerCommandException("Failed to execute command: " + e.getMessage(), e);
         }
     }
 }
