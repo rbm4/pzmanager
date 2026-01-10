@@ -38,7 +38,7 @@ if (-not (Test-Path $resourcesPath)) {
 
 $scriptContent = @"
 #!/bin/bash
-cd ~/pzmanager
+cd /home/pzuser/pzmanager
 git pull
 java -jar target/$jarName
 "@
