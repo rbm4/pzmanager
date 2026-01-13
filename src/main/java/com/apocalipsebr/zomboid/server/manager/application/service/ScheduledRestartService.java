@@ -17,7 +17,7 @@ import java.util.logging.Logger;
 @Service
 public class ScheduledRestartService {
     private static final Logger logger = Logger.getLogger(ScheduledRestartService.class.getName());
-    
+
     private final ServerRestartService serverRestartService;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
@@ -48,55 +48,50 @@ public class ScheduledRestartService {
         }
 
         long delayInSeconds = calculateDelayUntilNextRestart();
-        
+
         LocalDateTime nextRestartTime = LocalDateTime.now(ZoneId.of(timezone))
                 .plusSeconds(delayInSeconds);
-        
+
         logger.info(String.format(
-            "Scheduling automatic server restart for: %s (in %d hours and %d minutes)",
-            nextRestartTime,
-            delayInSeconds / 3600,
-            (delayInSeconds % 3600) / 60
-        ));
+                "Scheduling automatic server restart for: %s (in %d hours and %d minutes)",
+                nextRestartTime,
+                delayInSeconds / 3600,
+                (delayInSeconds % 3600) / 60));
 
         scheduler.schedule(() -> {
             executeScheduledRestart();
         }, delayInSeconds, TimeUnit.SECONDS);
     }
 
-    private long calculateDelayUntilNextRestart() {
+    public long calculateDelayUntilNextRestart() {
         ZoneId zoneId = ZoneId.of(timezone);
         LocalDateTime now = LocalDateTime.now(zoneId);
-        LocalDateTime targetTime = now.toLocalDate()
-                .atTime(LocalTime.of(restartHour, restartMinute));
+        LocalDateTime nextHour = now.plusHours(1)
+                .withMinute(0)
+                .withSecond(0)
+                .withNano(0);
 
-        // If target time has already passed today, schedule for tomorrow
-        if (now.isAfter(targetTime)) {
-            targetTime = targetTime.plusDays(1);
-        }
-
-        long secondsUntilRestart = ChronoUnit.SECONDS.between(now, targetTime);
-        return secondsUntilRestart;
+        return ChronoUnit.SECONDS.between(now, nextHour);
     }
 
     private void executeScheduledRestart() {
         try {
             logger.info("Executing scheduled automatic server restart");
-            
+
             // Validate password internally since this is an automatic restart
             if (serverRestartService.validatePassword(restartPassword)) {
                 serverRestartService.initiateRestart();
-                
+
                 // Schedule the next restart for tomorrow at the same time
                 scheduleNextRestart();
             } else {
                 logger.severe("Failed to validate restart password for scheduled restart");
             }
-            
+
         } catch (Exception e) {
             logger.severe("Failed to execute scheduled restart: " + e.getMessage());
             e.printStackTrace();
-            
+
             // Even if restart failed, schedule the next one
             scheduleNextRestart();
         }

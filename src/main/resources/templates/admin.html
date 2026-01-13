@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Apocalipse [BR]</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a6f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logout-btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card h2 {
+            margin-bottom: 20px;
+            color: #ff6b6b;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #ff6b6b;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a6f);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #11998e, #38ef7d);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(56, 239, 125, 0.4);
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .alert-success {
+            background: rgba(56, 239, 125, 0.2);
+            border: 1px solid rgba(56, 239, 125, 0.3);
+            color: #38ef7d;
+        }
+
+        .alert-error {
+            background: rgba(255, 107, 107, 0.2);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            color: #ff6b6b;
+        }
+
+        option {
+            background: #16213e;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Admin Panel</h1>
+            <div class="user-info">
+                <span>Welcome, <strong th:text="${username}"></strong></span>
+                <a href="/logout" class="logout-btn">Logout</a>
+            </div>
+        </div>
+
+        <div class="card-grid">
+            <!-- Server Restart Card -->
+            <div class="card">
+                <h2>🔄 Server Restart</h2>
+                <div id="restart-alert" class="alert"></div>
+                <p style="color: #aaa; margin-bottom: 20px;">
+                    Initiate a scheduled server restart with warnings at 10, 5, 1 minute and 15 seconds.
+                </p>
+                <button onclick="restartServer()" class="btn btn-danger">Restart Server</button>
+            </div>
+
+            <!-- Add Vehicle Card -->
+            <div class="card">
+                <h2>🚗 Add Vehicle</h2>
+                <div id="vehicle-alert" class="alert"></div>
+                <form onsubmit="addVehicle(event)">
+                    <div class="form-group">
+                        <label for="vehicle-player">Player Name</label>
+                        <input type="text" id="vehicle-player" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="vehicle-id">Vehicle Type</label>
+                        <select id="vehicle-id" required>
+                            <option value="">Select Vehicle</option>
+                            <option value="Base.PickUpTruck">Pickup Truck</option>
+                            <option value="Base.PickUpVan">Pickup Van</option>
+                            <option value="Base.StepVan">Step Van</option>
+                            <option value="Base.Van">Van</option>
+                            <option value="Base.SUV">SUV</option>
+                            <option value="Base.CarNormal">Normal Car</option>
+                            <option value="Base.CarLuxury">Luxury Car</option>
+                            <option value="Base.CarTaxi">Taxi</option>
+                            <option value="Base.PickUpTruckLights">Police Pickup</option>
+                            <option value="Base.CarLightsPolice">Police Car</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Spawn Vehicle</button>
+                </form>
+            </div>
+
+            <!-- Add Item Card -->
+            <div class="card">
+                <h2>📦 Add Item</h2>
+                <div id="item-alert" class="alert"></div>
+                <form onsubmit="addItem(event)">
+                    <div class="form-group">
+                        <label for="item-player">Player Name</label>
+                        <input type="text" id="item-player" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="item-id">Item Type</label>
+                        <select id="item-id" required>
+                            <option value="">Select Item</option>
+                            <option value="Base.Axe">Axe</option>
+                            <option value="Base.BaseballBat">Baseball Bat</option>
+                            <option value="Base.Hammer">Hammer</option>
+                            <option value="Base.Screwdriver">Screwdriver</option>
+                            <option value="Base.Saw">Saw</option>
+                            <option value="Base.Crowbar">Crowbar</option>
+                            <option value="Base.WaterBottleFull">Water Bottle (Full)</option>
+                            <option value="Base.CannedBeans">Canned Beans</option>
+                            <option value="Base.TinnedSoup">Tinned Soup</option>
+                            <option value="Base.FirstAidKit">First Aid Kit</option>
+                            <option value="Base.Pills">Pills</option>
+                            <option value="Base.Bandage">Bandage</option>
+                            <option value="Camping.CampingTent">Camping Tent</option>
+                            <option value="Base.Torch">Flashlight</option>
+                            <option value="Radio.WalkieTalkie5">Walkie Talkie</option>
+                            <option value="Base.ShotgunShellsBox">Box of Shotgun Shells</option>
+                            <option value="Base.Mov_MilitaryCrate">Military Crate</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="item-amount">Amount</label>
+                        <input type="number" id="item-amount" min="1" value="1" required>
+                    </div>
+                    <button type="submit" class="btn btn-success">Give Item</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/server';
+        const PASSWORD = 'adminrbz0mb01d2$3';
+
+        function showAlert(elementId, message, type) {
+            const alert = document.getElementById(elementId);
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            alert.style.display = 'block';
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 5000);
+        }
+
+        async function restartServer() {
+            if (!confirm('Are you sure you want to restart the server? Players will receive warnings.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/restart`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ password: PASSWORD })
+                });
+
+                const text = await response.text();
+                
+                if (response.ok) {
+                    showAlert('restart-alert', text, 'success');
+                } else {
+                    showAlert('restart-alert', text, 'error');
+                }
+            } catch (error) {
+                showAlert('restart-alert', 'Error: ' + error.message, 'error');
+            }
+        }
+
+        async function addVehicle(event) {
+            event.preventDefault();
+            
+            const playerName = document.getElementById('vehicle-player').value;
+            const vehicleId = document.getElementById('vehicle-id').value;
+            const command = `addvehicle "${vehicleId}" "${playerName}"`;
+
+            try {
+                const response = await fetch(`${API_BASE}/command`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ command: command })
+                });
+
+                const text = await response.text();
+                
+                if (response.ok) {
+                    showAlert('vehicle-alert', 'Vehicle spawned successfully!', 'success');
+                    event.target.reset();
+                } else {
+                    showAlert('vehicle-alert', text, 'error');
+                }
+            } catch (error) {
+                showAlert('vehicle-alert', 'Error: ' + error.message, 'error');
+            }
+        }
+
+        async function addItem(event) {
+            event.preventDefault();
+            
+            const playerName = document.getElementById('item-player').value;
+            const itemId = document.getElementById('item-id').value;
+            const amount = document.getElementById('item-amount').value;
+
+            const command = `additem "${playerName}" "${itemId}" ${amount}`;
+
+            try {
+                const response = await fetch(`${API_BASE}/command`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ command: command })
+                });
+
+                const text = await response.text();
+                
+                if (response.ok) {
+                    showAlert('item-alert', 'Item given successfully!', 'success');
+                    event.target.reset();
+                } else {
+                    showAlert('item-alert', text, 'error');
+                }
+            } catch (error) {
+                showAlert('item-alert', 'Error: ' + error.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

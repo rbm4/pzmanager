@@ -1,6 +1,9 @@
 package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
 import com.apocalipsebr.zomboid.server.manager.application.service.FileService;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -20,51 +23,99 @@ public class LogController {
         this.fileService = fileService;
     }
 
+    private final Map<String, Long> ipRequestTimestamps = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final long REQUEST_INTERVAL_MS = 60000; // 1 minute
+
+    private ResponseEntity<?> checkRateLimit(String clientIp) {
+        Long lastRequestTime = ipRequestTimestamps.get(clientIp);
+        long currentTime = System.currentTimeMillis();
+
+        if (lastRequestTime != null && (currentTime - lastRequestTime) < REQUEST_INTERVAL_MS) {
+            long waitTime = (REQUEST_INTERVAL_MS - (currentTime - lastRequestTime)) / 1000;
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(Map.of(
+                            "error", "Rate limit exceeded",
+                            "retry_after_seconds", waitTime));
+        }
+
+        ipRequestTimestamps.put(clientIp, currentTime);
+        return null;
+    }
+
+    private String getClientIp(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty()) {
+            ip = request.getRemoteAddr();
+        }
+        return ip;
+    }
+
     @GetMapping("/list")
-    public ResponseEntity<?> listLogs() {
+    public ResponseEntity<?> listLogs(HttpServletRequest request) {
+        checkRateLimit(getClientIp(request));
         try {
             List<String> files = fileService.listLogFiles();
             return ResponseEntity.ok(Map.of(
-                "files", files,
-                "count", files.size(),
-                "path", fileService.getLogsPath()
-            ));
+                    "files", files,
+                    "count", files.size(),
+                    "path", fileService.getLogsPath()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of(
-                    "error", e.getMessage(),
-                    "path", fileService.getLogsPath()
-                ));
+                    .body(Map.of(
+                            "error", e.getMessage(),
+                            "path", fileService.getLogsPath()));
         }
     }
 
     @GetMapping("/view/{filename}")
     public ResponseEntity<String> viewLog(
             @PathVariable String filename,
-            @RequestParam(defaultValue = "100") int lines) {
+            @RequestParam(defaultValue = "100") int lines, HttpServletRequest request) {
+        checkRateLimit(getClientIp(request));
         try {
             String content = fileService.getLogFileContent(filename, lines);
             return ResponseEntity.ok()
-                .contentType(MediaType.TEXT_PLAIN)
-                .body(content);
+                    .contentType(MediaType.TEXT_PLAIN)
+                    .body(content);
         } catch (SecurityException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body("Access denied: " + e.getMessage());
+                    .body("Access denied: " + e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body("Error reading file: " + e.getMessage());
+                    .body("Error reading file: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/view/{folder}/{filename}")
+    public ResponseEntity<String> viewLogFolder(
+            @PathVariable String filename,
+            @PathVariable String folder,
+            @RequestParam(defaultValue = "100") int lines, HttpServletRequest request) {
+        checkRateLimit(getClientIp(request));
+        try {
+            String content = fileService.getLogFileContent(folder + filename, lines);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.TEXT_PLAIN)
+                    .body(content);
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Access denied: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Error reading file: " + e.getMessage());
         }
     }
 
     @GetMapping("/download/{filename}")
-    public ResponseEntity<Resource> downloadLog(@PathVariable String filename) {
+    public ResponseEntity<Resource> downloadLog(@PathVariable String filename, HttpServletRequest request) {
+        checkRateLimit(getClientIp(request));
         try {
             Resource file = fileService.getLogFile(filename);
             return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, 
-                    "attachment; filename=\"" + filename + "\"")
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(file);
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "attachment; filename=\"" + filename + "\"")
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .body(file);
         } catch (SecurityException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         } catch (Exception e) {
@@ -75,19 +126,20 @@ public class LogController {
     @GetMapping("/tail/{filename}")
     public ResponseEntity<String> tailLog(
             @PathVariable String filename,
-            @RequestParam(defaultValue = "50") int lines) {
+            @RequestParam(defaultValue = "50") int lines, HttpServletRequest request) {
+        checkRateLimit(getClientIp(request));
         try {
             String content = fileService.getLogFileContent(filename, lines);
             return ResponseEntity.ok()
-                .contentType(MediaType.TEXT_PLAIN)
-                .header("X-Log-Lines", String.valueOf(lines))
-                .body(content);
+                    .contentType(MediaType.TEXT_PLAIN)
+                    .header("X-Log-Lines", String.valueOf(lines))
+                    .body(content);
         } catch (SecurityException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body("Access denied");
+                    .body("Access denied");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body("File not found: " + filename);
+                    .body("File not found: " + filename);
         }
     }
 }
