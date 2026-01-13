@@ -17,10 +17,10 @@ public class Ticket {
     @Column(nullable = false)
     private String author;
 
-    @Column(name = "answered_id")
+    @Column(name = "answeredID")
     private Long answeredID;
 
-    @Column(nullable = false)
+    @Column(name="viewed", nullable = false)
     private Boolean viewed = false;
 
     public Ticket() {
