@@ -7,7 +7,7 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 # Step 1: Clean and compile with Maven
-Write-Host "[1/4] Compiling project with Maven..." -ForegroundColor Yellow
+Write-Host "[1/5] Compiling project with Maven..." -ForegroundColor Yellow
 mvn clean package
 
 if ($LASTEXITCODE -ne 0) {
@@ -18,8 +18,8 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host " Build successful!" -ForegroundColor Green
 Write-Host ""
 
-# Step 1.5: Check for compiled JAR and create startup script
-Write-Host "[1.5/4] Creating Linux startup script..." -ForegroundColor Yellow
+# Step 2: Check for compiled JAR and create startup script
+Write-Host "[2/5] Creating Linux startup script..." -ForegroundColor Yellow
 
 $jarFile = Get-ChildItem -Path "./target" -Filter "*.jar" -ErrorAction SilentlyContinue | Select-Object -First 1
 
@@ -40,15 +40,15 @@ $scriptContent = @"
 #!/bin/bash
 cd /home/pzuser/pzmanager
 git pull
-java -jar target/$jarName
+java -Dspring.profiles.active=prod -jar target/$jarName
 "@
 
 Set-Content -Path $scriptPath -Value $scriptContent -Encoding UTF8
 Write-Host " Startup script created at $scriptPath" -ForegroundColor Green
 Write-Host ""
 
-# Step 2: Git add all changes
-Write-Host "[2/4] Adding changes to git..." -ForegroundColor Yellow
+# Step 3: Git add all changes
+Write-Host "[3/5] Adding changes to git..." -ForegroundColor Yellow
 git add .
 
 if ($LASTEXITCODE -ne 0) {
@@ -59,8 +59,8 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host " Changes staged!" -ForegroundColor Green
 Write-Host ""
 
-# Step 3: Git commit
-Write-Host "[3/4] Committing changes..." -ForegroundColor Yellow
+# Step 4: Git commit
+Write-Host "[4/5] Committing changes..." -ForegroundColor Yellow
 
 # Prompt for commit message
 $commitMessage = Read-Host "Enter commit message (or press Enter for default)"
@@ -80,8 +80,8 @@ else {
 
 Write-Host ""
 
-# Step 4: Git push
-Write-Host "[4/4] Pushing to remote..." -ForegroundColor Yellow
+# Step 5: Git push
+Write-Host "[5/5] Pushing to remote..." -ForegroundColor Yellow
 git push
 
 if ($LASTEXITCODE -ne 0) {
