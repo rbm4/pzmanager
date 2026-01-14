@@ -1,7 +1,7 @@
 package com.apocalipsebr.zomboid.server.manager.application.service;
 
-import com.apocalipsebr.zomboid.server.manager.domain.entity.Ticket;
-import com.apocalipsebr.zomboid.server.manager.domain.repository.TicketRepository;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Ticket;
+import com.apocalipsebr.zomboid.server.manager.domain.repository.app.TicketRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

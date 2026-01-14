@@ -1,6 +1,6 @@
-package com.apocalipsebr.zomboid.server.manager.domain.repository;
+package com.apocalipsebr.zomboid.server.manager.domain.repository.app;
 
-import com.apocalipsebr.zomboid.server.manager.domain.entity.Ticket;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Ticket;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -46,7 +46,7 @@ Edite o arquivo `src/main/resources/application.properties`:
 zomboid.control.file=/opt/pzserver/zomboid.control
 
 # Porta da aplicação (padrão: 8080)
-server.port=8080
+server.port=80
 ```
 
 ### 3. Compilar

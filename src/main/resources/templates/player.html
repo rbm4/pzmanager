@@ -80,6 +80,116 @@
             color: #aaa;
             line-height: 1.6;
         }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stats-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stats-card h3 {
+            font-size: 2rem;
+            margin-bottom: 5px;
+            color: #38ef7d;
+        }
+
+        .stats-card p {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .purchase-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+        }
+
+        .purchase-card h2 {
+            color: #ffc107;
+            margin-bottom: 15px;
+        }
+
+        .item-display {
+            background: rgba(255, 193, 7, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .item-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #ffc107;
+            margin-bottom: 10px;
+        }
+
+        .item-description {
+            color: #ddd;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .price-tag {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #38ef7d;
+            margin: 15px 0;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            width: 100%;
+        }
+
+        .btn-purchase {
+            background: linear-gradient(45deg, #ffc107, #ff9800);
+            color: white;
+        }
+
+        .btn-purchase:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4);
+        }
+
+        .btn-purchase:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .alert-success {
+            background: rgba(56, 239, 125, 0.2);
+            border: 1px solid rgba(56, 239, 125, 0.3);
+            color: #38ef7d;
+        }
+
+        .alert-error {
+            background: rgba(255, 107, 107, 0.2);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            color: #ff6b6b;
+        }
     </style>
 </head>
 <body>
@@ -92,10 +202,57 @@
             </div>
         </div>
 
-        <div class="card">
-            <h2>Welcome to Apocalipse [BR]</h2>
-            <p>Your player panel is currently under development.</p>
-            <p>More features coming soon!</p>
+        <div th:if="${param.purchase != null}" class="alert" 
+             th:classappend="${param.purchase[0] == 'success' ? 'alert-success' : 'alert-error'}">
+            <span th:if="${param.purchase[0] == 'success'}">✅ Skill Recovery Journal purchased successfully!</span>
+            <span th:if="${param.purchase[0] == 'error'}">❌ Purchase failed. Insufficient currency points.</span>
+        </div>
+
+        <div class="card-grid">
+            <div class="stats-card">
+                <h3 th:text="${stats.zombieKills}">0</h3>
+                <p>🧟 Zombie Kills</p>
+            </div>
+            <div class="stats-card">
+                <h3 th:text="${stats.money}">0</h3>
+                <p>💰 Money</p>
+            </div>
+            <div class="stats-card">
+                <h3 th:text="${stats.currencyPoints}">0</h3>
+                <p>⭐ Currency Points</p>
+            </div>
+        </div>
+
+        <div class="purchase-card">
+            <h2>📚 Special Item Shop</h2>
+            
+            <div class="item-display">
+                <div class="item-name">Skill Recovery Journal</div>
+                <div class="item-description">
+                    A special journal that allows you to recover lost skill experience points. 
+                    Essential for maintaining your character's progression after death or setbacks.
+                </div>
+                <div class="price-tag">
+                    💎 <span th:text="${journalCost}">1000</span> Currency Points
+                </div>
+            </div>
+
+            <form method="post" action="/player/purchase-journal" onsubmit="return confirm('Are you sure you want to purchase the Skill Recovery Journal?');">
+                <button type="submit" class="btn btn-purchase" 
+                        th:disabled="${stats.currencyPoints < journalCost}">
+                    <span th:if="${stats.currencyPoints >= journalCost}">Purchase Journal</span>
+                    <span th:unless="${stats.currencyPoints >= journalCost}">Insufficient Points</span>
+                </button>
+            </form>
+
+            <p style="margin-top: 15px; color: #aaa; font-size: 0.9rem;">
+                💡 Earn currency points by killing zombies and accumulating money in-game!
+            </p>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+            <h2>Coming Soon</h2>
+            <p>More features and items will be available in future updates!</p>
         </div>
     </div>
 </body>

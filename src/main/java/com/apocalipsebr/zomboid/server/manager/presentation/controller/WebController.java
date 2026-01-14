@@ -1,5 +1,7 @@
 package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
+import com.apocalipsebr.zomboid.server.manager.application.service.PlayerStatsService;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.zomboid.PlayerStats;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,6 +12,12 @@ import jakarta.servlet.http.HttpSession;
 
 @Controller
 public class WebController {
+
+    private final PlayerStatsService playerStatsService;
+
+    public WebController(PlayerStatsService playerStatsService) {
+        this.playerStatsService = playerStatsService;
+    }
 
     @GetMapping("/")
     public String home() {
@@ -73,8 +81,33 @@ public class WebController {
         if (role == null) {
             return "redirect:/login";
         }
-        model.addAttribute("username", session.getAttribute("user"));
+        
+        String username = (String) session.getAttribute("user");
+        PlayerStats stats = new PlayerStats(username);
+        
+        model.addAttribute("username", username);
+        model.addAttribute("stats", stats);
+        model.addAttribute("journalCost", playerStatsService.getSkillJournalCost());
+        
         return "player";
+    }
+
+    @PostMapping("/player/purchase-journal")
+    public String purchaseJournal(HttpSession session, Model model) {
+        String username = (String) session.getAttribute("user");
+        if (username == null) {
+            return "redirect:/login";
+        }
+        
+        boolean success = playerStatsService.purchaseSkillJournal(username);
+        
+        if (success) {
+            model.addAttribute("success", "Skill Recovery Journal purchased successfully!");
+        } else {
+            model.addAttribute("error", "Insufficient currency points or purchase failed.");
+        }
+        
+        return "redirect:/player?purchase=" + (success ? "success" : "error");
     }
 
     @GetMapping("/logout")
