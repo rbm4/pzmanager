@@ -2,6 +2,8 @@ package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
 import com.apocalipsebr.zomboid.server.manager.application.service.PlayerStatsService;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.PlayerStats;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,60 +34,27 @@ public class WebController {
         return "login";
     }
 
-    @PostMapping("/login")
-    public String doLogin(@RequestParam String username, 
-                         @RequestParam String password,
-                         HttpSession session) {
-        // Simple authentication - you can enhance this later
-        if ("player".equals(username) && "player123".equals(password)) {
-            session.setAttribute("user", username);
-            session.setAttribute("role", "player");
-            return "redirect:/player";
-        }
-        return "redirect:/login?error";
-    }
-
-    @GetMapping("/admin-login")
-    public String adminLogin(@RequestParam(required = false) String error, Model model) {
-        if (error != null) {
-            model.addAttribute("error", "Invalid admin credentials");
-        }
-        return "admin-login";
-    }
-
-    @PostMapping("/admin-login")
-    public String doAdminLogin(@RequestParam String username,
-                              @RequestParam String password,
-                              HttpSession session) {
-        // Admin authentication
-        if ("admin".equals(username) && "adminrbz0mb01d2$3".equals(password)) {
-            session.setAttribute("user", username);
-            session.setAttribute("role", "admin");
-            return "redirect:/admin";
-        }
-        return "redirect:/admin-login?error";
-    }
-
     @GetMapping("/admin")
     public String adminPanel(HttpSession session, Model model) {
-        if (!"admin".equals(session.getAttribute("role"))) {
-            return "redirect:/admin-login";
+        var user = (User) session.getAttribute("user");
+        if (user == null || !"ADMIN".equals(user.getRole())) {
+            return "redirect:/login";
         }
-        model.addAttribute("username", session.getAttribute("user"));
+        model.addAttribute("username", user.getUsername());
         return "admin";
     }
 
     @GetMapping("/player")
     public String playerPanel(HttpSession session, Model model) {
-        String role = (String) session.getAttribute("role");
-        if (role == null) {
+        var user = (User) session.getAttribute("user");
+        if (user == null) {
             return "redirect:/login";
         }
         
-        String username = (String) session.getAttribute("user");
-        PlayerStats stats = new PlayerStats(username);
+        PlayerStats stats = new PlayerStats(user.getUsername());
         
-        model.addAttribute("username", username);
+        model.addAttribute("username", user.getUsername());
+        model.addAttribute("role", user.getRole());
         model.addAttribute("stats", stats);
         model.addAttribute("journalCost", playerStatsService.getSkillJournalCost());
         
@@ -94,12 +63,12 @@ public class WebController {
 
     @PostMapping("/player/purchase-journal")
     public String purchaseJournal(HttpSession session, Model model) {
-        String username = (String) session.getAttribute("user");
-        if (username == null) {
+        var user = (User) session.getAttribute("user");
+        if (user == null) {
             return "redirect:/login";
         }
         
-        boolean success = playerStatsService.purchaseSkillJournal(username);
+        boolean success = playerStatsService.purchaseSkillJournal(user.getUsername());
         
         if (success) {
             model.addAttribute("success", "Skill Recovery Journal purchased successfully!");

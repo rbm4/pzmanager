@@ -67,7 +67,7 @@ public class ScheduledRestartService {
         ZoneId zoneId = ZoneId.of(timezone);
         LocalDateTime now = LocalDateTime.now(zoneId);
         LocalDateTime nextHour = now.plusHours(2)
-                .withMinute(30)
+                .withMinute(0)
                 .withSecond(0)
                 .withNano(0);
 

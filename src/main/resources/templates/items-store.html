@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Item Store - Apocalipse [BR]</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a6f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 15px;
+        }
+
+        .nav-link {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .search-bar {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .search-form {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+        }
+
+        .search-btn {
+            padding: 12px 30px;
+            background: #ff6b6b;
+            border: none;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-btn:hover {
+            background: #ee5a6f;
+        }
+
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .item-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .item-card:hover {
+            transform: translateY(-5px);
+            border-color: #4caf50;
+            box-shadow: 0 10px 30px rgba(76, 175, 80, 0.3);
+        }
+
+        .item-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        .item-icon {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+        }
+
+        .item-info {
+            flex: 1;
+        }
+
+        .item-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #4caf50;
+        }
+
+        .item-category {
+            color: #aaa;
+            font-size: 0.95rem;
+        }
+
+        .item-id {
+            color: #666;
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .buy-btn {
+            flex: 1;
+            padding: 12px;
+            background: #4caf50;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .buy-btn:hover {
+            background: #45a049;
+        }
+
+        .info-btn {
+            padding: 12px 20px;
+            background: #2196f3;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .info-btn:hover {
+            background: #1976d2;
+        }
+
+        .no-items {
+            text-align: center;
+            padding: 60px 20px;
+            color: #aaa;
+            grid-column: 1 / -1;
+        }
+
+        .store-banner {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .store-banner h2 {
+            color: #4caf50;
+            margin-bottom: 10px;
+        }
+
+        .store-banner p {
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛒 Item Store</h1>
+            <div class="header-right">
+                <div class="nav-links">
+                    <a href="/player" class="nav-link">Home</a>
+                    <a href="/items/wiki" class="nav-link">Wiki</a>
+                    <a th:if="${session.user}" href="/player" class="nav-link">Player Panel</a>
+                </div>
+                <div th:if="${session.user}" style="display: flex; align-items: center; gap: 10px; margin-left: 10px; padding-left: 10px; border-left: 1px solid rgba(255,255,255,0.2);">
+                    <span th:text="${session.user.username}">User</span>
+                    <a href="/logout" class="nav-link" style="padding: 8px 15px; font-size: 0.9rem;">Logout</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="store-banner">
+            <h2>Available Items for Purchase</h2>
+            <p>Browse items that can be purchased in-game using currency points</p>
+        </div>
+
+        <div class="search-bar">
+            <form class="search-form" method="get" action="/items/store">
+                <input type="text" name="search" class="search-input" 
+                       placeholder="Search sellable items..." 
+                       th:value="${search}">
+                <button type="submit" class="search-btn">Search</button>
+            </form>
+        </div>
+
+        <div class="items-grid">
+            <div th:each="item : ${items}" class="item-card">
+                <div class="item-header">
+                    <img th:src="${'https://pzwiki.net' + item.icon}" 
+                         class="item-icon" 
+                         th:alt="${item.name}"
+                         onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22%3E%3Crect fill=%22%23444%22 width=%2280%22 height=%2280%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23888%22 font-size=%2224%22%3E?%3C/text%3E%3C/svg%3E'">
+                    <div class="item-info">
+                        <div class="item-name" th:text="${item.name}">Item Name</div>
+                        <div class="item-category" th:text="${item.category}">Category</div>
+                    </div>
+                </div>
+                <div class="item-id" th:text="${item.itemId}">Base.ItemId</div>
+                <div class="item-actions">
+                    <button class="buy-btn" onclick="alert('Purchase system coming soon!')">Buy Now</button>
+                    <a th:href="${'https://pzwiki.net' + item.page}" target="_blank" class="info-btn">Info</a>
+                </div>
+            </div>
+            
+            <div th:if="${#lists.isEmpty(items)}" class="no-items">
+                <h2>No sellable items found</h2>
+                <p>Check back later for available items</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

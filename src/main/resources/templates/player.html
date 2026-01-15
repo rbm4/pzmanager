@@ -190,6 +190,52 @@
             border: 1px solid rgba(255, 107, 107, 0.3);
             color: #ff6b6b;
         }
+
+        .nav-menu {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .nav-menu h3 {
+            color: #4facfe;
+            margin-bottom: 15px;
+        }
+
+        .nav-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .nav-link {
+            display: block;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .nav-link.admin {
+            border-color: rgba(255, 107, 107, 0.5);
+            background: rgba(255, 107, 107, 0.1);
+        }
+
+        .nav-link.admin:hover {
+            background: rgba(255, 107, 107, 0.2);
+        }
     </style>
 </head>
 <body>
@@ -206,6 +252,16 @@
              th:classappend="${param.purchase[0] == 'success' ? 'alert-success' : 'alert-error'}">
             <span th:if="${param.purchase[0] == 'success'}">✅ Skill Recovery Journal purchased successfully!</span>
             <span th:if="${param.purchase[0] == 'error'}">❌ Purchase failed. Insufficient currency points.</span>
+        </div>
+
+        <div class="nav-menu">
+            <h3>🗺️ Navigation</h3>
+            <div class="nav-links">
+                <a href="/items/wiki" class="nav-link">📚 Item Wiki</a>
+                <a href="/items/store" class="nav-link">🛒 Item Store</a>
+                <a href="/items" class="nav-link">📦 Browse All Items</a>
+                <a th:if="${role == 'ADMIN'}" href="/admin" class="nav-link admin">⚙️ Admin Panel</a>
+            </div>
         </div>
 
         <div class="card-grid">

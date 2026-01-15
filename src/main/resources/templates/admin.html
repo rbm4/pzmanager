@@ -174,6 +174,47 @@
             background: #16213e;
             color: white;
         }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 0.9rem;
+            font-family: 'Courier New', monospace;
+            min-height: 200px;
+            resize: vertical;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #ff6b6b;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .full-width-card {
+            grid-column: 1 / -1;
+        }
+
+        .stats-display {
+            background: rgba(56, 239, 125, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .stats-display.show {
+            display: block;
+        }
+
+        .stats-display p {
+            margin: 5px 0;
+            color: #38ef7d;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -182,6 +223,9 @@
             <h1>🔧 Admin Panel</h1>
             <div class="user-info">
                 <span>Welcome, <strong th:text="${username}"></strong></span>
+                <a href="/" class="logout-btn" style="margin-right: 10px;">🏠 Home</a>
+                <a href="/player" class="logout-btn" style="margin-right: 10px;">🎮 Player Panel</a>
+                <a href="/items/manage" class="logout-btn" style="margin-right: 10px;">📦 Manage Items</a>
                 <a href="/tickets" class="logout-btn" style="margin-right: 10px;">🎫 Tickets</a>
                 <a href="/logout" class="logout-btn">Logout</a>
             </div>
@@ -265,6 +309,34 @@
                     </div>
                     <button type="submit" class="btn btn-success">Give Item</button>
                 </form>
+            </div>
+        </div>
+
+        <!-- Import Items Card (Full Width) -->
+        <div class="card full-width-card">
+            <h2>📥 Import Zomboid Items (Batch)</h2>
+            <div id="import-alert" class="alert"></div>
+            <p style="color: #aaa; margin-bottom: 20px;">
+                Paste the complete JSON array of items to import them into the database. Each item should have: category, icon, name, page, and itemId fields.
+            </p>
+            <form onsubmit="importItems(event)">
+                <div class="form-group">
+                    <label for="items-json">Items JSON Array</label>
+                    <textarea id="items-json" placeholder='[
+  {
+    "category": "Junk",
+    "icon": "/w/images/2/20/BackgammonBoard.png",
+    "name": "Backgammon Board",
+    "page": "/wiki/Backgammon_Board",
+    "itemId": "Base.BackgammonBoard"
+  }
+]' required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Import Items</button>
+            </form>
+            <div id="import-stats" class="stats-display">
+                <p>✅ Successfully imported: <span id="stats-created">0</span> created, <span id="stats-updated">0</span> updated</p>
+                <p>📊 Total processed: <span id="stats-total">0</span> items</p>
             </div>
         </div>
     </div>
@@ -366,6 +438,66 @@
                 }
             } catch (error) {
                 showAlert('item-alert', 'Error: ' + error.message, 'error');
+            }
+        }
+
+        async function importItems(event) {
+            event.preventDefault();
+            
+            const jsonInput = document.getElementById('items-json').value;
+            const statsDisplay = document.getElementById('import-stats');
+            
+            // Validate JSON
+            let itemsArray;
+            try {
+                itemsArray = JSON.parse(jsonInput);
+                
+                if (!Array.isArray(itemsArray)) {
+                    showAlert('import-alert', 'Error: JSON must be an array of items', 'error');
+                    return;
+                }
+                
+                if (itemsArray.length === 0) {
+                    showAlert('import-alert', 'Error: Array is empty', 'error');
+                    return;
+                }
+                
+            } catch (error) {
+                showAlert('import-alert', 'Error: Invalid JSON format - ' + error.message, 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/zomboid-items/batch', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: jsonInput
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    // Display stats
+                    document.getElementById('stats-created').textContent = result.created || 0;
+                    document.getElementById('stats-updated').textContent = result.updated || 0;
+                    document.getElementById('stats-total').textContent = result.total || 0;
+                    statsDisplay.classList.add('show');
+                    
+                    showAlert('import-alert', result.message || 'Items imported successfully!', 'success');
+                    
+                    // Clear textarea after 2 seconds
+                    setTimeout(() => {
+                        document.getElementById('items-json').value = '';
+                    }, 2000);
+                } else {
+                    showAlert('import-alert', result.error || 'Import failed', 'error');
+                    statsDisplay.classList.remove('show');
+                }
+            } catch (error) {
+                showAlert('import-alert', 'Error: ' + error.message, 'error');
+                statsDisplay.classList.remove('show');
             }
         }
     </script>
