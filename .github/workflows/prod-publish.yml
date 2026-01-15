@@ -1,0 +1,80 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'pom.xml'
+      - '.github/workflows/deploy.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Wait for deployment window
+        run: |
+          echo "Waiting 30 seconds to ensure push is complete..."
+          sleep 30
+      
+      - name: Trigger server restart
+        env:
+          SERVER_URL: ${{ secrets.SERVER_URL }}
+          RESTART_PASSWORD: ${{ secrets.RESTART_PASSWORD }}
+        run: |
+          echo "Triggering restart on production server..."
+          
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            "${SERVER_URL}/api/system/restart" \
+            -H "Content-Type: application/json" \
+            -d "{\"password\": \"${RESTART_PASSWORD}\"}")
+          
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+          
+          echo "Response: $BODY"
+          echo "HTTP Status: $HTTP_CODE"
+          
+          if [ "$HTTP_CODE" -eq 200 ]; then
+            echo "✅ Restart triggered successfully!"
+          else
+            echo "❌ Restart failed with status $HTTP_CODE"
+            exit 1
+          fi
+      
+      - name: Wait for server to restart
+        run: |
+          echo "Waiting 30 seconds for server to restart..."
+          sleep 30
+      
+      - name: Verify deployment
+        env:
+          SERVER_URL: ${{ secrets.SERVER_URL }}
+        run: |
+          echo "Checking server health..."
+          
+          for i in {1..10}; do
+            if curl -s -f "${SERVER_URL}/api/system/health" > /dev/null; then
+              echo "✅ Server is UP and responding!"
+              exit 0
+            fi
+            echo "Attempt $i/10: Server not ready yet..."
+            sleep 5
+          done
+          
+          echo "❌ Server health check failed after 10 attempts"
+          exit 1
+      
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "🚀 Deployment completed successfully!"
+          else
+            echo "⚠️ Deployment encountered issues"
+          fi
