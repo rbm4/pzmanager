@@ -1,6 +1,6 @@
-package com.apocalipsebr.zomboid.server.manager.domain.repository.zomboid;
+package com.apocalipsebr.zomboid.server.manager.domain.repository.app;
 
-import com.apocalipsebr.zomboid.server.manager.domain.entity.zomboid.PlayerStats;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.PlayerStats;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

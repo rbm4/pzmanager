@@ -1,7 +1,7 @@
 package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
 import com.apocalipsebr.zomboid.server.manager.application.service.PlayerStatsService;
-import com.apocalipsebr.zomboid.server.manager.domain.entity.zomboid.PlayerStats;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.PlayerStats;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;

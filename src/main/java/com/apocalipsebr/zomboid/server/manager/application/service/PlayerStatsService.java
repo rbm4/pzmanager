@@ -1,7 +1,7 @@
 package com.apocalipsebr.zomboid.server.manager.application.service;
 
-import com.apocalipsebr.zomboid.server.manager.domain.entity.zomboid.PlayerStats;
-import com.apocalipsebr.zomboid.server.manager.domain.repository.zomboid.PlayerStatsRepository;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.PlayerStats;
+import com.apocalipsebr.zomboid.server.manager.domain.repository.app.PlayerStatsRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

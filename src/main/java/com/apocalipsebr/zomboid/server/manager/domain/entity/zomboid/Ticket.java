@@ -1,4 +1,4 @@
-package com.apocalipsebr.zomboid.server.manager.domain.entity.app;
+package com.apocalipsebr.zomboid.server.manager.domain.entity.zomboid;
 import jakarta.persistence.*;
 
 

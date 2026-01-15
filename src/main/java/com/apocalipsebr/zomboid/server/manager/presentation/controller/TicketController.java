@@ -1,7 +1,7 @@
 package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
 import com.apocalipsebr.zomboid.server.manager.application.service.TicketService;
-import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Ticket;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.zomboid.Ticket;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
