@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${item.name} + ' - Apocalipse [BR]'">Item Detail</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a6f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 15px;
+        }
+
+        .nav-link, .btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-link:hover, .btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .item-detail-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 40px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .item-header {
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .item-icon-large {
+            width: 150px;
+            height: 150px;
+            object-fit: contain;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        .item-info {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .item-title {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+
+        .item-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .meta-badge {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            font-size: 0.9rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .meta-badge.sellable {
+            background: rgba(76, 175, 80, 0.2);
+            border-color: #4caf50;
+            color: #4caf50;
+        }
+
+        .item-property {
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            gap: 15px;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .property-label {
+            color: #aaa;
+            font-weight: 600;
+        }
+
+        .property-value {
+            color: #fff;
+            word-break: break-all;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn-primary {
+            background: #ff6b6b;
+            border-color: #ff6b6b;
+        }
+
+        .btn-primary:hover {
+            background: #ee5a6f;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📦 Item Details</h1>
+            <div class="nav-links">
+                <a href="/items" class="nav-link">← Back to List</a>
+                <a href="/" class="nav-link">Home</a>
+            </div>
+        </div>
+
+        <div class="item-detail-card">
+            <div class="item-header">
+                <img th:src="${'https://pzwiki.net' + item.icon}" 
+                     class="item-icon-large" 
+                     th:alt="${item.name}"
+                     onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22150%22 height=%22150%22%3E%3Crect fill=%22%23444%22 width=%22150%22 height=%22150%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23888%22 font-size=%2248%22%3E?%3C/text%3E%3C/svg%3E'">
+                
+                <div class="item-info">
+                    <div class="item-title" th:text="${item.name}">Item Name</div>
+                    <div class="item-meta">
+                        <span class="meta-badge" th:text="${item.category}">Category</span>
+                        <span class="meta-badge" 
+                              th:classappend="${item.sellable ? 'sellable' : ''}"
+                              th:text="${item.sellable ? '✅ Sellable' : '❌ Not Sellable'}">
+                            Status
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="item-properties">
+                <div class="item-property">
+                    <div class="property-label">Item ID</div>
+                    <div class="property-value" th:text="${item.itemId}">Base.ItemId</div>
+                </div>
+
+                <div class="item-property">
+                    <div class="property-label">Category</div>
+                    <div class="property-value" th:text="${item.category}">Category</div>
+                </div>
+
+                <div class="item-property">
+                    <div class="property-label">Icon Path</div>
+                    <div class="property-value" th:text="${item.icon}">/path/to/icon.png</div>
+                </div>
+
+                <div class="item-property">
+                    <div class="property-label">Wiki Page</div>
+                    <div class="property-value" th:text="${item.page}">/wiki/Page</div>
+                </div>
+
+                <div class="item-property">
+                    <div class="property-label">Sellable</div>
+                    <div class="property-value" th:text="${item.sellable ? 'Yes - Available in store' : 'No - Not available for purchase'}">
+                        Status
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <a th:href="${'https://pzwiki.net' + item.page}" 
+                   target="_blank" 
+                   class="btn btn-primary">
+                    📖 View on PZ Wiki
+                </a>
+                <a href="/items" class="btn btn-secondary">
+                    ← Back to List
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

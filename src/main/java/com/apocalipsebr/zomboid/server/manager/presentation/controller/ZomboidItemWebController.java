@@ -4,6 +4,10 @@ import com.apocalipsebr.zomboid.server.manager.application.service.ZomboidItemSe
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.ZomboidItem;
 
 import jakarta.servlet.http.HttpSession;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -25,28 +29,44 @@ public class ZomboidItemWebController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) Boolean sellable,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
             Model model) {
         
-        List<ZomboidItem> items;
+        Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
+        Page<ZomboidItem> itemsPage;
         
         if (search != null && !search.trim().isEmpty()) {
-            items = zomboidItemService.searchItems(search);
+            itemsPage = zomboidItemService.searchItemsPaginated(search, pageable);
             model.addAttribute("search", search);
         } else if (category != null && !category.trim().isEmpty()) {
-            items = zomboidItemService.getItemsByCategory(category);
+            itemsPage = zomboidItemService.getItemsByCategoryPaginated(category, pageable);
             model.addAttribute("category", category);
         } else if (Boolean.TRUE.equals(sellable)) {
-            items = zomboidItemService.getSellableItems();
+            itemsPage = zomboidItemService.getSellableItemsPaginated(pageable);
             model.addAttribute("sellable", true);
         } else {
-            items = zomboidItemService.getAllItems();
+            itemsPage = zomboidItemService.getAllItemsPaginated(pageable);
         }
         
-        model.addAttribute("items", items);
+        model.addAttribute("itemsPage", itemsPage);
+        model.addAttribute("items", itemsPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", itemsPage.getTotalPages());
         model.addAttribute("totalItems", zomboidItemService.getTotalItemCount());
         model.addAttribute("sellableCount", zomboidItemService.getSellableItemCount());
         
         return "items-list";
+    }
+
+    @GetMapping("/{id}")
+    public String itemDetail(@PathVariable Long id, Model model) {
+        return zomboidItemService.getItemById(id)
+            .map(item -> {
+                model.addAttribute("item", item);
+                return "item-detail";
+            })
+            .orElse("redirect:/items?error=notfound");
     }
 
     @GetMapping("/wiki")

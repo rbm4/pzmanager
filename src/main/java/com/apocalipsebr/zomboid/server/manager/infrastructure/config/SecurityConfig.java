@@ -52,7 +52,7 @@ public class SecurityConfig {
                 .requireExplicitSave(false) // Automatically save SecurityContext to session
             )
             .csrf(csrf -> csrf
-                .ignoringRequestMatchers("/api/system/**", "/auth/**", "/api/zomboid-items/**") // Disable CSRF for APIs
+                .disable() // Disable CSRF for APIs
             );
 
         return http.build();

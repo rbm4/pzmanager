@@ -5,6 +5,7 @@ import com.apocalipsebr.zomboid.server.manager.application.service.ServerRestart
 import com.apocalipsebr.zomboid.server.manager.application.service.ScheduledRestartService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -25,12 +26,14 @@ public class ServerController {
         this.scheduledRestartService = scheduledRestartService;
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/command")
     public ResponseEntity<String> sendCommand(@RequestBody CommandRequest request) {
         serverCommandService.sendCommand(request.getCommand());
         return ResponseEntity.ok("Command sent successfully: " + request.getCommand());
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/command/text")
     public ResponseEntity<String> sendCommandAsText(@RequestParam String command) {
         serverCommandService.sendCommand(command);

@@ -104,6 +104,236 @@
             background: #ee5a6f;
         }
 
+        .items-list {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .item-row {
+            display: grid;
+            grid-template-columns: 60px 1fr 150px 200px 150px;
+            gap: 15px;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .item-row:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .item-row:last-child {
+            border-bottom: none;
+        }
+
+        .item-icon-small {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+        }
+
+        .item-details {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .item-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .item-id {
+            color: #888;
+            font-size: 0.85rem;
+        }
+
+        .item-category {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #ee5a6f;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 30px;
+            padding: 20px;
+        }
+
+        .pagination-btn {
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .pagination-btn:hover:not(.disabled) {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .pagination-btn.active {
+            background: #ff6b6b;
+            border-color: #ff6b6b;
+        }
+
+        .pagination-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-info {
+            color: #aaa;
+            margin: 0 10px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 30px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            color: #ff6b6b;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #aaa;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #ff6b6b;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .btn-cancel {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4caf50;
+            color: #4caf50;
+        }
+
+        .alert.error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #f44336;
+            color: #f44336;
+        }
+
         .items-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -223,15 +453,42 @@
             </form>
         </div>
 
-        <div class="items-grid">
-            <div th:each="item : ${items}" class="item-card">
+        <div class="items-list">
+            <div th:each="item : ${items}" class="item-row">
                 <img th:src="${'https://pzwiki.net' + item.icon}" 
-                     class="item-icon" 
+                     class="item-icon-small" 
                      th:alt="${item.name}"
-                     onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22%3E%3Crect fill=%22%23444%22 width=%2280%22 height=%2280%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23888%22 font-size=%2224%22%3E?%3C/text%3E%3C/svg%3E'">
-                <div class="item-name" th:text="${item.name}">Item Name</div>
+                     onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2250%22 height=%2250%22%3E%3Crect fill=%22%23444%22 width=%2250%22 height=%2250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23888%22 font-size=%2220%22%3E?%3C/text%3E%3C/svg%3E'">
+                
+                <div class="item-details">
+                    <div class="item-name" th:text="${item.name}">Item Name</div>
+                    <div class="item-id" th:text="${item.itemId}">Base.ItemId</div>
+                </div>
+                
                 <div class="item-category" th:text="${item.category}">Category</div>
-                <div class="item-id" th:text="${item.itemId}">Base.ItemId</div>
+                
+                <div class="item-id" th:text="${item.sellable ? '✅ Sellable' : '❌ Not Sellable'}">Status</div>
+                
+                <div class="item-actions">
+                    <a th:href="${'https://pzwiki.net' + item.page}" 
+                       target="_blank" 
+                       class="btn btn-primary"
+                       title="View on PZ Wiki">
+                        📖 Wiki
+                    </a>
+                    <a th:href="@{'/items/' + ${item.id}}" 
+                       class="btn btn-secondary"
+                       title="View Details">
+                        ℹ️ Details
+                    </a>
+                    <button th:if="${session.user != null and session.user.role == 'ADMIN'}" 
+                            class="btn btn-primary deliver-btn"
+                            th:data-item-name="${item.name}"
+                            th:data-item-id="${item.itemId}"
+                            title="Deliver to Player">
+                        📦 Deliver
+                    </button>
+                </div>
             </div>
             
             <div th:if="${#lists.isEmpty(items)}" class="no-items">
@@ -239,6 +496,133 @@
                 <p>Try a different search query</p>
             </div>
         </div>
+
+        <div th:if="${totalPages > 1}" class="pagination">
+            <a th:href="@{/items(page=${currentPage > 0 ? currentPage - 1 : 0}, size=20, search=${search}, category=${category}, sellable=${sellable})}"
+               th:classappend="${currentPage == 0 ? 'disabled' : ''}"
+               class="pagination-btn">
+                ← Previous
+            </a>
+            
+            <span class="pagination-info">
+                Page <span th:text="${currentPage + 1}">1</span> of <span th:text="${totalPages}">1</span>
+            </span>
+            
+            <a th:href="@{/items(page=${currentPage < totalPages - 1 ? currentPage + 1 : currentPage}, size=20, search=${search}, category=${category}, sellable=${sellable})}"
+               th:classappend="${currentPage >= totalPages - 1 ? 'disabled' : ''}"
+               class="pagination-btn">
+                Next →
+            </a>
+        </div>
+
+        <!-- Delivery Modal -->
+        <div id="deliverModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">📦 Deliver Item</h2>
+                    <button class="close-modal" onclick="closeDeliverModal()">×</button>
+                </div>
+                
+                <div id="modalAlert" class="alert"></div>
+                
+                <form id="deliverForm" onsubmit="deliverItem(event)">
+                    <div class="form-group">
+                        <label class="form-label">Item</label>
+                        <input type="text" id="deliverItemName" class="form-input" readonly>
+                        <input type="hidden" id="deliverItemId">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Player Name</label>
+                        <input type="text" id="playerName" class="form-input" placeholder="Enter player username" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Amount</label>
+                        <input type="number" id="itemAmount" class="form-input" min="1" value="1" required>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-cancel" onclick="closeDeliverModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Deliver Item</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
+
+    <script>
+        // Add event listeners to all deliver buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.deliver-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const itemName = this.getAttribute('data-item-name');
+                    const itemId = this.getAttribute('data-item-id');
+                    openDeliverModal(itemName, itemId);
+                });
+            });
+        });
+
+        function openDeliverModal(itemName, itemId) {
+            document.getElementById('deliverItemName').value = itemName;
+            document.getElementById('deliverItemId').value = itemId;
+            document.getElementById('playerName').value = '';
+            document.getElementById('itemAmount').value = '1';
+            document.getElementById('deliverModal').classList.add('active');
+            document.getElementById('modalAlert').style.display = 'none';
+        }
+
+        function closeDeliverModal() {
+            document.getElementById('deliverModal').classList.remove('active');
+        }
+
+        async function deliverItem(event) {
+            event.preventDefault();
+            
+            const itemId = document.getElementById('deliverItemId').value;
+            const playerName = document.getElementById('playerName').value;
+            const amount = document.getElementById('itemAmount').value;
+            
+            const command = `giveItem "${playerName}" "${itemId}" ${amount}`;
+            
+            try {
+                const response = await fetch('/api/server/command', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ command: command })
+                });
+                
+                const alert = document.getElementById('modalAlert');
+                
+                if (response.ok) {
+                    alert.className = 'alert success';
+                    alert.textContent = `✅ Successfully delivered ${amount}x ${document.getElementById('deliverItemName').value} to ${playerName}`;
+                    alert.style.display = 'block';
+                    
+                    setTimeout(() => {
+                        closeDeliverModal();
+                    }, 2000);
+                } else {
+                    alert.className = 'alert error';
+                    alert.textContent = '❌ Failed to deliver item. Please try again.';
+                    alert.style.display = 'block';
+                }
+            } catch (error) {
+                const alert = document.getElementById('modalAlert');
+                alert.className = 'alert error';
+                alert.textContent = '❌ Error: ' + error.message;
+                alert.style.display = 'block';
+            }
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('deliverModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeDeliverModal();
+            }
+        });
+    </script>
 </body>
 </html>

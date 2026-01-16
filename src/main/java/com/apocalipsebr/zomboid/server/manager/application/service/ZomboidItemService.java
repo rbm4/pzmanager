@@ -3,6 +3,8 @@ package com.apocalipsebr.zomboid.server.manager.application.service;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.ZomboidItem;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.ZomboidItemRepository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -98,5 +100,22 @@ public class ZomboidItemService {
 
     public long getSellableItemCount() {
         return zomboidItemRepository.findBySellableTrue().size();
+    }
+
+    // Paginated methods
+    public Page<ZomboidItem> getAllItemsPaginated(Pageable pageable) {
+        return zomboidItemRepository.findAll(pageable);
+    }
+
+    public Page<ZomboidItem> getSellableItemsPaginated(Pageable pageable) {
+        return zomboidItemRepository.findBySellable(true, pageable);
+    }
+
+    public Page<ZomboidItem> searchItemsPaginated(String query, Pageable pageable) {
+        return zomboidItemRepository.findByNameContainingIgnoreCaseOrItemIdContainingIgnoreCase(query, query, pageable);
+    }
+
+    public Page<ZomboidItem> getItemsByCategoryPaginated(String category, Pageable pageable) {
+        return zomboidItemRepository.findByCategory(category, pageable);
     }
 }

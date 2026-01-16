@@ -1,6 +1,8 @@
 package com.apocalipsebr.zomboid.server.manager.domain.repository.app;
 
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.ZomboidItem;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -19,4 +21,11 @@ public interface ZomboidItemRepository extends JpaRepository<ZomboidItem, Long> 
     List<ZomboidItem> findByNameContainingIgnoreCaseOrItemIdContainingIgnoreCase(String name, String itemId);
     
     List<ZomboidItem> findByCategory(String category);
+    
+    // Paginated queries
+    Page<ZomboidItem> findBySellable(Boolean sellable, Pageable pageable);
+    
+    Page<ZomboidItem> findByNameContainingIgnoreCaseOrItemIdContainingIgnoreCase(String name, String itemId, Pageable pageable);
+    
+    Page<ZomboidItem> findByCategory(String category, Pageable pageable);
 }
