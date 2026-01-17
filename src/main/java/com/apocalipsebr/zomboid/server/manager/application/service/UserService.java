@@ -80,4 +80,17 @@ public class UserService {
     public Optional<User> getUserByUsername(String username) {
         return userRepository.findByUsername(username);
     }
+
+    public java.util.List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    @Transactional
+    public User updateUserRole(Long userId, String role) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        user.setRole(role);
+        logger.info("Updated role for user " + user.getUsername() + " to: " + role);
+        return userRepository.save(user);
+    }
 }

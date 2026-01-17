@@ -112,12 +112,24 @@
 
         .item-row {
             display: grid;
-            grid-template-columns: 60px 1fr 150px 200px 150px;
+            grid-template-columns: 60px 2fr 150px 100px minmax(320px, 1fr);
             gap: 15px;
             align-items: center;
             padding: 15px 20px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             transition: all 0.3s ease;
+        }
+
+        .list-header {
+            display: grid;
+            grid-template-columns: 60px 2fr 150px 100px minmax(320px, 1fr);
+            gap: 15px;
+            align-items: center;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px 10px 0 0;
+            font-weight: 600;
+            color: #ff6b6b;
         }
 
         .item-row:hover {
@@ -449,11 +461,30 @@
                 <input type="text" name="search" class="search-input" 
                        placeholder="Search by name or item ID..." 
                        th:value="${search}">
+                <select name="category" class="search-input" style="flex: 0.5;">
+                    <option value="">All Categories</option>
+                    <option value="Accessory" th:selected="${category == 'Accessory'}">Accessory</option>
+                    <option value="Container" th:selected="${category == 'Container'}">Container</option>
+                    <option value="Food" th:selected="${category == 'Food'}">Food</option>
+                    <option value="Literature" th:selected="${category == 'Literature'}">Literature</option>
+                    <option value="Weapon" th:selected="${category == 'Weapon'}">Weapon</option>
+                    <option value="Clothing" th:selected="${category == 'Clothing'}">Clothing</option>
+                    <option value="Tool" th:selected="${category == 'Tool'}">Tool</option>
+                    <option value="Medical" th:selected="${category == 'Medical'}">Medical</option>
+                </select>
                 <button type="submit" class="search-btn">Search</button>
             </form>
         </div>
 
         <div class="items-list">
+            <div class="list-header">
+                <div>Icon</div>
+                <div>Item Details</div>
+                <div>Category</div>
+                <div>Status</div>
+                <div>Actions</div>
+            </div>
+            
             <div th:each="item : ${items}" class="item-row">
                 <img th:src="${'https://pzwiki.net' + item.icon}" 
                      class="item-icon-small" 
