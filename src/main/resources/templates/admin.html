@@ -16,7 +16,7 @@
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             color: #fff;
             min-height: 100vh;
-            padding: 20px;
+            display: flex;
         }
 
         .header {
@@ -60,6 +60,10 @@
         .container {
             max-width: 1200px;
             margin: 0 auto;
+            margin-left: 280px;
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
         }
 
         .card-grid {
@@ -215,21 +219,25 @@
             color: #38ef7d;
             font-weight: 600;
         }
+
+        @media (max-width: 768px) {
+            .container {
+                margin-left: 0;
+            }
+
+            body {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+<!-- Sidebar -->
+<div th:replace="~{sidebar-component :: sidebar}"></div>
+
+<div class="container">
         <div class="header">
             <h1>🔧 Admin Panel</h1>
-            <div class="user-info">
-                <span>Welcome, <strong th:text="${username}"></strong></span>
-                <a href="/" class="logout-btn" style="margin-right: 10px;">🏠 Home</a>
-                <a href="/player" class="logout-btn" style="margin-right: 10px;">🎮 Player Panel</a>
-                <a href="/items/manage" class="logout-btn" style="margin-right: 10px;">📦 Manage Items</a>
-                <a href="/admin/users" class="logout-btn" style="margin-right: 10px;">👥 Manage Users</a>
-                <a href="/tickets" class="logout-btn" style="margin-right: 10px;">🎫 Tickets</a>
-                <a href="/logout" class="logout-btn">Logout</a>
-            </div>
         </div>
 
         <div class="card-grid">

@@ -16,7 +16,7 @@
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             color: #fff;
             min-height: 100vh;
-            padding: 20px;
+            display: flex;
         }
 
         .header {
@@ -59,6 +59,10 @@
         .container {
             max-width: 800px;
             margin: 0 auto;
+            margin-left: 280px;
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
         }
 
         .card {
@@ -188,16 +192,25 @@
             color: #888;
             margin-top: 5px;
         }
+
+        @media (max-width: 768px) {
+            .container {
+                margin-left: 0;
+            }
+
+            body {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+<!-- Sidebar -->
+<div th:replace="~{sidebar-component :: sidebar}"></div>
+
+<div class="container">
         <div class="header">
             <h1>✏️ Edit Item</h1>
-            <div class="nav-links">
-                <a href="/items/manage" class="nav-link">Back to List</a>
-                <a href="/admin" class="nav-link">Admin Panel</a>
-            </div>
         </div>
 
         <div th:if="${param.error}" class="alert alert-error">

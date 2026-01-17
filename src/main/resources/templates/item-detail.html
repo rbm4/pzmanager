@@ -16,12 +16,16 @@
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             color: #fff;
             min-height: 100vh;
-            padding: 20px;
+            display: flex;
         }
 
         .container {
             max-width: 900px;
             margin: 0 auto;
+            margin-left: 280px;
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
         }
 
         .header {
@@ -159,16 +163,25 @@
             background: rgba(255, 255, 255, 0.1);
             border-color: rgba(255, 255, 255, 0.2);
         }
+
+        @media (max-width: 768px) {
+            .container {
+                margin-left: 0;
+            }
+
+            body {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+<!-- Sidebar -->
+<div th:replace="~{sidebar-component :: sidebar}"></div>
+
+<div class="container">
         <div class="header">
             <h1>📦 Item Details</h1>
-            <div class="nav-links">
-                <a href="/items" class="nav-link">← Back to List</a>
-                <a href="/" class="nav-link">Home</a>
-            </div>
         </div>
 
         <div class="item-detail-card">

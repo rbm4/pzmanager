@@ -16,12 +16,16 @@
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             color: #fff;
             min-height: 100vh;
-            padding: 20px;
+            display: flex;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
+            margin-left: 280px;
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
         }
 
         .header {
@@ -193,17 +197,25 @@
             color: #aaa;
             margin-top: 5px;
         }
+
+        @media (max-width: 768px) {
+            .container {
+                margin-left: 0;
+            }
+
+            body {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+<!-- Sidebar -->
+<div th:replace="~{sidebar-component :: sidebar}"></div>
+
+<div class="container">
         <div class="header">
             <h1>👥 User Management</h1>
-            <div class="nav-links">
-                <a href="/admin" class="nav-link">← Admin Panel</a>
-                <a href="/player" class="nav-link">Player Panel</a>
-                <a href="/" class="nav-link">Home</a>
-            </div>
         </div>
 
         <div id="alert" class="alert"></div>

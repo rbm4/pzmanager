@@ -16,7 +16,7 @@
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             color: #fff;
             min-height: 100vh;
-            padding: 20px;
+            display: flex;
         }
 
         .header {
@@ -61,6 +61,10 @@
         .container {
             max-width: 1400px;
             margin: 0 auto;
+            margin-left: 280px;
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
         }
 
         .stats-grid {
@@ -203,17 +207,25 @@
             font-size: 4rem;
             margin-bottom: 20px;
         }
+
+        @media (max-width: 768px) {
+            .container {
+                margin-left: 0;
+            }
+
+            body {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+<!-- Sidebar -->
+<div th:replace="~{sidebar-component :: sidebar}"></div>
+
+<div class="container">
         <div class="header">
             <h1>🎫 Support Tickets</h1>
-            <div class="header-actions">
-                <span>Welcome, <strong th:text="${username}"></strong></span>
-                <a href="/admin" class="btn">← Back to Admin</a>
-                <a href="/logout" class="btn">Logout</a>
-            </div>
         </div>
 
         <div class="stats-grid">

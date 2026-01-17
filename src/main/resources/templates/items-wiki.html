@@ -16,7 +16,7 @@
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             color: #fff;
             min-height: 100vh;
-            padding: 20px;
+            display: flex;
         }
 
         .header {
@@ -64,6 +64,10 @@
         .container {
             max-width: 1400px;
             margin: 0 auto;
+            margin-left: 280px;
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
         }
 
         .search-bar {
@@ -185,23 +189,25 @@
             color: #aaa;
             grid-column: 1 / -1;
         }
+
+        @media (max-width: 768px) {
+            .container {
+                margin-left: 0;
+            }
+
+            body {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+<!-- Sidebar -->
+<div th:replace="~{sidebar-component :: sidebar}"></div>
+
+<div class="container">
         <div class="header">
             <h1>📚 Item Wiki</h1>
-            <div class="header-right">
-                <div class="nav-links">
-                    <a href="/player" class="nav-link">Home</a>
-                    <a href="/items/store" class="nav-link">Store</a>
-                    <a th:if="${session.user}" href="/player" class="nav-link">Player Panel</a>
-                </div>
-                <div th:if="${session.user}" style="display: flex; align-items: center; gap: 10px; margin-left: 10px; padding-left: 10px; border-left: 1px solid rgba(255,255,255,0.2);">
-                    <span th:text="${session.user.username}">User</span>
-                    <a href="/logout" class="nav-link" style="padding: 8px 15px; font-size: 0.9rem;">Logout</a>
-                </div>
-            </div>
         </div>
 
         <div class="search-bar">
