@@ -621,7 +621,7 @@
             const playerName = document.getElementById('playerName').value;
             const amount = document.getElementById('itemAmount').value;
             
-            const command = `giveItem "${playerName}" "${itemId}" ${amount}`;
+            const command = `additem "${playerName}" "${itemId}" ${amount}`;
             
             try {
                 const response = await fetch('/api/server/command', {
