@@ -72,18 +72,25 @@ public class ZomboidItemWebController {
     @GetMapping("/wiki")
     public String wikiView(
             @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "24") int size,
             Model model) {
         
-        List<ZomboidItem> items;
+        Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
+        Page<ZomboidItem> itemsPage;
         
         if (search != null && !search.trim().isEmpty()) {
-            items = zomboidItemService.searchItems(search);
+            itemsPage = zomboidItemService.searchItemsPaginated(search, pageable);
             model.addAttribute("search", search);
         } else {
-            items = zomboidItemService.getAllItems();
+            itemsPage = zomboidItemService.getAllItemsPaginated(pageable);
         }
         
-        model.addAttribute("items", items);
+        model.addAttribute("itemsPage", itemsPage);
+        model.addAttribute("items", itemsPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", itemsPage.getTotalPages());
+        model.addAttribute("totalItems", itemsPage.getTotalElements());
         model.addAttribute("wikiMode", true);
         
         return "items-wiki";

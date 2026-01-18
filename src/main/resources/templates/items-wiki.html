@@ -190,6 +190,50 @@
             grid-column: 1 / -1;
         }
 
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .pagination-btn {
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .pagination-btn:hover:not(.disabled):not(.active) {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .pagination-btn.active {
+            background: #ff6b6b;
+            border-color: #ff6b6b;
+            font-weight: 600;
+        }
+
+        .pagination-btn.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .pagination-info {
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-top: 15px;
+            text-align: center;
+        }
+
         @media (max-width: 768px) {
             .container {
                 margin-left: 0;
@@ -241,6 +285,55 @@
                 <h2>No items found</h2>
                 <p>Try a different search query</p>
             </div>
+        </div>
+
+        <!-- Pagination -->
+        <div th:if="${totalPages > 1}" class="pagination">
+            <!-- First page -->
+            <a th:href="@{/items/wiki(page=0, search=${search})}" 
+               class="pagination-btn" 
+               th:classappend="${currentPage == 0 ? 'disabled' : ''}">
+                ⟨⟨
+            </a>
+            
+            <!-- Previous page -->
+            <a th:href="@{/items/wiki(page=${currentPage - 1}, search=${search})}" 
+               class="pagination-btn" 
+               th:classappend="${currentPage == 0 ? 'disabled' : ''}">
+                ⟨
+            </a>
+            
+            <!-- Page numbers -->
+            <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                <a th:if="${i >= currentPage - 2 && i <= currentPage + 2}" 
+                   th:href="@{/items/wiki(page=${i}, search=${search})}" 
+                   class="pagination-btn" 
+                   th:classappend="${i == currentPage ? 'active' : ''}"
+                   th:text="${i + 1}">
+                    1
+                </a>
+            </th:block>
+            
+            <!-- Next page -->
+            <a th:href="@{/items/wiki(page=${currentPage + 1}, search=${search})}" 
+               class="pagination-btn" 
+               th:classappend="${currentPage >= totalPages - 1 ? 'disabled' : ''}">
+                ⟩
+            </a>
+            
+            <!-- Last page -->
+            <a th:href="@{/items/wiki(page=${totalPages - 1}, search=${search})}" 
+               class="pagination-btn" 
+               th:classappend="${currentPage >= totalPages - 1 ? 'disabled' : ''}">
+                ⟩⟩
+            </a>
+        </div>
+
+        <div th:if="${totalItems != null}" class="pagination-info">
+            Showing <strong th:text="${items.size()}">0</strong> of <strong th:text="${totalItems}">0</strong> items
+            <span th:if="${totalPages > 1}">
+                (Page <strong th:text="${currentPage + 1}">1</strong> of <strong th:text="${totalPages}">1</strong>)
+            </span>
         </div>
     </div>
 </body>

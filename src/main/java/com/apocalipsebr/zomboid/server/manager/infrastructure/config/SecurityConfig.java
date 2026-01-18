@@ -23,15 +23,11 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login/**", "/auth/**", "/error").permitAll()
-                .requestMatchers("/items/wiki", "/items/store", "/items").permitAll() // Public item views
+                .requestMatchers("/login/**", "/auth/**", "/error").permitAll()
+                .requestMatchers("/api/system/**").permitAll() // For deployment endpoint
                 .requestMatchers("/items/manage", "/items/*/edit", "/items/*/toggle-sellable").hasRole("ADMIN") // Admin item management
                 .requestMatchers("/admin/**").hasRole("ADMIN") // Admin panel access
-                .requestMatchers("/api/system/**").permitAll() // For deployment endpoint
-                .requestMatchers("/api/zomboid-items/**").authenticated() // API requires authentication
-                .requestMatchers("/player/**").authenticated() // Require authentication for player pages
-                .requestMatchers("/api/**").authenticated()
-                .anyRequest().authenticated()
+                .anyRequest().authenticated() // All other routes require authentication
             )
             .formLogin(form -> form
                 .loginPage("/login")

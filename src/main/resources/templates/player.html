@@ -211,26 +211,6 @@
 
     <!-- Purchase Card -->
     <div class="purchase-card">
-        <h2>📚 Special Item Shop</h2>
-        
-        <div class="item-display">
-            <div class="item-name">Skill Recovery Journal</div>
-            <div class="item-description">
-                A special journal that allows you to recover lost skill experience points. 
-                Essential for maintaining your character's progression after death or setbacks.
-            </div>
-            <div class="price-tag">
-                💎 <span th:text="${journalCost}">1000</span> Currency Points
-            </div>
-        </div>
-
-        <form method="post" action="/player/purchase-journal" onsubmit="return confirm('Are you sure you want to purchase the Skill Recovery Journal?');">
-            <button type="submit" class="btn-purchase" 
-                    th:disabled="${stats.currencyPoints < journalCost}">
-                <span th:if="${stats.currencyPoints >= journalCost}">Purchase Journal</span>
-                <span th:unless="${stats.currencyPoints >= journalCost}">Insufficient Points</span>
-            </button>
-        </form>
 
         <p style="margin-top: 15px; color: #aaa; font-size: 0.9rem;">
             💡 Earn currency points by killing zombies and accumulating money in-game!
