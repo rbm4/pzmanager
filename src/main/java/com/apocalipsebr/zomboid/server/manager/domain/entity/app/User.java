@@ -2,6 +2,8 @@ package com.apocalipsebr.zomboid.server.manager.domain.entity.app;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -32,6 +34,9 @@ public class User {
     @OneToOne
     @JoinColumn(name = "player_stats_id", referencedColumnName = "id")
     private PlayerStats playerStats;
+    
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Character> characters = new ArrayList<>();
     
     @Column(name = "role")
     private String role = "PLAYER";
@@ -117,5 +122,32 @@ public class User {
 
     public void setRole(String role) {
         this.role = role;
+    }
+    
+    public List<Character> getCharacters() {
+        return characters;
+    }
+    
+    public void setCharacters(List<Character> characters) {
+        this.characters = characters;
+    }
+    
+    // Aggregate methods to calculate total kills and points from all characters
+    public int getTotalZombieKills() {
+        return characters.stream()
+            .mapToInt(Character::getZombieKills)
+            .sum();
+    }
+    
+    public int getTotalCurrencyPoints() {
+        return characters.stream()
+            .mapToInt(Character::getCurrencyPoints)
+            .sum();
+    }
+    
+    public long getActiveCharactersCount() {
+        return characters.stream()
+            .filter(c -> !c.getIsDead())
+            .count();
     }
 }

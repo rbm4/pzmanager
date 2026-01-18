@@ -25,6 +25,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/login/**", "/auth/**", "/error").permitAll()
                 .requestMatchers("/api/system/**").permitAll() // For deployment endpoint
+                .requestMatchers("/api/zombie-kills/**").permitAll() // For game server updates
                 .requestMatchers("/items/manage", "/items/*/edit", "/items/*/toggle-sellable").hasRole("ADMIN") // Admin item management
                 .requestMatchers("/admin/**").hasRole("ADMIN") // Admin panel access
                 .anyRequest().authenticated() // All other routes require authentication

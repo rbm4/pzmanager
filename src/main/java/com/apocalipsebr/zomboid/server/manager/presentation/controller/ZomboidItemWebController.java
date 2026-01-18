@@ -8,6 +8,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -119,14 +122,11 @@ public class ZomboidItemWebController {
     }
 
     @GetMapping("/manage")
+    @PreAuthorize("hasRole('ADMIN')")
     public String manageItems(
             @RequestParam(required = false) String search,
             HttpSession session,
             Model model) {
-        
-        if (!"admin".equals(session.getAttribute("role"))) {
-            return "redirect:/admin-login";
-        }
         
         List<ZomboidItem> items;
         
@@ -145,10 +145,8 @@ public class ZomboidItemWebController {
     }
 
     @GetMapping("/{id}/edit")
+    @PreAuthorize("hasRole('ADMIN')")
     public String editItem(@PathVariable Long id, HttpSession session, Model model) {
-        if (!"admin".equals(session.getAttribute("role"))) {
-            return "redirect:/admin-login";
-        }
         
         return zomboidItemService.getItemById(id)
             .map(item -> {
@@ -164,10 +162,6 @@ public class ZomboidItemWebController {
             @ModelAttribute ZomboidItem item,
             HttpSession session) {
         
-        if (!"admin".equals(session.getAttribute("role"))) {
-            return "redirect:/admin-login";
-        }
-        
         try {
             zomboidItemService.updateItem(id, item);
             return "redirect:/items/manage?success=updated";
@@ -180,10 +174,6 @@ public class ZomboidItemWebController {
     public String toggleSellable(
             @PathVariable Long id,
             HttpSession session) {
-        
-        if (!"admin".equals(session.getAttribute("role"))) {
-            return "redirect:/admin-login";
-        }
         
         try {
             ZomboidItem item = zomboidItemService.getItemById(id)

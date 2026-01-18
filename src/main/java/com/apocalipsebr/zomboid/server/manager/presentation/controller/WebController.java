@@ -1,6 +1,8 @@
 package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
+import com.apocalipsebr.zomboid.server.manager.application.service.CharacterService;
 import com.apocalipsebr.zomboid.server.manager.application.service.PlayerStatsService;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Character;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.PlayerStats;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
 
@@ -11,14 +13,17 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import jakarta.servlet.http.HttpSession;
+import java.util.List;
 
 @Controller
 public class WebController {
 
     private final PlayerStatsService playerStatsService;
+    private final CharacterService characterService;
 
-    public WebController(PlayerStatsService playerStatsService) {
+    public WebController(PlayerStatsService playerStatsService, CharacterService characterService) {
         this.playerStatsService = playerStatsService;
+        this.characterService = characterService;
     }
 
     @GetMapping("/")
@@ -58,10 +63,20 @@ public class WebController {
         
         PlayerStats stats = new PlayerStats(user.getUsername());
         
+        // Get user's characters
+        List<Character> userCharacters = characterService.getUserCharacters(user);
+        
+        // Get top characters ranking
+        List<Character> topCharacters = characterService.getTopCharactersByKills();
+        
         model.addAttribute("username", user.getUsername());
         model.addAttribute("role", user.getRole());
         model.addAttribute("stats", stats);
         model.addAttribute("journalCost", playerStatsService.getSkillJournalCost());
+        model.addAttribute("userCharacters", userCharacters);
+        model.addAttribute("topCharacters", topCharacters);
+        model.addAttribute("totalKills", user.getTotalZombieKills());
+        model.addAttribute("totalPoints", user.getTotalCurrencyPoints());
         
         return "player";
     }

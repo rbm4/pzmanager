@@ -165,6 +165,105 @@
             opacity: 0.5;
         }
 
+        .ranking-section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .ranking-section h2 {
+            color: #4facfe;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+
+        .ranking-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .ranking-table th {
+            background: rgba(79, 172, 254, 0.1);
+            padding: 15px;
+            text-align: left;
+            color: #4facfe;
+            font-weight: 600;
+            border-bottom: 2px solid #4facfe;
+        }
+
+        .ranking-table td {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .ranking-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .rank-badge {
+            display: inline-block;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 35px;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .rank-1 { background: linear-gradient(45deg, #FFD700, #FFA500); }
+        .rank-2 { background: linear-gradient(45deg, #C0C0C0, #808080); }
+        .rank-3 { background: linear-gradient(45deg, #CD7F32, #8B4513); }
+        .rank-other { background: rgba(255, 255, 255, 0.1); }
+
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .status-alive {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+        }
+
+        .status-dead {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+        }
+
+        .user-characters {
+            margin-top: 30px;
+        }
+
+        .character-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .character-info h4 {
+            color: #4facfe;
+            margin-bottom: 8px;
+        }
+
+        .character-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+
         @media (max-width: 768px) {
             .main-content {
                 margin-left: 0;
@@ -172,6 +271,15 @@
 
             body {
                 flex-direction: column;
+            }
+            
+            .ranking-table {
+                font-size: 0.85rem;
+            }
+            
+            .ranking-table th,
+            .ranking-table td {
+                padding: 10px;
             }
         }
     </style>
@@ -195,6 +303,81 @@
 
     <!-- Stats Cards -->
     <div class="card-grid">
+        <div class="stats-card">
+            <h3 th:text="${totalKills}">0</h3>
+            <p>🧟 Total Zombie Kills</p>
+        </div>
+        <div class="stats-card">
+            <h3 th:text="${totalPoints}">0</h3>
+            <p>⭐ Total Currency Points</p>
+        </div>
+        <div class="stats-card">
+            <h3 th:text="${userCharacters.size()}">0</h3>
+            <p>👤 Characters</p>
+        </div>
+    </div>
+
+    <!-- Player Rankings Section -->
+    <div class="ranking-section">
+        <h2>🏆 Top Players Ranking</h2>
+        <table class="ranking-table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Character Name</th>
+                    <th>Player</th>
+                    <th>Zombie Kills</th>
+                    <th>Profession</th>
+                    <th>Server</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="character, iterStat : ${topCharacters}">
+                    <td>
+                        <span class="rank-badge" 
+                              th:classappend="${iterStat.index == 0 ? 'rank-1' : (iterStat.index == 1 ? 'rank-2' : (iterStat.index == 2 ? 'rank-3' : 'rank-other'))}"
+                              th:text="${iterStat.index + 1}">1</span>
+                    </td>
+                    <td th:text="${character.playerName}">Character Name</td>
+                    <td th:text="${character.user.username}">Username</td>
+                    <td th:text="${character.zombieKills}">0</td>
+                    <td th:text="${character.profession != null ? character.profession : 'Unknown'}">Profession</td>
+                    <td th:text="${character.serverName}">Server</td>
+                    <td>
+                        <span class="status-badge" 
+                              th:classappend="${character.isDead ? 'status-dead' : 'status-alive'}"
+                              th:text="${character.isDead ? '💀 Dead' : '✅ Alive'}">Status</span>
+                    </td>
+                </tr>
+                <tr th:if="${topCharacters.empty}">
+                    <td colspan="7" style="text-align: center; color: #aaa;">No character data available yet.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- User's Characters Section -->
+    <div class="ranking-section user-characters" th:if="${!userCharacters.empty}">
+        <h2>👥 Your Characters</h2>
+        <div th:each="character : ${userCharacters}" class="character-card">
+            <div class="character-info">
+                <h4 th:text="${character.playerName}">Character Name</h4>
+                <div class="character-stats">
+                    <span>🧟 <strong th:text="${character.zombieKills}">0</strong> Kills</span>
+                    <span>⭐ <strong th:text="${character.currencyPoints}">0</strong> Points</span>
+                    <span th:if="${character.profession != null}">💼 <strong th:text="${character.profession}">Profession</strong></span>
+                    <span th:if="${character.hoursSurvived != null}">⏱️ <strong th:text="${character.hoursSurvived}">0</strong>h Survived</span>
+                </div>
+            </div>
+            <span class="status-badge" 
+                  th:classappend="${character.isDead ? 'status-dead' : 'status-alive'}"
+                  th:text="${character.isDead ? '💀 Dead' : '✅ Alive'}">Status</span>
+        </div>
+    </div>
+
+    <!-- Stats Cards (Legacy - Hidden) -->
+    <div class="card-grid" style="display: none;">
         <div class="stats-card">
             <h3 th:text="${stats.zombieKills}">0</h3>
             <p>🧟 Zombie Kills</p>
