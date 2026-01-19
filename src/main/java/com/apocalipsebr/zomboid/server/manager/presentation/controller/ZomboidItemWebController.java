@@ -102,20 +102,43 @@ public class ZomboidItemWebController {
     @GetMapping("/store")
     public String storeView(
             @RequestParam(required = false) String search,
+            @RequestParam(required = false) String category,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "24") int size,
             Model model) {
         
-        List<ZomboidItem> items;
+        Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
+        Page<ZomboidItem> itemsPage;
         
         if (search != null && !search.trim().isEmpty()) {
-            items = zomboidItemService.searchItems(search).stream()
-                .filter(ZomboidItem::getSellable)
-                .toList();
+            itemsPage = zomboidItemService.searchItemsPaginated(search, pageable);
+            itemsPage = new org.springframework.data.domain.PageImpl<>(
+                itemsPage.getContent().stream()
+                    .filter(ZomboidItem::getSellable)
+                    .toList(),
+                pageable,
+                itemsPage.getTotalElements()
+            );
             model.addAttribute("search", search);
+        } else if (category != null && !category.trim().isEmpty()) {
+            itemsPage = zomboidItemService.getItemsByCategoryPaginated(category, pageable);
+            itemsPage = new org.springframework.data.domain.PageImpl<>(
+                itemsPage.getContent().stream()
+                    .filter(ZomboidItem::getSellable)
+                    .toList(),
+                pageable,
+                itemsPage.getTotalElements()
+            );
+            model.addAttribute("category", category);
         } else {
-            items = zomboidItemService.getSellableItems();
+            itemsPage = zomboidItemService.getSellableItemsPaginated(pageable);
         }
         
-        model.addAttribute("items", items);
+        model.addAttribute("itemsPage", itemsPage);
+        model.addAttribute("items", itemsPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", itemsPage.getTotalPages());
+        model.addAttribute("totalItems", itemsPage.getTotalElements());
         model.addAttribute("storeMode", true);
         
         return "items-store";
@@ -125,19 +148,29 @@ public class ZomboidItemWebController {
     @PreAuthorize("hasRole('ADMIN')")
     public String manageItems(
             @RequestParam(required = false) String search,
+            @RequestParam(required = false) String category,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
             HttpSession session,
             Model model) {
         
-        List<ZomboidItem> items;
+        Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
+        Page<ZomboidItem> itemsPage;
         
         if (search != null && !search.trim().isEmpty()) {
-            items = zomboidItemService.searchItems(search);
+            itemsPage = zomboidItemService.searchItemsPaginated(search, pageable);
             model.addAttribute("search", search);
+        } else if (category != null && !category.trim().isEmpty()) {
+            itemsPage = zomboidItemService.getItemsByCategoryPaginated(category, pageable);
+            model.addAttribute("category", category);
         } else {
-            items = zomboidItemService.getAllItems();
+            itemsPage = zomboidItemService.getAllItemsPaginated(pageable);
         }
         
-        model.addAttribute("items", items);
+        model.addAttribute("itemsPage", itemsPage);
+        model.addAttribute("items", itemsPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", itemsPage.getTotalPages());
         model.addAttribute("totalItems", zomboidItemService.getTotalItemCount());
         model.addAttribute("sellableCount", zomboidItemService.getSellableItemCount());
         

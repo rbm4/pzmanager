@@ -28,6 +28,9 @@ public class ZomboidItem {
     @Column(nullable = false)
     private Boolean sellable = false;
 
+    @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 0")
+    private Integer value = 0;
+
     public ZomboidItem() {
     }
 
@@ -94,5 +97,13 @@ public class ZomboidItem {
 
     public void setSellable(Boolean sellable) {
         this.sellable = sellable;
+    }
+
+    public Integer getValue() {
+        return value;
+    }
+
+    public void setValue(Integer value) {
+        this.value = value;
     }
 }

@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Players - Admin Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            margin-left: 280px;
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a6f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .search-section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .btn-search {
+            padding: 12px 25px;
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-search:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-clear {
+            padding: 12px 25px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-clear:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .table-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .table-header {
+            display: grid;
+            grid-template-columns: 60px 150px 200px 80px 100px 100px 100px 120px 150px;
+            gap: 10px;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            font-weight: 600;
+            color: #ff6b6b;
+            font-size: 14px;
+        }
+
+        .player-row {
+            display: grid;
+            grid-template-columns: 60px 150px 200px 80px 100px 100px 100px 120px 150px;
+            gap: 10px;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            font-size: 13px;
+        }
+
+        .player-row:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .player-row:last-child {
+            border-bottom: none;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .status-alive {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4caf50;
+            color: #4caf50;
+        }
+
+        .status-dead {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #f44336;
+            color: #f44336;
+        }
+
+        .btn-ban {
+            padding: 8px 15px;
+            background: linear-gradient(45deg, #f44336, #e91e63);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 12px;
+        }
+
+        .btn-ban:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.4);
+        }
+
+        .btn-ban:disabled {
+            background: rgba(255, 255, 255, 0.1);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .pagination-btn {
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-info {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            color: #4facfe;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4caf50;
+            color: #4caf50;
+        }
+
+        .alert-error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #f44336;
+            color: #f44336;
+        }
+
+        .text-truncate {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .container {
+                margin-left: 0;
+                padding: 15px;
+            }
+
+            .table-header,
+            .player-row {
+                grid-template-columns: 1fr;
+                gap: 5px;
+            }
+
+            .search-box {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Include Sidebar -->
+    <div th:replace="sidebar-component :: sidebar"></div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🌐 Network Players Management</h1>
+        </div>
+
+        <!-- Alert Messages -->
+        <div id="alertContainer"></div>
+
+        <!-- Search Section -->
+        <div class="search-section">
+            <div class="search-box">
+                <input type="text" 
+                       id="searchInput" 
+                       class="search-input" 
+                       placeholder="Search by player name or Steam ID...">
+                <button class="btn-search" onclick="searchPlayers()">🔍 Search</button>
+                <button class="btn-clear" onclick="clearSearch()">✖️ Clear</button>
+            </div>
+        </div>
+
+        <!-- Players Table -->
+        <div class="table-container">
+            <div class="table-header">
+                <div>ID</div>
+                <div>Steam ID</div>
+                <div>Username</div>
+                <div>Index</div>
+                <div>X</div>
+                <div>Y</div>
+                <div>Z</div>
+                <div>Status</div>
+                <div>Actions</div>
+            </div>
+            <div id="playersTableBody">
+                <div class="loading">Loading players...</div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="paginationContainer" style="display: none;">
+            <button class="pagination-btn" id="btnFirst" onclick="goToPage(0)">⏮️ First</button>
+            <button class="pagination-btn" id="btnPrev" onclick="goToPrevPage()">⬅️ Previous</button>
+            <div class="pagination-info" id="pageInfo">Page 1 of 1</div>
+            <button class="pagination-btn" id="btnNext" onclick="goToNextPage()">Next ➡️</button>
+            <button class="pagination-btn" id="btnLast" onclick="goToLastPage()">Last ⏭️</button>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 0;
+        let totalPages = 0;
+        let currentSearch = '';
+
+        // Load players on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPlayers();
+            
+            // Allow search with Enter key
+            document.getElementById('searchInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchPlayers();
+                }
+            });
+        });
+
+        function loadPlayers(page = 0, search = '') {
+            currentPage = page;
+            currentSearch = search;
+
+            const params = new URLSearchParams({
+                page: page,
+                size: 20,
+                sortBy: 'id',
+                sortDir: 'desc'
+            });
+
+            if (search) {
+                params.append('search', search);
+            }
+
+            fetch(`/admin/players/api/list?${params.toString()}`)
+                .then(response => response.json())
+                .then(data => {
+                    displayPlayers(data.players);
+                    updatePagination(data);
+                })
+                .catch(error => {
+                    console.error('Error loading players:', error);
+                    showAlert('Error loading players: ' + error.message, 'error');
+                    document.getElementById('playersTableBody').innerHTML = 
+                        '<div class="no-data">Error loading players</div>';
+                });
+        }
+
+        function displayPlayers(players) {
+            const tbody = document.getElementById('playersTableBody');
+            
+            if (!players || players.length === 0) {
+                tbody.innerHTML = '<div class="no-data">No players found</div>';
+                return;
+            }
+
+            tbody.innerHTML = players.map(player => `
+                <div class="player-row">
+                    <div>${player.id || 'N/A'}</div>
+                    <div class="text-truncate" title="${player.steamid || 'N/A'}">${player.steamid || 'N/A'}</div>
+                    <div class="text-truncate" title="${player.username || 'N/A'}">${player.username || 'N/A'}</div>
+                    <div>${player.playerIndex !== null ? player.playerIndex : 'N/A'}</div>
+                    <div>${player.x !== null ? player.x.toFixed(1) : 'N/A'}</div>
+                    <div>${player.y !== null ? player.y.toFixed(1) : 'N/A'}</div>
+                    <div>${player.z !== null ? player.z.toFixed(1) : 'N/A'}</div>
+                    <div>
+                        <span class="status-badge ${player.isDead ? 'status-dead' : 'status-alive'}">
+                            ${player.isDead ? '💀 Dead' : '✅ Alive'}
+                        </span>
+                    </div>
+                    <div>
+                        <button class="btn-ban" 
+                                onclick="banPlayer('${player.steamid}', '${player.name}')"
+                                ${!player.steamid ? 'disabled' : ''}>
+                            🚫 Ban
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updatePagination(data) {
+            totalPages = data.totalPages;
+            currentPage = data.currentPage;
+
+            document.getElementById('pageInfo').textContent = 
+                `Page ${currentPage + 1} of ${totalPages} (${data.totalItems} total)`;
+
+            document.getElementById('btnFirst').disabled = !data.hasPrevious;
+            document.getElementById('btnPrev').disabled = !data.hasPrevious;
+            document.getElementById('btnNext').disabled = !data.hasNext;
+            document.getElementById('btnLast').disabled = !data.hasNext;
+
+            document.getElementById('paginationContainer').style.display = 
+                totalPages > 0 ? 'flex' : 'none';
+        }
+
+        function searchPlayers() {
+            const search = document.getElementById('searchInput').value.trim();
+            loadPlayers(0, search);
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            loadPlayers(0, '');
+        }
+
+        function goToPage(page) {
+            loadPlayers(page, currentSearch);
+        }
+
+        function goToNextPage() {
+            if (currentPage < totalPages - 1) {
+                loadPlayers(currentPage + 1, currentSearch);
+            }
+        }
+
+        function goToPrevPage() {
+            if (currentPage > 0) {
+                loadPlayers(currentPage - 1, currentSearch);
+            }
+        }
+
+        function goToLastPage() {
+            loadPlayers(totalPages - 1, currentSearch);
+        }
+
+        function banPlayer(steamId, playerName) {
+            if (!steamId) {
+                showAlert('Cannot ban player: Steam ID is missing', 'error');
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to ban player "${playerName}" (${steamId})?`)) {
+                return;
+            }
+
+            fetch('/admin/players/api/ban', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ steamId: steamId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert(`Player "${playerName}" has been banned successfully!`, 'success');
+                    // Reload current page after a short delay
+                    setTimeout(() => loadPlayers(currentPage, currentSearch), 1500);
+                } else {
+                    showAlert('Error: ' + (data.message || 'Failed to ban player'), 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error banning player:', error);
+                showAlert('Error banning player: ' + error.message, 'error');
+            });
+        }
+
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+            
+            const alert = document.createElement('div');
+            alert.className = `alert ${alertClass}`;
+            alert.textContent = message;
+            
+            alertContainer.innerHTML = '';
+            alertContainer.appendChild(alert);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 300);
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

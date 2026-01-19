@@ -88,6 +88,11 @@
             font-size: 1rem;
         }
 
+        .search-input option {
+            background: #16213e;
+            color: white;
+        }
+
         .search-btn {
             padding: 12px 30px;
             background: #ff6b6b;
@@ -225,6 +230,45 @@
             color: #f44336;
         }
 
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 30px;
+            padding: 20px;
+        }
+
+        .pagination-btn {
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .pagination-btn:hover:not(.disabled) {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .pagination-btn.active {
+            background: #ff6b6b;
+            border-color: #ff6b6b;
+        }
+
+        .pagination-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-info {
+            color: #aaa;
+            margin: 0 10px;
+        }
+
         @media (max-width: 768px) {
             .container {
                 margin-left: 0;
@@ -271,6 +315,17 @@
                 <input type="text" name="search" class="search-input" 
                        placeholder="Search by name or item ID..." 
                        th:value="${search}">
+                <select name="category" class="search-input" style="flex: 0.5;">
+                    <option value="">All Categories</option>
+                    <option value="Accessory" th:selected="${category == 'Accessory'}">Accessory</option>
+                    <option value="Container" th:selected="${category == 'Container'}">Container</option>
+                    <option value="Food" th:selected="${category == 'Food'}">Food</option>
+                    <option value="Literature" th:selected="${category == 'Literature'}">Literature</option>
+                    <option value="Weapon" th:selected="${category == 'Weapon'}">Weapon</option>
+                    <option value="Clothing" th:selected="${category == 'Clothing'}">Clothing</option>
+                    <option value="Tool" th:selected="${category == 'Tool'}">Tool</option>
+                    <option value="Medical" th:selected="${category == 'Medical'}">Medical</option>
+                </select>
                 <button type="submit" class="search-btn">Search</button>
             </form>
         </div>
@@ -318,6 +373,24 @@
                     </tr>
                 </tbody>
             </table>
+        </div>
+
+        <div th:if="${totalPages > 1}" class="pagination">
+            <a th:href="@{/items/manage(page=${currentPage > 0 ? currentPage - 1 : 0}, size=20, search=${search}, category=${category})}"
+               th:classappend="${currentPage == 0 ? 'disabled' : ''}"
+               class="pagination-btn">
+                ← Previous
+            </a>
+            
+            <span class="pagination-info">
+                Page <span th:text="${currentPage + 1}">1</span> of <span th:text="${totalPages}">1</span>
+            </span>
+            
+            <a th:href="@{/items/manage(page=${currentPage < totalPages - 1 ? currentPage + 1 : currentPage}, size=20, search=${search}, category=${category})}"
+               th:classappend="${currentPage >= totalPages - 1 ? 'disabled' : ''}"
+               class="pagination-btn">
+                Next →
+            </a>
         </div>
     </div>
 </body>

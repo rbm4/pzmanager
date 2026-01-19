@@ -51,18 +51,10 @@ public class ZombieKillsController {
                 return ResponseEntity.badRequest().body(response);
             }
             
-            // Find user by Steam ID
-            Optional<User> userOpt = userService.getUserBySteamId(updateDTO.getPlayerId());
-            
-            if (userOpt.isEmpty()) {
-                logger.warning("User not found with Steam ID: " + updateDTO.getPlayerId());
-                response.put("success", false);
-                response.put("error", "User not found. Please login to the system first.");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-            }
-            
-            User user = userOpt.get();
-            logger.info("Found user: " + user.getUsername());
+            // Find or create user by Steam ID
+            // If user hasn't logged in yet, create a minimal entry to track their stats
+            User user = userService.createOrGetUserBySteamId(updateDTO.getPlayerId());
+            logger.info("Processing stats for user: " + user.getUsername() + " (Steam ID: " + updateDTO.getPlayerId() + ")");
             
             // Update character stats
             Character character = characterService.updateCharacterStats(user, updateDTO);

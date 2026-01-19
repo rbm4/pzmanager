@@ -23,6 +23,26 @@ public class UserService {
         this.playerStatsService = playerStatsService;
     }
 
+    /**
+     * Creates a minimal user with only Steam ID if not found, or returns existing user.
+     * This is used when tracking stats for users who haven't logged in yet.
+     */
+    @Transactional
+    public User createOrGetUserBySteamId(String steamId) {
+        Optional<User> existingUser = userRepository.findBySteamId(steamId);
+        
+        if (existingUser.isPresent()) {
+            return existingUser.get();
+        }
+        
+        // Create minimal user with only steamId and placeholder username
+        User newUser = new User(steamId, "Player_" + steamId);
+        newUser.setLastLogin(null); // Not logged in yet
+        
+        logger.info("Created minimal user entry for Steam ID: " + steamId);
+        return userRepository.save(newUser);
+    }
+
     @Transactional
     public User processOAuthUser(String steamId, String username, String avatarUrl, String profileUrl) {
         Optional<User> existingUser = userRepository.findBySteamId(steamId);
@@ -43,7 +63,15 @@ public class UserService {
                 logger.info("Assigned ADMIN role to user: " + username + " (" + steamId + ")");
             }
             
-            logger.info("Updated existing user: " + username + " (" + steamId + ")");
+            // If this was a minimal user (created from zombie kills), now fully initialize it
+            if (user.getPlayerStats() == null) {
+                PlayerStats playerStats = playerStatsService.getPlayerStats(username);
+                user.setPlayerStats(playerStats);
+                logger.info("Updated minimal user to full profile: " + username + " (" + steamId + ")");
+            } else {
+                logger.info("Updated existing user: " + username + " (" + steamId + ")");
+            }
+            
             return userRepository.save(user);
         } else {
             // Create PlayerStats for new user first
