@@ -15,6 +15,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -86,16 +88,20 @@ public class ZombieKillsController {
             ZombieKillsUpdateDTO[] updateDTOs;
             String[] lines = fileContent.split("\n");
             java.util.List<ZombieKillsUpdateDTO> dtoList = new java.util.ArrayList<>();
-            
+
             for (String line : lines) {
                 String trimmedLine = line.trim();
                 if (!trimmedLine.isEmpty()) {
                     ZombieKillsUpdateDTO dto = objectMapper.fromJson(trimmedLine, ZombieKillsUpdateDTO.class);
-                    dto = dto.withPlayerIdNumeric(Double.parseDouble(dto.playerId())).withTimestampNumeric(Double.parseDouble(dto.timestamp()));
+                    long high = Long.parseLong(dto.playerIdHigh());
+                    long low = Long.parseLong(dto.playerIdLow());
+                    String fullSteamId = String.valueOf((high * 4294967296L) + low);
+                    dto = dto.withPlayerIdNumeric(new BigDecimal(fullSteamId))
+                            .withTimestampNumeric(new BigDecimal(dto.timestamp()));
                     dtoList.add(dto);
                 }
             }
-            
+
             updateDTOs = dtoList.toArray(new ZombieKillsUpdateDTO[0]);
 
             int processedCount = 0;
@@ -129,7 +135,7 @@ public class ZombieKillsController {
             response.put("error", "Error processing zombie kills: " + e.getMessage());
             response.put("processed", 0);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        } finally{
+        } finally {
             scheduleConsumeKills();
         }
     }
@@ -161,9 +167,15 @@ public class ZombieKillsController {
 
             // Find or create user by Steam ID
             // If user hasn't logged in yet, create a minimal entry to track their stats
-            User user = userService.createOrGetUserBySteamId(updateDTO.playerId());
-            logger.info("Processing stats for user: " + user.getUsername() + " (Steam ID: " + updateDTO.playerId()
-                    + ")");
+            // Use approximate lookup to handle byte drift from Lua precision loss
+            Optional<User> approximateUser = userService.getUserByApproximateSteamId(updateDTO.playerIdNumeric(), new BigDecimal(UserService.STEAM_ID_DEVIATION_TOLERANCE));
+            
+            User user = approximateUser.orElseGet(() -> 
+                userService.createOrGetUserBySteamId(updateDTO.playerIdNumeric())
+            );
+            
+            logger.info("Processing stats for user: " + user.getUsername() + " (Steam ID: " + user.getSteamId()
+                    + ", Calculated: " + updateDTO.playerId() + ")");
 
             // Update character stats
             Character character = characterService.updateCharacterStats(user, updateDTO);

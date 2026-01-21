@@ -31,6 +31,12 @@ public class ZomboidItem {
     @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 0")
     private Integer value = 0;
 
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT 0")
+    private Boolean custom = false;
+
+    @Column(columnDefinition = "TEXT")
+    private String storeDescription;
+
     public ZomboidItem() {
     }
 
@@ -105,5 +111,21 @@ public class ZomboidItem {
 
     public void setValue(Integer value) {
         this.value = value;
+    }
+
+    public Boolean getCustom() {
+        return custom;
+    }
+
+    public void setCustom(Boolean custom) {
+        this.custom = custom;
+    }
+
+    public String getStoreDescription() {
+        return storeDescription;
+    }
+
+    public void setStoreDescription(String storeDescription) {
+        this.storeDescription = storeDescription;
     }
 }

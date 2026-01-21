@@ -327,8 +327,6 @@
                     <th>Character Name</th>
                     <th>Player</th>
                     <th>Zombie Kills</th>
-                    <th>Profession</th>
-                    <th>Server</th>
                     <th>Status</th>
                 </tr>
             </thead>
@@ -342,8 +340,6 @@
                     <td th:text="${character.playerName}">Character Name</td>
                     <td th:text="${character.user.username}">Username</td>
                     <td th:text="${character.zombieKills}">0</td>
-                    <td th:text="${character.profession != null ? character.profession : 'Unknown'}">Profession</td>
-                    <td th:text="${character.serverName}">Server</td>
                     <td>
                         <span class="status-badge" 
                               th:classappend="${character.isDead ? 'status-dead' : 'status-alive'}"
@@ -366,7 +362,6 @@
                 <div class="character-stats">
                     <span>🧟 <strong th:text="${character.zombieKills}">0</strong> Kills</span>
                     <span>⭐ <strong th:text="${character.currencyPoints}">0</strong> Points</span>
-                    <span th:if="${character.profession != null}">💼 <strong th:text="${character.profession}">Profession</strong></span>
                     <span th:if="${character.hoursSurvived != null}">⏱️ <strong th:text="${character.hoursSurvived}">0</strong>h Survived</span>
                 </div>
             </div>

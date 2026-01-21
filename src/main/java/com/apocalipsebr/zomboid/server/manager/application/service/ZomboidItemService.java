@@ -79,6 +79,8 @@ public class ZomboidItemService {
         item.setPage(updatedItem.getPage());
         item.setItemId(updatedItem.getItemId());
         item.setSellable(updatedItem.getSellable());
+        item.setCustom(updatedItem.getCustom());
+        item.setStoreDescription(updatedItem.getStoreDescription());
         
         return zomboidItemRepository.save(item);
     }

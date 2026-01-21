@@ -366,7 +366,7 @@
     <div class="products-grid">
         <div th:each="item : ${items}" class="product-card">
             <div class="product-image">
-                <img th:src="${'https://pzwiki.net' + item.icon}" 
+                <img th:src="${item.custom ? item.icon : 'https://pzwiki.net' + item.icon}" 
                      class="product-icon" 
                      th:alt="${item.name}"
                      onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%22120%22%3E%3Crect fill=%22%23444%22 width=%22120%22 height=%22120%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23888%22 font-size=%2240%22%3E?%3C/text%3E%3C/svg%3E'">
@@ -375,7 +375,8 @@
                 <div class="product-category" th:text="${item.category}">Category</div>
                 <h3 class="product-name" th:text="${item.name}">Item Name</h3>
                 <div class="product-id" th:text="${item.itemId}">Base.ItemId</div>
-                <p class="product-description">
+                <p class="product-description" 
+                   th:text="${item.storeDescription != null && !item.storeDescription.isEmpty() ? item.storeDescription : 'High-quality survival item available for purchase. Check the wiki for detailed information about stats and usage.'}">
                     High-quality survival item available for purchase. Check the wiki for detailed information about stats and usage.
                 </p>
                 <div class="product-footer">
@@ -390,7 +391,8 @@
                         <button class="btn-buy" onclick="alert('Purchase system coming soon!')">
                             🛒 Buy
                         </button>
-                        <a th:href="${'https://pzwiki.net' + item.page}" 
+                        <a th:if="${!item.custom}" 
+                           th:href="${'https://pzwiki.net' + item.page}" 
                            target="_blank" 
                            class="btn-info"
                            title="View on Wiki">

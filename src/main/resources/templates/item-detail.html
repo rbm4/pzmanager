@@ -186,7 +186,7 @@
 
         <div class="item-detail-card">
             <div class="item-header">
-                <img th:src="${'https://pzwiki.net' + item.icon}" 
+                <img th:src="${item.custom ? item.icon : 'https://pzwiki.net' + item.icon}" 
                      class="item-icon-large" 
                      th:alt="${item.name}"
                      onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22150%22 height=%22150%22%3E%3Crect fill=%22%23444%22 width=%22150%22 height=%22150%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23888%22 font-size=%2248%22%3E?%3C/text%3E%3C/svg%3E'">
@@ -234,7 +234,8 @@
             </div>
 
             <div class="action-buttons">
-                <a th:href="${'https://pzwiki.net' + item.page}" 
+                <a th:if="${!item.custom}" 
+                   th:href="${'https://pzwiki.net' + item.page}" 
                    target="_blank" 
                    class="btn btn-primary">
                     📖 View on PZ Wiki

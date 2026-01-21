@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create New Item - Apocalipse [BR]</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            margin-left: 280px;
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a6f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .form-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 30px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #aaa;
+            font-weight: 600;
+        }
+
+        .form-input,
+        .form-select,
+        textarea.form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: #ff6b6b;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .form-select option {
+            background: #16213e;
+            color: white;
+        }
+
+        .form-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .form-checkbox input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .form-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #ee5a6f;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .help-text {
+            font-size: 0.85rem;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .alert-error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #f44336;
+            color: #f44336;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin-left: 0;
+            }
+
+            body {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- Sidebar -->
+<div th:replace="~{sidebar-component :: sidebar}"></div>
+
+<div class="container">
+        <div class="header">
+            <h1>➕ Create New Item</h1>
+        </div>
+
+        <div th:if="${error}" class="alert alert-error" th:text="${error}">
+            Error message
+        </div>
+
+        <div class="form-card">
+            <form method="post" action="/items/create">
+                <div class="form-group">
+                    <label class="form-label" for="name">Item Name *</label>
+                    <input type="text" id="name" name="name" class="form-input" required
+                           placeholder="e.g., Golden Katana">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="itemId">Item ID *</label>
+                    <input type="text" id="itemId" name="itemId" class="form-input" required
+                           placeholder="e.g., Custom.GoldenKatana">
+                    <div class="help-text">Must be unique. Format: ModName.ItemName</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="category">Category *</label>
+                    <select id="category" name="category" class="form-select" required>
+                        <option value="">Select a category...</option>
+                        <option value="Accessory">Accessory</option>
+                        <option value="Container">Container</option>
+                        <option value="Food">Food</option>
+                        <option value="Literature">Literature</option>
+                        <option value="Weapon">Weapon</option>
+                        <option value="Clothing">Clothing</option>
+                        <option value="Tool">Tool</option>
+                        <option value="Medical">Medical</option>
+                        <option value="Custom">Custom</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="icon">Icon URL *</label>
+                    <input type="text" id="icon" name="icon" class="form-input" required
+                           placeholder="https://example.com/icon.png">
+                    <div class="help-text">For custom items, provide full URL. For vanilla items, use wiki path.</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="page">Wiki Page Path</label>
+                    <input type="text" id="page" name="page" class="form-input"
+                           placeholder="/wiki/ItemName">
+                    <div class="help-text">Optional. Only needed for non-custom items.</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="value">Item Value (Points)</label>
+                    <input type="number" id="value" name="value" class="form-input" min="0" value="0"
+                           placeholder="0">
+                    <div class="help-text">Points required to purchase this item.</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="storeDescription">Store Description</label>
+                    <textarea id="storeDescription" name="storeDescription" class="form-input" rows="4"
+                              placeholder="Describe this item for the store..."></textarea>
+                    <div class="help-text">Description shown in the store. Leave empty for generic text.</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-checkbox">
+                        <input type="checkbox" name="custom" id="custom">
+                        <span>This is a custom item (not from vanilla game)</span>
+                    </label>
+                    <div class="help-text">Check this for custom/modded items. Wiki link won't be shown.</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-checkbox">
+                        <input type="checkbox" name="sellable" id="sellable">
+                        <span>Make item sellable in store</span>
+                    </label>
+                </div>
+
+                <div class="form-buttons">
+                    <button type="submit" class="btn btn-primary">✅ Create Item</button>
+                    <a href="/items/manage" class="btn btn-secondary">❌ Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
