@@ -75,15 +75,17 @@ public class ServerRestartService {
     }
 
     private void warningBlock(String tempo) {
-        sendWarning(tempo);
+        sendWarning("Servidor reiniciando em " + tempo);
         scheduler.schedule(() -> {
-            sendWarning("Voltamos rapidinho, apenas 5 minutos!");
+            String command = "servermsg \" " + "Voltamos rapidinho, apenas 5 minutos!" + "\"";
+            logger.info("Sending warning: " + command);
+            commandService.sendCommand(command);
         }, 10, TimeUnit.SECONDS);
     }
 
     private void sendWarning(String time) {
         try {
-            String command = "servermsg \"Servidor reiniciando em " + time + "\"";
+            String command = "servermsg \" " + time + "\"";
             logger.info("Sending warning: " + command);
             commandService.sendCommand(command);
 
