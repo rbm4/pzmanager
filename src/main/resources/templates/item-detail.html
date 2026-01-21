@@ -181,7 +181,7 @@
 
 <div class="container">
         <div class="header">
-            <h1>📦 Item Details</h1>
+            <h1>📦 Detalhes do Item</h1>
         </div>
 
         <div class="item-detail-card">
@@ -197,7 +197,7 @@
                         <span class="meta-badge" th:text="${item.category}">Category</span>
                         <span class="meta-badge" 
                               th:classappend="${item.sellable ? 'sellable' : ''}"
-                              th:text="${item.sellable ? '✅ Sellable' : '❌ Not Sellable'}">
+                              th:text="${item.sellable ? '✅ Vendável' : '❌ Não Vendável'}">
                             Status
                         </span>
                     </div>
@@ -206,28 +206,28 @@
 
             <div class="item-properties">
                 <div class="item-property">
-                    <div class="property-label">Item ID</div>
+                    <div class="property-label">ID do Item</div>
                     <div class="property-value" th:text="${item.itemId}">Base.ItemId</div>
                 </div>
 
                 <div class="item-property">
-                    <div class="property-label">Category</div>
+                    <div class="property-label">Categoria</div>
                     <div class="property-value" th:text="${item.category}">Category</div>
                 </div>
 
                 <div class="item-property">
-                    <div class="property-label">Icon Path</div>
+                    <div class="property-label">Caminho do Ícone</div>
                     <div class="property-value" th:text="${item.icon}">/path/to/icon.png</div>
                 </div>
 
                 <div class="item-property">
-                    <div class="property-label">Wiki Page</div>
+                    <div class="property-label">Página da Wiki</div>
                     <div class="property-value" th:text="${item.page}">/wiki/Page</div>
                 </div>
 
                 <div class="item-property">
-                    <div class="property-label">Sellable</div>
-                    <div class="property-value" th:text="${item.sellable ? 'Yes - Available in store' : 'No - Not available for purchase'}">
+                    <div class="property-label">Vendável</div>
+                    <div class="property-value" th:text="${item.sellable ? 'Sim - Disponível na loja' : 'Não - Não disponível para compra'}">
                         Status
                     </div>
                 </div>
@@ -238,10 +238,10 @@
                    th:href="${'https://pzwiki.net' + item.page}" 
                    target="_blank" 
                    class="btn btn-primary">
-                    📖 View on PZ Wiki
+                    📖 Ver na Wiki do PZ
                 </a>
                 <a href="/items" class="btn btn-secondary">
-                    ← Back to List
+                    ← Voltar para a Lista
                 </a>
             </div>
         </div>

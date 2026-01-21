@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Characters - Apocalipse [BR]</title>
+    <title>Meus Personagens - Apocalipse [BR]</title>
     <style>
         * {
             margin: 0;
@@ -316,7 +316,7 @@
 <!-- Main Content -->
 <main class="main-content">
     <div class="header">
-        <h1>👥 My Characters</h1>
+        <h1>👥 Meus Personagens</h1>
     </div>
 
     <div class="characters-grid">
@@ -328,7 +328,6 @@
             <div class="character-header">
                 <div>
                     <div class="character-name" th:text="${character.playerName}">Character Name</div>
-                    <div class="character-profession" th:text="${character.profession != null ? character.profession : 'Unknown Profession'}">Profession</div>
                     <span class="status-online" 
                           th:if="${character.lastUpdate != null && character.lastUpdate.isAfter(#temporals.createNow().minusSeconds(61))}">
                         🟢 Online
@@ -336,13 +335,13 @@
                 </div>
                 <span class="status-badge" 
                       th:classappend="${character.isDead ? 'status-dead' : 'status-alive'}"
-                      th:text="${character.isDead ? '💀 Dead' : '✅ Alive'}">Status</span>
+                      th:text="${character.isDead ? '💀 Morto' : '✅ Vivo'}">Status</span>
             </div>
 
             <!-- Character Stats -->
             <div class="character-stats">
                 <div class="stat-item">
-                    <span class="stat-label">Zombie Kills</span>
+                    <span class="stat-label">Abates de Zumbis</span>
                     <div class="stat-value">
                         <span class="stat-icon">🧟</span>
                         <span th:text="${character.zombieKills}">0</span>
@@ -350,7 +349,7 @@
                 </div>
 
                 <div class="stat-item">
-                    <span class="stat-label">Dólar do apocalise</span>
+                    <span class="stat-label">Dólar do apocalipse</span>
                     <div class="stat-value">
                         <span class="stat-icon">₳</span>
                         <span th:text="${character.currencyPoints}">0</span>
@@ -358,7 +357,7 @@
                 </div>
 
                 <div class="stat-item">
-                    <span class="stat-label">Hours Survived</span>
+                    <span class="stat-label">Horas Sobrevividas</span>
                     <div class="stat-value">
                         <span class="stat-icon">⏱️</span>
                         <span th:text="${character.hoursSurvived != null ? character.hoursSurvived + 'h' : 'N/A'}">0h</span>
@@ -366,15 +365,15 @@
                 </div>
 
                 <div class="stat-item">
-                    <span class="stat-label">Infection Status</span>
+                    <span class="stat-label">Status de Infecção</span>
                     <div class="stat-value" style="font-size: 1.1rem;">
                         <span th:if="${character.lastInfected != null && character.lastInfected}" style="color: #ff9800;">
                             <span class="stat-icon">⚠️</span>
-                            <span>INFECTED</span>
+                            <span>INFECTADO</span>
                         </span>
                         <span th:if="${character.lastInfected == null || !character.lastInfected}" style="color: #4caf50;">
                             <span class="stat-icon">✅</span>
-                            <span>Healthy</span>
+                            <span>Saudável</span>
                         </span>
                     </div>
                 </div>
@@ -382,7 +381,7 @@
 
             <!-- Health Bar -->
             <div class="character-health" th:if="${character.lastHealth != null}">
-                <span class="health-label">Health</span>
+                <span class="health-label">Saúde</span>
                 <div class="health-bar">
                     <div class="health-fill" 
                          th:style="'width: ' + ${character.lastHealth} + '%'"
@@ -392,12 +391,12 @@
             </div>
 
             <div class="in-vehicle" th:if="${character.lastInVehicle != null && character.lastInVehicle}">
-                🚗 In Vehicle
+                🚗 Em Veículo
             </div>
 
             <!-- Location -->
             <div class="character-location" th:if="${character.lastX != null}">
-                <div class="location-label">📍 Last Known Location</div>
+                <div class="location-label">📍 Última Localização Conhecida</div>
                 <div class="location-coords">
                     X: <span th:text="${character.lastX}">0</span>, 
                     Y: <span th:text="${character.lastY}">0</span>, 
@@ -408,16 +407,16 @@
             <!-- Footer -->
             <div class="character-footer">
                 <div class="last-update">
-                    🕒 Last seen: 
-                    <span th:text="${character.lastUpdate != null ? #temporals.format(character.lastUpdate, 'dd/MM/yyyy HH:mm') : 'Never'}">Never</span>
+                    🕒 Visto pela última vez: 
+                    <span th:text="${character.lastUpdate != null ? #temporals.format(character.lastUpdate, 'dd/MM/yyyy HH:mm') : 'Nunca'}">Never</span>
                 </div>
             </div>
         </div>
 
         <!-- No Characters Message -->
         <div class="no-characters" th:if="${userCharacters.empty}">
-            <h2>😔 No Characters Yet</h2>
-            <p>Start playing on the server to create your first character!</p>
+            <h2>😔 Nenhum Personagem Ainda</h2>
+            <p>Comece a jogar no servidor para criar seu primeiro personagem!</p>
         </div>
     </div>
 </main>

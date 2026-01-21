@@ -278,25 +278,26 @@
 
     <nav>
         <div class="nav-section">
-            <div class="nav-title">Player Menu</div>
-            <a href="/player" class="nav-link">🏠 Dashboard</a>
-            <a href="/my-characters" class="nav-link">👥 My Characters</a>
-            <a href="/items/wiki" class="nav-link">📚 Item Wiki</a>
-            <a href="/items/store" class="nav-link">🛒 Item Store</a>
-            <a href="/items" class="nav-link">📦 Browse All Items</a>
+            <div class="nav-title">Menu do Jogador</div>
+            <a href="/player" class="nav-link">🏠 Painel</a>
+            <a href="/my-characters" class="nav-link">👥 Meus Personagens</a>
+            <a href="/items/wiki" class="nav-link">📚 Wiki de Itens</a>
+            <a href="/items/store" class="nav-link">🛒 Loja</a>
+            <a href="/items" class="nav-link">📦 Navegar Itens</a>
         </div>
 
         <div class="nav-section" th:if="${session.user.role == 'ADMIN'}">
             <div class="nav-title">Admin</div>
-            <a href="/admin" class="nav-link admin">⚙️ Admin Panel</a>
-            <a href="/admin/users" class="nav-link admin">👥 Manage Users</a>
-            <a href="/admin/players" class="nav-link admin">🌐 Network Players</a>
-            <a href="/items/manage" class="nav-link admin">📝 Manage Items</a>
+            <a href="/admin" class="nav-link admin">⚙️ Painel Admin</a>
+            <a href="/admin/users" class="nav-link admin">👥 Gerenciar Usuários</a>
+            <a href="/admin/players" class="nav-link admin">🌐 Jogadores da Rede</a>
+            <a href="/items/manage" class="nav-link admin">📝 Gerenciar Itens</a>
+            <a href="/tickets" class="nav-link admin">🎫 Chamados</a>
         </div>
 
         <div class="nav-section">
-            <div class="nav-title">Logout</div>
-            <a href="/logout" class="nav-link logout">🚪 Logout</a>
+            <div class="nav-title">Sair</div>
+            <a href="/logout" class="nav-link logout">🚪 Sair</a>
         </div>
     </nav>
 </aside>

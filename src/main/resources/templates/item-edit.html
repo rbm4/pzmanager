@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Item - Apocalipse [BR]</title>
+    <title>Editar Item - Apocalipse [BR]</title>
     <style>
         * {
             margin: 0;
@@ -210,11 +210,11 @@
 
 <div class="container">
         <div class="header">
-            <h1>✏️ Edit Item</h1>
+            <h1>✏️ Editar Item</h1>
         </div>
 
         <div th:if="${param.error}" class="alert alert-error">
-            <span th:if="${param.error[0] == 'failed'}">Failed to update item. Please try again.</span>
+            <span th:if="${param.error[0] == 'failed'}">Falha ao atualizar o item. Por favor, tente novamente.</span>
         </div>
 
         <div class="card">
@@ -231,64 +231,64 @@
 
             <form th:action="@{/items/{id}/edit(id=${item.id})}" method="post">
                 <div class="form-group">
-                    <label for="name">Item Name *</label>
+                    <label for="name">Nome do Item *</label>
                     <input type="text" id="name" name="name" th:value="${item.name}" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="itemId">Item ID *</label>
+                    <label for="itemId">ID do Item *</label>
                     <input type="text" id="itemId" name="itemId" th:value="${item.itemId}" required>
-                    <div class="help-text">Example: Base.Hammer</div>
+                    <div class="help-text">Exemplo: Base.Hammer</div>
                 </div>
 
                 <div class="form-group">
-                    <label for="category">Category *</label>
+                    <label for="category">Categoria *</label>
                     <input type="text" id="category" name="category" th:value="${item.category}" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="icon">Icon URL *</label>
+                    <label for="icon">URL do Ícone *</label>
                     <input type="text" id="icon" name="icon" th:value="${item.icon}" required>
-                    <div class="help-text">Example: /w/images/2/20/Hammer.png</div>
+                    <div class="help-text">Exemplo: /w/images/2/20/Hammer.png</div>
                 </div>
 
                 <div class="form-group">
-                    <label for="page">Wiki Page URL *</label>
+                    <label for="page">URL da Página da Wiki *</label>
                     <input type="text" id="page" name="page" th:value="${item.page}" >
-                    <div class="help-text">Example: /wiki/Hammer</div>
+                    <div class="help-text">Exemplo: /wiki/Hammer</div>
                 </div>
 
                 <div class="form-group">
-                    <label for="storeDescription">Store Description</label>
+                    <label for="storeDescription">Descrição da Loja</label>
                     <textarea id="storeDescription" name="storeDescription" rows="4"
                               style="width: 100%; padding: 12px; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: white; font-size: 1rem; font-family: inherit;"
-                              placeholder="Describe this item for the store..." th:text="${item.storeDescription}"></textarea>
-                    <div class="help-text">Description shown in the store.</div>
+                              placeholder="Descreva este item para a loja..." th:text="${item.storeDescription}"></textarea>
+                    <div class="help-text">Descrição mostrada na loja.</div>
                 </div>
 
                 <div class="form-group">
-                    <label for="value">Item Value (Currency Points)</label>
+                    <label for="value">Valor do Item (Pontos de Moeda)</label>
                     <input class="form-input" type="number" id="value" name="value" th:value="${item.value}" min="0" required>
-                    <div class="help-text">Cost in currency points. Set to 0 for free items.</div>
+                    <div class="help-text">Custo em pontos de moeda. Defina como 0 para itens gratuitos.</div>
                 </div>
 
                 <div class="form-group">
                     <div class="checkbox-group">
                         <input type="checkbox" id="sellable" name="sellable" th:checked="${item.sellable}">
-                        <label for="sellable" style="margin-bottom: 0;">This item is sellable in the store</label>
+                        <label for="sellable" style="margin-bottom: 0;">Este item é vendável na loja</label>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <div class="checkbox-group">
                         <input type="checkbox" id="custom" name="custom" th:checked="${item.custom}">
-                        <label for="custom" style="margin-bottom: 0;">This item is a custom item</label>
+                        <label for="custom" style="margin-bottom: 0;">Este item é um item customizado</label>
                     </div>
                 </div>
 
                 <div class="form-actions">
-                    <a href="/items/manage" class="btn btn-secondary">Cancel</a>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <a href="/items/manage" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
                 </div>
             </form>
         </div>

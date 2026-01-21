@@ -13,7 +13,13 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            background: 
+                linear-gradient(135deg, rgba(26, 26, 46, 0.85) 0%, rgba(22, 33, 62, 0.85) 100%),
+                url('/login.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
             color: #fff;
             min-height: 100vh;
             display: flex;
@@ -130,7 +136,7 @@
 </head>
 <body>
     <div class="login-container">
-        <h1>Login</h1>
+        <h1>APOCALISE [BR] Login</h1>
         
         <div th:if="${error}" class="error">
             <span th:text="${error}"></span>
@@ -142,8 +148,6 @@
             </svg>
             Login com a Steam
         </a>
-
-        <a href="/" class="back-link">← Back to Home</a>
     </div>
 
     <style>

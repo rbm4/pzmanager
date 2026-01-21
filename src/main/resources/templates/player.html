@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Player Panel - Apocalipse [BR]</title>
+    <title>Painel do Jogador - Apocalipse [BR]</title>
     <style>
         * {
             margin: 0;
@@ -291,42 +291,42 @@
 <!-- Main Content -->
 <main class="main-content">
     <div class="header">
-        <h1>Player Dashboard</h1>
+        <h1>Painel do Jogador</h1>
     </div>
 
     <!-- Success/Error Messages -->
     <div th:if="${param.purchase != null}" class="alert" 
          th:classappend="${param.purchase[0] == 'success' ? 'alert-success' : 'alert-error'}">
-        <span th:if="${param.purchase[0] == 'success'}">✅ Skill Recovery Journal purchased successfully!</span>
-        <span th:if="${param.purchase[0] == 'error'}">❌ Purchase failed. Insufficient currency points.</span>
+        <span th:if="${param.purchase[0] == 'success'}">✅ Diário de Recuperação de Habilidades comprado com sucesso!</span>
+        <span th:if="${param.purchase[0] == 'error'}">❌ Compra falhou. Moeda insuficiente.</span>
     </div>
 
     <!-- Stats Cards -->
     <div class="card-grid">
         <div class="stats-card">
             <h3 th:text="${totalKills}">0</h3>
-            <p>🧟 Total Zombie Kills</p>
+            <p>🧟 Abates de Zumbis</p>
         </div>
         <div class="stats-card">
             <h3 th:text="${totalPoints}">0</h3>
-            <p>₳ Dólares do apocalise</p>
+            <p>₳ Dólares do apocalipse</p>
         </div>
         <div class="stats-card">
             <h3 th:text="${userCharacters.size()}">0</h3>
-            <p>👤 Characters</p>
+            <p>👤 Personagens</p>
         </div>
     </div>
 
     <!-- Player Rankings Section -->
     <div class="ranking-section">
-        <h2>🏆 Top Zombie Slayers</h2>
+        <h2>🏆 Top Exterminadores de Zumbis</h2>
         <table class="ranking-table">
             <thead>
                 <tr>
                     <th>Rank</th>
-                    <th>Character Name</th>
-                    <th>Player</th>
-                    <th>Zombie Kills</th>
+                    <th>Nome do Personagem</th>
+                    <th>Jogador</th>
+                    <th>Abates de Zumbis</th>
                     <th>Status</th>
                 </tr>
             </thead>
@@ -345,11 +345,11 @@
                     <td>
                         <span class="status-badge" 
                               th:classappend="${character.isDead ? 'status-dead' : 'status-alive'}"
-                              th:text="${character.isDead ? '💀 Dead' : '✅ Alive'}">Status</span>
+                              th:text="${character.isDead ? '💀 Morto' : '✅ Vivo'}">Status</span>
                     </td>
                 </tr>
                 <tr th:if="${topCharactersByKills.empty}">
-                    <td colspan="5" style="text-align: center; color: #aaa;">No character data available yet.</td>
+                    <td colspan="5" style="text-align: center; color: #aaa;">Nenhum dado de personagem disponível ainda.</td>
                 </tr>
             </tbody>
         </table>
@@ -357,15 +357,15 @@
 
     <!-- Longest Survivors Rankings Section -->
     <div class="ranking-section">
-        <h2>⏱️ Longest Survivors</h2>
+        <h2>⏱️ Sobreviventes Mais Resistentes</h2>
         <table class="ranking-table">
             <thead>
                 <tr>
                     <th>Rank</th>
-                    <th>Character Name</th>
-                    <th>Player</th>
-                    <th>Hours Survived</th>
-                    <th>Zombie Kills</th>
+                    <th>Nome do Personagem</th>
+                    <th>Jogador</th>
+                    <th>Horas Sobrevividas</th>
+                    <th>Abates de Zumbis</th>
                     <th>Status</th>
                 </tr>
             </thead>
@@ -385,11 +385,11 @@
                     <td>
                         <span class="status-badge" 
                               th:classappend="${character.isDead ? 'status-dead' : 'status-alive'}"
-                              th:text="${character.isDead ? '💀 Dead' : '✅ Alive'}">Status</span>
+                              th:text="${character.isDead ? '💀 Morto' : '✅ Vivo'}">Status</span>
                     </td>
                 </tr>
                 <tr th:if="${topCharactersByHours.empty}">
-                    <td colspan="6" style="text-align: center; color: #aaa;">No character data available yet.</td>
+                    <td colspan="6" style="text-align: center; color: #aaa;">Nenhum dado de personagem disponível ainda.</td>
                 </tr>
             </tbody>
         </table>
@@ -415,7 +415,7 @@
     <div class="purchase-card">
 
         <p style="margin-top: 15px; color: #aaa; font-size: 0.9rem;">
-            💡 Earn currency points by killing zombies and accumulating money in-game!
+            💡 Ganhe dólares do apocalipse matando zumbis e acumulando dinheiro no jogo!
         </p>
     </div>
 </main>

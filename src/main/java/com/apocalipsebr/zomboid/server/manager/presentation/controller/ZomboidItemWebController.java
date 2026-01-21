@@ -213,7 +213,7 @@ public class ZomboidItemWebController {
                 } catch (Exception e) {
                     return Map.of(
                         "success", false,
-                        "message", "Purchase successful but failed to deliver item. Contact an admin."
+                        "message", "Compra realizada com sucesso mas falhou ao entregar o item. Contate um administrador."
                     );
                 }
                 

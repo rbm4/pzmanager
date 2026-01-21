@@ -143,7 +143,7 @@ public class ZomboidItemService {
             .orElseThrow(() -> new IllegalArgumentException("Item not found"));
         
         if (!item.getSellable()) {
-            return new PurchaseResult(false, "Item is not available for purchase");
+            return new PurchaseResult(false, "Item não está disponível para compra");
         }
         
         // Validate character exists and belongs to user
@@ -155,8 +155,8 @@ public class ZomboidItemService {
         // Check if character is online (lastUpdate within last 61 seconds)
         LocalDateTime cutoffTime = LocalDateTime.now().minusSeconds(61);
         if (targetCharacter.getLastUpdate() == null || targetCharacter.getLastUpdate().isBefore(cutoffTime)) {
-            return new PurchaseResult(false, "Character must be online to receive items. Last seen: " + 
-                (targetCharacter.getLastUpdate() != null ? targetCharacter.getLastUpdate().toString() : "never"));
+            return new PurchaseResult(false, "Personagem deve estar online para receber itens. Última vez visto: " + 
+                (targetCharacter.getLastUpdate() != null ? targetCharacter.getLastUpdate().toString() : "nunca"));
         }
         
         // Calculate total currency across all characters
@@ -165,8 +165,8 @@ public class ZomboidItemService {
             .sum();
         
         if (totalCurrency < item.getValue()) {
-            return new PurchaseResult(false, "Insufficient currency. Required: " + item.getValue() + 
-                " ₳, Available: " + totalCurrency + " ₳");
+            return new PurchaseResult(false, "Moeda insuficiente. Necessário: " + item.getValue() + 
+                " ₳, Disponível: " + totalCurrency + " ₳");
         }
         
         // Deduct currency from characters (starting from first, then next, etc.)
@@ -184,6 +184,6 @@ public class ZomboidItemService {
         }
         characterService.saveAll(userCharacters);
         logger.info("Successfully purchased item " + item.getName() + " for character " + targetCharacter.getPlayerName());
-        return new PurchaseResult(true, "Purchase successful! Item will be delivered to " + targetCharacter.getPlayerName());
+        return new PurchaseResult(true, "Compra realizada com sucesso! O item será entregue para " + targetCharacter.getPlayerName());
     }
 }

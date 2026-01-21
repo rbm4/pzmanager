@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tickets - Apocalipse [BR]</title>
+    <title>Chamados - Apocalipse [BR]</title>
     <style>
         * {
             margin: 0;
@@ -225,54 +225,54 @@
 
 <div class="container">
         <div class="header">
-            <h1>🎫 Support Tickets</h1>
+            <h1>🎫 Chamados de Suporte</h1>
         </div>
 
         <div class="stats-grid">
             <div class="stat-card total">
                 <h3 th:text="${stats.total}">0</h3>
-                <p>Total Tickets</p>
+                <p>Total de Chamados</p>
             </div>
             <div class="stat-card open">
                 <h3 th:text="${stats.unviewed}">0</h3>
-                <p>Unviewed</p>
+                <p>Não Vistos</p>
             </div>
             <div class="stat-card pending">
                 <h3 th:text="${stats.viewed}">0</h3>
-                <p>Viewed</p>
+                <p>Vistos</p>
             </div>
             <div class="stat-card closed">
                 <h3 th:text="${stats.answered}">0</h3>
-                <p>Answered</p>
+                <p>Respondidos</p>
             </div>
         </div>
 
         <div class="filters">
-            <a href="/tickets" class="filter-btn" th:classappend="${filterStatus == null ? 'active' : ''}">All</a>
-            <a href="/tickets?status=unviewed" class="filter-btn" th:classappend="${filterStatus == 'unviewed' ? 'active' : ''}">Unviewed</a>
-            <a href="/tickets?status=viewed" class="filter-btn" th:classappend="${filterStatus == 'viewed' ? 'active' : ''}">Viewed</a>
-            <a href="/tickets?status=answered" class="filter-btn" th:classappend="${filterStatus == 'answered' ? 'active' : ''}">Answered</a>
+            <a href="/tickets" class="filter-btn" th:classappend="${filterStatus == null ? 'active' : ''}">Todos</a>
+            <a href="/tickets?status=unviewed" class="filter-btn" th:classappend="${filterStatus == 'unviewed' ? 'active' : ''}">Não Vistos</a>
+            <a href="/tickets?status=viewed" class="filter-btn" th:classappend="${filterStatus == 'viewed' ? 'active' : ''}">Vistos</a>
+            <a href="/tickets?status=answered" class="filter-btn" th:classappend="${filterStatus == 'answered' ? 'active' : ''}">Respondidos</a>
         </div>
 
         <div class="tickets-container">
             <div th:if="${tickets.isEmpty()}" class="empty-state">
                 <div class="empty-state-icon">📭</div>
-                <h2>No tickets found</h2>
-                <p>There are no support tickets to display.</p>
+                <h2>Nenhum chamado encontrado</h2>
+                <p>Não há chamados de suporte para exibir.</p>
             </div>
 
             <div th:each="ticket : ${tickets}" class="ticket-item">
                 <div class="ticket-header">
-                    <span class="ticket-id">Ticket #<span th:text="${ticket.id}">1</span></span>
+                    <span class="ticket-id">Chamado #<span th:text="${ticket.id}">1</span></span>
                     <span class="ticket-status" 
                           th:classappend="${ticket.viewed ? 'status-closed' : 'status-open'}"
-                          th:text="${ticket.viewed ? 'Viewed' : 'Unviewed'}">unviewed</span>
+                          th:text="${ticket.viewed ? 'Visto' : 'Não Visto'}">unviewed</span>
                 </div>
                 <div class="ticket-player" th:text="${ticket.author}">PlayerName</div>
                 <div class="ticket-message" th:text="${ticket.message}">Ticket message content goes here...</div>
                 <div class="ticket-meta">
-                    <span th:if="${ticket.answeredID != null}">✅ Answered (Reply ID: <span th:text="${ticket.answeredID}">0</span>)</span>
-                    <span th:unless="${ticket.answeredID != null}">⏳ No answer yet</span>
+                    <span th:if="${ticket.answeredID != null}">✅ Respondido (ID da Resposta: <span th:text="${ticket.answeredID}">0</span>)</span>
+                    <span th:unless="${ticket.answeredID != null}">⏳ Ainda sem resposta</span>
                 </div>
             </div>
         </div>

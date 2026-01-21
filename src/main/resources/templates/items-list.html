@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Items List - Apocalipse [BR]</title>
+    <title>Lista de Itens - Apocalipse [BR]</title>
     <style>
         * {
             margin: 0;
@@ -461,36 +461,36 @@
         <div class="stats">
             <div class="stat-card">
                 <div class="stat-number" th:text="${totalItems}">0</div>
-                <div class="stat-label">Total Items</div>
+                <div class="stat-label">Total de Itens</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number" th:text="${sellableCount}">0</div>
-                <div class="stat-label">Sellable Items</div>
+                <div class="stat-label">Itens Vendáveis</div>
             </div>
         </div>
 
         <div class="search-bar">
             <form class="search-form" method="get" action="/items">
                 <input type="text" name="search" class="search-input" 
-                       placeholder="Search by name or item ID..." 
+                       placeholder="Buscar por nome ou ID do item..." 
                        th:value="${search}">
                 <select name="category" class="search-input" style="flex: 0.5;">
-                    <option value="">All Categories</option>
+                    <option value="">Todas as Categorias</option>
                     <option th:each="cat : ${categories}" 
                             th:value="${cat}" 
                             th:text="${cat}"
                             th:selected="${category == cat}">Category</option>
                 </select>
-                <button type="submit" class="search-btn">Search</button>
+                <button type="submit" class="search-btn">Buscar</button>
             </form>
         </div>
 
         <div class="items-list">
             <div class="list-header">
-                <div>Icon</div>
-                <div>Item Details</div>
-                <div>Category</div>
-                <div>Actions</div>
+                <div>Ícone</div>
+                <div>Detalhes do Item</div>
+                <div>Categoria</div>
+                <div>Ações</div>
             </div>
             
             <div th:each="item : ${items}" class="item-row">
@@ -511,27 +511,27 @@
                     <a th:if="${!item.custom}" th:href="${'https://pzwiki.net' + item.page}" 
                        target="_blank" 
                        class="btn btn-primary"
-                       title="View on PZ Wiki">
+                       title="Ver na Wiki do PZ">
                         📖 Wiki
                     </a>
                     <a th:href="@{'/items/' + ${item.id}}" 
                        class="btn btn-secondary"
-                       title="View Details">
-                        ℹ️ Details
+                       title="Ver Detalhes">
+                        ℹ️ Detalhes
                     </a>
                     <button th:if="${session.user != null and session.user.role == 'ADMIN'}" 
                             class="btn btn-primary deliver-btn"
                             th:data-item-name="${item.name}"
                             th:data-item-id="${item.itemId}"
-                            title="Deliver to Player">
-                        📦 Deliver
+                            title="Entregar ao Jogador">
+                        📦 Entregar
                     </button>
                 </div>
             </div>
             
             <div th:if="${#lists.isEmpty(items)}" class="no-items">
-                <h2>No items found</h2>
-                <p>Try a different search query</p>
+                <h2>Nenhum item encontrado</h2>
+                <p>Tente uma consulta de busca diferente</p>
             </div>
         </div>
 
@@ -539,17 +539,17 @@
             <a th:href="@{/items(page=${currentPage > 0 ? currentPage - 1 : 0}, size=20, search=${search}, category=${category}, sellable=${sellable})}"
                th:classappend="${currentPage == 0 ? 'disabled' : ''}"
                class="pagination-btn">
-                ← Previous
+                ← Anterior
             </a>
             
             <span class="pagination-info">
-                Page <span th:text="${currentPage + 1}">1</span> of <span th:text="${totalPages}">1</span>
+                Página <span th:text="${currentPage + 1}">1</span> de <span th:text="${totalPages}">1</span>
             </span>
             
             <a th:href="@{/items(page=${currentPage < totalPages - 1 ? currentPage + 1 : currentPage}, size=20, search=${search}, category=${category}, sellable=${sellable})}"
                th:classappend="${currentPage >= totalPages - 1 ? 'disabled' : ''}"
                class="pagination-btn">
-                Next →
+                Próximo →
             </a>
         </div>
 
@@ -557,7 +557,7 @@
         <div id="deliverModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2 class="modal-title">📦 Deliver Item</h2>
+                    <h2 class="modal-title">📦 Entregar Item</h2>
                     <button class="close-modal" onclick="closeDeliverModal()">×</button>
                 </div>
                 
@@ -571,18 +571,18 @@
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">Player Name</label>
-                        <input type="text" id="playerName" class="form-input" placeholder="Enter player username" required>
+                        <label class="form-label">Nome do Jogador</label>
+                        <input type="text" id="playerName" class="form-input" placeholder="Digite o nome de usuário do jogador" required>
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">Amount</label>
+                        <label class="form-label">Quantidade</label>
                         <input type="number" id="itemAmount" class="form-input" min="1" value="1" required>
                     </div>
                     
                     <div class="modal-actions">
-                        <button type="button" class="btn btn-cancel" onclick="closeDeliverModal()">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Deliver Item</button>
+                        <button type="button" class="btn btn-cancel" onclick="closeDeliverModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Entregar Item</button>
                     </div>
                 </form>
             </div>
@@ -636,7 +636,7 @@
                 
                 if (response.ok) {
                     alert.className = 'alert success';
-                    alert.textContent = `✅ Successfully delivered ${amount}x ${document.getElementById('deliverItemName').value} to ${playerName}`;
+                    alert.textContent = `✅ Entregue com sucesso ${amount}x ${document.getElementById('deliverItemName').value} para ${playerName}`;
                     alert.style.display = 'block';
                     
                     setTimeout(() => {
@@ -644,13 +644,13 @@
                     }, 2000);
                 } else {
                     alert.className = 'alert error';
-                    alert.textContent = '❌ Failed to deliver item. Please try again.';
+                    alert.textContent = '❌ Falha ao entregar o item. Por favor, tente novamente.';
                     alert.style.display = 'block';
                 }
             } catch (error) {
                 const alert = document.getElementById('modalAlert');
                 alert.className = 'alert error';
-                alert.textContent = '❌ Error: ' + error.message;
+                alert.textContent = '❌ Erro: ' + error.message;
                 alert.style.display = 'block';
             }
         }

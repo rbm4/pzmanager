@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Item Wiki - Apocalipse [BR]</title>
+    <title>Wiki de Itens - Apocalipse [BR]</title>
     <style>
         * {
             margin: 0;
@@ -251,15 +251,15 @@
 
 <div class="container">
         <div class="header">
-            <h1>📚 Item Wiki</h1>
+            <h1>📚 Wiki de Itens</h1>
         </div>
 
         <div class="search-bar">
             <form class="search-form" method="get" action="/items/wiki">
                 <input type="text" name="search" class="search-input" 
-                       placeholder="Search by name or item ID..." 
+                       placeholder="Buscar por nome ou ID do item..." 
                        th:value="${search}">
-                <button type="submit" class="search-btn">Search</button>
+                <button type="submit" class="search-btn">Buscar</button>
             </form>
         </div>
 
@@ -277,13 +277,13 @@
                 </div>
                 <div class="item-id" th:text="${item.itemId}">Base.ItemId</div>
                 <a th:if="${!item.custom}" th:href="${'https://pzwiki.net' + item.page}" target="_blank" class="wiki-link">
-                    View in Wiki →
+                    Ver na Wiki →
                 </a>
             </div>
             
             <div th:if="${#lists.isEmpty(items)}" class="no-items">
-                <h2>No items found</h2>
-                <p>Try a different search query</p>
+                <h2>Nenhum item encontrado</h2>
+                <p>Tente uma consulta de busca diferente</p>
             </div>
         </div>
 
@@ -330,9 +330,9 @@
         </div>
 
         <div th:if="${totalItems != null}" class="pagination-info">
-            Showing <strong th:text="${items.size()}">0</strong> of <strong th:text="${totalItems}">0</strong> items
+            Mostrando <strong th:text="${items.size()}">0</strong> de <strong th:text="${totalItems}">0</strong> itens
             <span th:if="${totalPages > 1}">
-                (Page <strong th:text="${currentPage + 1}">1</strong> of <strong th:text="${totalPages}">1</strong>)
+                (Página <strong th:text="${currentPage + 1}">1</strong> de <strong th:text="${totalPages}">1</strong>)
             </span>
         </div>
     </div>

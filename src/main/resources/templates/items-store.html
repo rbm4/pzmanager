@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Item Store - Apocalipse [BR]</title>
+    <title>Loja - Apocalipse [BR]</title>
     <style>
         * {
             margin: 0;
@@ -336,7 +336,7 @@
 
 <div class="container">
     <div class="header">
-        <h1>🛒 Apocalipse Store</h1>
+        <h1>🛒 Loja Apocalipse</h1>
         <div class="header-info">
             <div class="header-label">Saldo</div>
             <div class="header-value" style="color: #ffc107;" th:text="${totalCurrency != null ? totalCurrency + ' ₳' : '0 ₳'}">0 ₳</div>
@@ -346,16 +346,16 @@
     <div class="search-bar">
         <form class="search-form" method="get" action="/items/store">
             <input type="text" name="search" class="search-input" 
-                   placeholder="Search for items..." 
+                   placeholder="Buscar itens..." 
                    th:value="${search}">
             <select name="category" class="search-input" style="flex: 0.5;">
-                <option value="">All Categories</option>
+                <option value="">Todas as Categorias</option>
                 <option th:each="cat : ${categories}" 
                         th:value="${cat}" 
                         th:text="${cat}"
                         th:selected="${category == cat}">Category</option>
             </select>
-            <button type="submit" class="search-btn">🔍 Search</button>
+            <button type="submit" class="search-btn">🔍 Buscar</button>
         </form>
     </div>
 
@@ -372,12 +372,12 @@
                 <h3 class="product-name" th:text="${item.name}">Item Name</h3>
                 <div class="product-id" th:text="${item.itemId}">Base.ItemId</div>
                 <p class="product-description" 
-                   th:text="${item.storeDescription != null && !item.storeDescription.isEmpty() ? item.storeDescription : 'High-quality survival item available for purchase. Check the wiki for detailed information about stats and usage.'}">
-                    High-quality survival item available for purchase. Check the wiki for detailed information about stats and usage.
+                   th:text="${item.storeDescription != null && !item.storeDescription.isEmpty() ? item.storeDescription : 'Item de sobrevivência de alta qualidade disponível para compra. Confira a wiki para informações detalhadas sobre stats e uso.'}">
+                    Item de sobrevivência de alta qualidade disponível para compra. Confira a wiki para informações detalhadas sobre stats e uso.
                 </p>
                 <div class="product-footer">
                     <div class="product-price">
-                        <div class="price-label">Price</div>
+                        <div class="price-label">Preço</div>
                         <div class="price-value">
                             <span th:text="${item.value}">0</span>
                             <span class="price-currency">₳</span>
@@ -389,13 +389,13 @@
                                 th:data-item-name="${item.name}"
                                 th:data-item-value="${item.value}"
                                 th:data-item-itemid="${item.itemId}">
-                            🛒 Buy
+                            🛒 Comprar
                         </button>
                         <a th:if="${!item.custom}" 
                            th:href="${'https://pzwiki.net' + item.page}" 
                            target="_blank" 
                            class="btn-info"
-                           title="View on Wiki">
+                           title="Ver na Wiki">
                             ℹ️
                         </a>
                     </div>
@@ -404,8 +404,8 @@
         </div>
         
         <div th:if="${#lists.isEmpty(items)}" class="no-items">
-            <h2>🔍 No items found</h2>
-            <p>Try adjusting your search or filters</p>
+            <h2>🔍 Nenhum item encontrado</h2>
+            <p>Tente ajustar sua busca ou filtros</p>
         </div>
     </div>
 
@@ -413,17 +413,17 @@
         <a th:href="@{/items/store(page=${currentPage > 0 ? currentPage - 1 : 0}, size=24, search=${search}, category=${category})}"
            th:classappend="${currentPage == 0 ? 'disabled' : ''}"
            class="pagination-btn">
-            ← Previous
+            ← Anterior
         </a>
         
         <span class="pagination-info">
-            Page <span th:text="${currentPage + 1}">1</span> of <span th:text="${totalPages}">1</span>
+            Página <span th:text="${currentPage + 1}">1</span> de <span th:text="${totalPages}">1</span>
         </span>
         
         <a th:href="@{/items/store(page=${currentPage < totalPages - 1 ? currentPage + 1 : currentPage}, size=24, search=${search}, category=${category})}"
            th:classappend="${currentPage >= totalPages - 1 ? 'disabled' : ''}"
            class="pagination-btn">
-            Next →
+            Próximo →
         </a>
     </div>
 
@@ -431,7 +431,7 @@
     <div id="purchaseModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 1000; justify-content: center; align-items: center;">
         <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 30px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.2); max-width: 500px; width: 90%;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="color: #ff6b6b; font-size: 1.5rem;">🛒 Purchase Item</h2>
+                <h2 style="color: #ff6b6b; font-size: 1.5rem;">🛒 Comprar Item</h2>
                 <button onclick="closePurchaseModal()" style="background: none; border: none; color: white; font-size: 2rem; cursor: pointer;">×</button>
             </div>
             
@@ -442,20 +442,20 @@
                 <div id="modalItemName" style="font-size: 1.2rem; font-weight: 600; margin: 5px 0;"></div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
                     <div>
-                        <div style="color: #aaa; font-size: 0.85rem;">Price:</div>
+                        <div style="color: #aaa; font-size: 0.85rem;">Preço:</div>
                         <div style="color: #ffc107; font-size: 1.5rem; font-weight: 700;"><span id="modalItemValue"></span> ₳</div>
                     </div>
                     <div>
-                        <div style="color: #aaa; font-size: 0.85rem;">Your Balance:</div>
+                        <div style="color: #aaa; font-size: 0.85rem;">Seu Saldo:</div>
                         <div style="color: #4caf50; font-size: 1.5rem; font-weight: 700;"><span th:text="${totalCurrency}">0</span> ₳</div>
                     </div>
                 </div>
             </div>
             
             <div th:if="${userCharacters != null && !userCharacters.isEmpty()}" style="margin-bottom: 20px;">
-                <label style="display: block; margin-bottom: 10px; color: #aaa;">Select Character to Receive Item:</label>
+                <label style="display: block; margin-bottom: 10px; color: #aaa;">Selecione o Personagem para Receber o Item:</label>
                 <select id="characterSelect" style="width: 100%; padding: 12px; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: white; font-size: 1rem;">
-                    <option value="" style="background: #16213e; color: #aaa;">-- Choose a character --</option>
+                    <option value="" style="background: #16213e; color: #aaa;">-- Escolha um personagem --</option>
                     <option th:each="char : ${userCharacters}" 
                             th:value="${char.id}"
                             th:text="${char.playerName + ' (' + char.currencyPoints + ' ₳) - ' + (char.lastUpdate != null && char.lastUpdate.isAfter(#temporals.createNow().minusSeconds(61)) ? 'Online' : 'Offline')}"
@@ -464,15 +464,15 @@
                             th:style="${(char.lastUpdate != null && char.lastUpdate.isAfter(#temporals.createNow().minusSeconds(61))) ? 'background: #16213e; color: #4caf50;' : 'background: #16213e; color: #666;'}">
                     </option>
                 </select>
-                <div style="font-size: 0.85rem; color: #888; margin-top: 5px;">⚠️ Character must be online to receive items</div>
+                <div style="font-size: 0.85rem; color: #888; margin-top: 5px;">⚠️ O personagem deve estar online para receber itens</div>
             </div>
             <div th:unless="${userCharacters != null && !userCharacters.isEmpty()}" style="margin-bottom: 20px; padding: 15px; background: rgba(244, 67, 54, 0.2); border: 1px solid #f44336; border-radius: 8px; color: #f44336;">
-                You don't have any characters yet. Play on the server to create one!
+                Você ainda não tem nenhum personagem. Jogue no servidor para criar um!
             </div>
             
             <div style="display: flex; gap: 10px;">
-                <button onclick="closePurchaseModal()" style="flex: 1; padding: 12px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white; border-radius: 8px; cursor: pointer; font-size: 1rem;">Cancel</button>
-                <button onclick="confirmPurchase()" th:if="${userCharacters != null && !userCharacters.isEmpty()}" style="flex: 1; padding: 12px; background: linear-gradient(45deg, #4caf50, #8bc34a); border: none; color: white; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 600;">Confirm Purchase</button>
+                <button onclick="closePurchaseModal()" style="flex: 1; padding: 12px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white; border-radius: 8px; cursor: pointer; font-size: 1rem;">Cancelar</button>
+                <button onclick="confirmPurchase()" th:if="${userCharacters != null && !userCharacters.isEmpty()}" style="flex: 1; padding: 12px; background: linear-gradient(45deg, #4caf50, #8bc34a); border: none; color: white; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 600;">Confirmar Compra</button>
             </div>
         </div>
     </div>
@@ -578,12 +578,12 @@
         const characterId = document.getElementById('characterSelect').value;
         
         if (!characterId) {
-            showModalAlert('Please select a character to receive the item', 'error');
+            showModalAlert('Por favor, selecione um personagem para receber o item', 'error');
             return;
         }
         
         if (selectedItemValue > totalCurrency) {
-            showModalAlert('Insufficient currency. You need ' + selectedItemValue + ' ₳ but only have ' + totalCurrency + ' ₳', 'error');
+            showModalAlert('Moeda insuficiente. Você precisa de ' + selectedItemValue + ' ₳ mas só tem ' + totalCurrency + ' ₳', 'error');
             return;
         }
         
@@ -608,7 +608,7 @@
                 showModalAlert('❌ ' + result.message, 'error');
             }
         } catch (error) {
-            showModalAlert('❌ Error: ' + error.message, 'error');
+            showModalAlert('❌ Erro: ' + error.message, 'error');
         }
     }
     
