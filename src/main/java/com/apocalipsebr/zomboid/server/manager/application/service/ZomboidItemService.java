@@ -119,15 +119,19 @@ public class ZomboidItemService {
     }
 
     public Page<ZomboidItem> searchItemsPaginated(String query, Pageable pageable) {
-        return zomboidItemRepository.findByNameContainingIgnoreCaseOrItemIdContainingIgnoreCase(query, query, pageable);
+        return zomboidItemRepository.findByNameContainingIgnoreCaseOrItemIdContainingIgnoreCaseAndSellableTrue(query, query, pageable);
     }
 
     public Page<ZomboidItem> getItemsByCategoryPaginated(String category, Pageable pageable) {
-        return zomboidItemRepository.findByCategory(category, pageable);
+        return zomboidItemRepository.findByCategoryContainingIgnoreCaseAndSellableTrue(category, pageable);
     }
     
     public List<String> getAllCategories() {
         return zomboidItemRepository.findDistinctCategories();
+    }
+    
+    public List<String> getSellableCategories() {
+        return zomboidItemRepository.findDistinctCategoriesFromSellableItems();
     }
 
     public record PurchaseResult(boolean success, String message) {}

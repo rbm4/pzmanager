@@ -350,9 +350,9 @@
                 </div>
 
                 <div class="stat-item">
-                    <span class="stat-label">Currency Points</span>
+                    <span class="stat-label">Dólar do apocalise</span>
                     <div class="stat-value">
-                        <span class="stat-icon">⭐</span>
+                        <span class="stat-icon">₳</span>
                         <span th:text="${character.currencyPoints}">0</span>
                     </div>
                 </div>
@@ -366,10 +366,16 @@
                 </div>
 
                 <div class="stat-item">
-                    <span class="stat-label">Server</span>
-                    <div class="stat-value" style="font-size: 1rem;">
-                        <span class="stat-icon">🌐</span>
-                        <span th:text="${character.serverName != null ? character.serverName : 'Unknown'}">Server</span>
+                    <span class="stat-label">Infection Status</span>
+                    <div class="stat-value" style="font-size: 1.1rem;">
+                        <span th:if="${character.lastInfected != null && character.lastInfected}" style="color: #ff9800;">
+                            <span class="stat-icon">⚠️</span>
+                            <span>INFECTED</span>
+                        </span>
+                        <span th:if="${character.lastInfected == null || !character.lastInfected}" style="color: #4caf50;">
+                            <span class="stat-icon">✅</span>
+                            <span>Healthy</span>
+                        </span>
                     </div>
                 </div>
             </div>
@@ -383,11 +389,6 @@
                          th:classappend="${character.lastHealth < 30 ? 'low' : (character.lastHealth < 60 ? 'medium' : '')}"
                          th:text="${character.lastHealth + '%'}">100%</div>
                 </div>
-            </div>
-
-            <!-- Status Warnings -->
-            <div class="infected-warning" th:if="${character.lastInfected != null && character.lastInfected}">
-                ⚠️ INFECTED
             </div>
 
             <div class="in-vehicle" th:if="${character.lastInVehicle != null && character.lastInVehicle}">

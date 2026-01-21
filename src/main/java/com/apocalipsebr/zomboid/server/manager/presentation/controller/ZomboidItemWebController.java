@@ -137,26 +137,14 @@ public class ZomboidItemWebController {
             HttpSession session,
             Model model) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
+        Pageable pageable = PageRequest.of(page, size, Sort.by("value").descending());
         Page<ZomboidItem> itemsPage;
 
         if (search != null && !search.trim().isEmpty()) {
             itemsPage = zomboidItemService.searchItemsPaginated(search, pageable);
-            itemsPage = new org.springframework.data.domain.PageImpl<>(
-                    itemsPage.getContent().stream()
-                            .filter(ZomboidItem::getSellable)
-                            .toList(),
-                    pageable,
-                    itemsPage.getTotalElements());
             model.addAttribute("search", search);
         } else if (category != null && !category.trim().isEmpty()) {
             itemsPage = zomboidItemService.getItemsByCategoryPaginated(category, pageable);
-            itemsPage = new org.springframework.data.domain.PageImpl<>(
-                    itemsPage.getContent().stream()
-                            .filter(ZomboidItem::getSellable)
-                            .toList(),
-                    pageable,
-                    itemsPage.getTotalElements());
             model.addAttribute("category", category);
         } else {
             itemsPage = zomboidItemService.getSellableItemsPaginated(pageable);
@@ -168,6 +156,7 @@ public class ZomboidItemWebController {
         model.addAttribute("totalPages", itemsPage.getTotalPages());
         model.addAttribute("totalItems", itemsPage.getTotalElements());
         model.addAttribute("storeMode", true);
+        model.addAttribute("categories", zomboidItemService.getSellableCategories());
         
         // Add user currency and characters if logged in
         User user = (User) session.getAttribute("user");

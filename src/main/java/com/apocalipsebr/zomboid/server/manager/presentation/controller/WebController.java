@@ -84,15 +84,17 @@ public class WebController {
             .mapToInt(Character::getCurrencyPoints)
             .sum();
         
-        // Get top characters ranking by hours survived
-        List<Character> topCharacters = characterService.getTopCharactersByHoursSurvived();
+        // Get top characters rankings
+        List<Character> topCharactersByKills = characterService.getTopCharactersByKills();
+        List<Character> topCharactersByHours = characterService.getTopCharactersByHoursSurvived();
         
         model.addAttribute("username", user.getUsername());
         model.addAttribute("role", user.getRole());
         model.addAttribute("stats", stats);
         model.addAttribute("journalCost", playerStatsService.getSkillJournalCost());
         model.addAttribute("userCharacters", userCharacters);
-        model.addAttribute("topCharacters", topCharacters);
+        model.addAttribute("topCharactersByKills", topCharactersByKills);
+        model.addAttribute("topCharactersByHours", topCharactersByHours);
         model.addAttribute("totalKills", totalKills);
         model.addAttribute("totalPoints", totalPoints);
         

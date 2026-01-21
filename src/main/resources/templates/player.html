@@ -309,7 +309,7 @@
         </div>
         <div class="stats-card">
             <h3 th:text="${totalPoints}">0</h3>
-            <p>⭐ Total Currency Points</p>
+            <p>₳ Dólares do apocalise</p>
         </div>
         <div class="stats-card">
             <h3 th:text="${userCharacters.size()}">0</h3>
@@ -319,7 +319,45 @@
 
     <!-- Player Rankings Section -->
     <div class="ranking-section">
-        <h2>🏆 Top Survivors - Longest Time Alive</h2>
+        <h2>🏆 Top Zombie Slayers</h2>
+        <table class="ranking-table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Character Name</th>
+                    <th>Player</th>
+                    <th>Zombie Kills</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="character, iterStat : ${topCharactersByKills}">
+                    <td>
+                        <span class="rank-badge" 
+                              th:classappend="${iterStat.index == 0 ? 'rank-1' : (iterStat.index == 1 ? 'rank-2' : (iterStat.index == 2 ? 'rank-3' : 'rank-other'))}"
+                              th:text="${iterStat.index + 1}">1</span>
+                    </td>
+                    <td th:text="${character.playerName}">Character Name</td>
+                    <td th:text="${character.user.username}">Username</td>
+                    <td>
+                        <strong th:text="${character.zombieKills}">0</strong>
+                    </td>
+                    <td>
+                        <span class="status-badge" 
+                              th:classappend="${character.isDead ? 'status-dead' : 'status-alive'}"
+                              th:text="${character.isDead ? '💀 Dead' : '✅ Alive'}">Status</span>
+                    </td>
+                </tr>
+                <tr th:if="${topCharactersByKills.empty}">
+                    <td colspan="5" style="text-align: center; color: #aaa;">No character data available yet.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Longest Survivors Rankings Section -->
+    <div class="ranking-section">
+        <h2>⏱️ Longest Survivors</h2>
         <table class="ranking-table">
             <thead>
                 <tr>
@@ -332,7 +370,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr th:each="character, iterStat : ${topCharacters}">
+                <tr th:each="character, iterStat : ${topCharactersByHours}">
                     <td>
                         <span class="rank-badge" 
                               th:classappend="${iterStat.index == 0 ? 'rank-1' : (iterStat.index == 1 ? 'rank-2' : (iterStat.index == 2 ? 'rank-3' : 'rank-other'))}"
@@ -350,7 +388,7 @@
                               th:text="${character.isDead ? '💀 Dead' : '✅ Alive'}">Status</span>
                     </td>
                 </tr>
-                <tr th:if="${topCharacters.empty}">
+                <tr th:if="${topCharactersByHours.empty}">
                     <td colspan="6" style="text-align: center; color: #aaa;">No character data available yet.</td>
                 </tr>
             </tbody>

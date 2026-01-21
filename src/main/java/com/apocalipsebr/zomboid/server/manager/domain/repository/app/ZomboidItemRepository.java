@@ -26,10 +26,15 @@ public interface ZomboidItemRepository extends JpaRepository<ZomboidItem, Long> 
     @Query("SELECT DISTINCT z.category FROM ZomboidItem z WHERE z.category IS NOT NULL ORDER BY z.category")
     List<String> findDistinctCategories();
     
+    @Query("SELECT DISTINCT z.category FROM ZomboidItem z WHERE z.category IS NOT NULL AND z.sellable = true ORDER BY z.category")
+    List<String> findDistinctCategoriesFromSellableItems();
+    
     // Paginated queries
     Page<ZomboidItem> findBySellable(Boolean sellable, Pageable pageable);
     
-    Page<ZomboidItem> findByNameContainingIgnoreCaseOrItemIdContainingIgnoreCase(String name, String itemId, Pageable pageable);
+    Page<ZomboidItem> findByNameContainingIgnoreCaseOrItemIdContainingIgnoreCaseAndSellableTrue(String name, String itemId, Pageable pageable);
     
     Page<ZomboidItem> findByCategory(String category, Pageable pageable);
+
+    Page<ZomboidItem> findByCategoryContainingIgnoreCaseAndSellableTrue(String category, Pageable pageable);
 }
