@@ -3,6 +3,8 @@ package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 import com.apocalipsebr.zomboid.server.manager.application.service.TicketService;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.zomboid.Ticket;
 import jakarta.servlet.http.HttpSession;
+
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,14 +25,11 @@ public class TicketController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public String viewTickets(@RequestParam(required = false) String status, 
                              HttpSession session, 
                              Model model) {
-        // Check if user is admin
-        if (!"admin".equals(session.getAttribute("role"))) {
-            return "redirect:/admin-login";
-        }
-
+       
         List<Ticket> tickets;
         if (status != null && !status.isEmpty()) {
             tickets = ticketService.getTicketsByStatus(status);
