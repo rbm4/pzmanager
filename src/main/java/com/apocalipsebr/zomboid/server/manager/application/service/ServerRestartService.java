@@ -15,7 +15,7 @@ import java.util.logging.Logger;
 @Service
 public class ServerRestartService {
     private static final Logger logger = Logger.getLogger(ServerRestartService.class.getName());
-    
+
     private final ServerCommandService commandService;
     private final DiscordNotificationService discordNotificationService;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
@@ -25,7 +25,7 @@ public class ServerRestartService {
     private String restartPassword;
 
     public ServerRestartService(ServerCommandService commandService,
-                              DiscordNotificationService discordNotificationService) {
+            DiscordNotificationService discordNotificationService) {
         this.commandService = commandService;
         this.discordNotificationService = discordNotificationService;
     }
@@ -38,37 +38,47 @@ public class ServerRestartService {
         if (restartInProgress) {
             throw new IllegalStateException("A restart is already in progress");
         }
-        
+
         restartInProgress = true;
         logger.info("Server restart initiated");
-        
+
         // Send Discord notification that restart was initiated
         discordNotificationService.sendRestartInitiated();
 
         // 10 minute warning
         scheduler.schedule(() -> {
-            sendWarning("10 minutos");
+            warningBlock("10 minutos");
         }, 0, TimeUnit.SECONDS);
 
         // 5 minute warning
         scheduler.schedule(() -> {
-            sendWarning("5 minutos");
+            warningBlock("5 minutos");
         }, 5, TimeUnit.MINUTES);
 
         // 1 minute warning
         scheduler.schedule(() -> {
-            sendWarning("1 minuto");
+            warningBlock("1 minuto");
         }, 9, TimeUnit.MINUTES);
 
         // 15 second warning
         scheduler.schedule(() -> {
-            sendWarning("15 segundos");
+            warningBlock("15 segundos");
         }, 9 * 60 + 45, TimeUnit.SECONDS);
 
         // Save, quit and restart
         scheduler.schedule(() -> {
+            scheduler.schedule(() -> {
+                sendWarning("Voltamos rapidinho, apenas 5 minutos!");
+            }, 10, TimeUnit.SECONDS);
             executeShutdownSequence();
         }, 10, TimeUnit.MINUTES);
+    }
+
+    private void warningBlock(String tempo) {
+        sendWarning(tempo);
+        scheduler.schedule(() -> {
+            sendWarning("Voltamos rapidinho, apenas 5 minutos!");
+        }, 10, TimeUnit.SECONDS);
     }
 
     private void sendWarning(String time) {
@@ -76,7 +86,7 @@ public class ServerRestartService {
             String command = "servermsg \"Servidor reiniciando em " + time + "\"";
             logger.info("Sending warning: " + command);
             commandService.sendCommand(command);
-            
+
             // Send Discord notification
             discordNotificationService.sendRestartWarning(time);
         } catch (Exception e) {
@@ -88,7 +98,7 @@ public class ServerRestartService {
         try {
             // Send Discord notification that server is shutting down
             discordNotificationService.sendServerShuttingDown();
-            
+
             // Save the server
             logger.info("Executing save command");
             commandService.sendCommand("save");
@@ -105,7 +115,7 @@ public class ServerRestartService {
 
             // Execute the restart script
             executeRestartScript();
-            
+
         } catch (Exception e) {
             logger.severe("Error during shutdown sequence: " + e.getMessage());
             restartInProgress = false;
@@ -115,11 +125,11 @@ public class ServerRestartService {
     private void executeRestartScript() {
         try {
             logger.info("Executing VM restart script");
-            
+
             // Get the script from resources
             InputStream scriptStream = getClass().getClassLoader()
                     .getResourceAsStream("restart-vm.sh");
-            
+
             if (scriptStream == null) {
                 logger.severe("Restart script not found in resources");
                 restartInProgress = false;
@@ -129,11 +139,10 @@ public class ServerRestartService {
             // Copy script to temp location and make it executable
             String tempScript = "/tmp/restart-vm.sh";
             ProcessBuilder copyBuilder = new ProcessBuilder(
-                    "bash", "-c", 
-                    "cat > " + tempScript + " && chmod +x " + tempScript
-            );
+                    "bash", "-c",
+                    "cat > " + tempScript + " && chmod +x " + tempScript);
             Process copyProcess = copyBuilder.start();
-            
+
             // Write script content
             scriptStream.transferTo(copyProcess.getOutputStream());
             copyProcess.getOutputStream().close();
@@ -155,9 +164,9 @@ public class ServerRestartService {
 
             int exitCode = process.waitFor();
             logger.info("Restart script completed with exit code: " + exitCode);
-            
+
             // Note: Application will be terminated by VM restart
-            
+
         } catch (IOException | InterruptedException e) {
             logger.severe("Failed to execute restart script: " + e.getMessage());
             restartInProgress = false;

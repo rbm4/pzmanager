@@ -1,5 +1,6 @@
 package com.apocalipsebr.zomboid.server.manager.application.service;
 
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Character;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.ZomboidItem;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.ZomboidItemRepository;
 
@@ -8,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -18,9 +20,11 @@ public class ZomboidItemService {
     private static final Logger logger = Logger.getLogger(ZomboidItemService.class.getName());
     
     private final ZomboidItemRepository zomboidItemRepository;
+    private final CharacterService characterService;
 
-    public ZomboidItemService(ZomboidItemRepository zomboidItemRepository) {
+    public ZomboidItemService(ZomboidItemRepository zomboidItemRepository,CharacterService characterService) {
         this.zomboidItemRepository = zomboidItemRepository;
+        this.characterService = characterService;
     }
 
     @Transactional
@@ -81,6 +85,7 @@ public class ZomboidItemService {
         item.setSellable(updatedItem.getSellable());
         item.setCustom(updatedItem.getCustom());
         item.setStoreDescription(updatedItem.getStoreDescription());
+        item.setValue(updatedItem.getValue());
         
         return zomboidItemRepository.save(item);
     }
@@ -119,5 +124,62 @@ public class ZomboidItemService {
 
     public Page<ZomboidItem> getItemsByCategoryPaginated(String category, Pageable pageable) {
         return zomboidItemRepository.findByCategory(category, pageable);
+    }
+    
+    public List<String> getAllCategories() {
+        return zomboidItemRepository.findDistinctCategories();
+    }
+
+    public record PurchaseResult(boolean success, String message) {}
+
+    @Transactional
+    public PurchaseResult purchaseItem(Long itemId, Long characterId, List<Character> userCharacters) {
+        // Validate item exists and is sellable
+        ZomboidItem item = zomboidItemRepository.findById(itemId)
+            .orElseThrow(() -> new IllegalArgumentException("Item not found"));
+        
+        if (!item.getSellable()) {
+            return new PurchaseResult(false, "Item is not available for purchase");
+        }
+        
+        // Validate character exists and belongs to user
+        Character targetCharacter = userCharacters.stream()
+            .filter(c -> c.getId().equals(characterId))
+            .findFirst()
+            .orElseThrow(() -> new IllegalArgumentException("Character not found or does not belong to user"));
+        
+        // Check if character is online (lastUpdate within last 61 seconds)
+        LocalDateTime cutoffTime = LocalDateTime.now().minusSeconds(61);
+        if (targetCharacter.getLastUpdate() == null || targetCharacter.getLastUpdate().isBefore(cutoffTime)) {
+            return new PurchaseResult(false, "Character must be online to receive items. Last seen: " + 
+                (targetCharacter.getLastUpdate() != null ? targetCharacter.getLastUpdate().toString() : "never"));
+        }
+        
+        // Calculate total currency across all characters
+        int totalCurrency = userCharacters.stream()
+            .mapToInt(c -> c.getCurrencyPoints() != null ? c.getCurrencyPoints() : 0)
+            .sum();
+        
+        if (totalCurrency < item.getValue()) {
+            return new PurchaseResult(false, "Insufficient currency. Required: " + item.getValue() + 
+                " ₳, Available: " + totalCurrency + " ₳");
+        }
+        
+        // Deduct currency from characters (starting from first, then next, etc.)
+        int remainingCost = item.getValue();
+        for (Character character : userCharacters) {
+            if (remainingCost <= 0) break;
+            
+            int currentPoints = character.getCurrencyPoints() != null ? character.getCurrencyPoints() : 0;
+            if (currentPoints > 0) {
+                int deduction = Math.min(currentPoints, remainingCost);
+                character.setCurrencyPoints(currentPoints - deduction);
+                remainingCost -= deduction;
+                logger.info("Deducted " + deduction + " ₳ from character: " + character.getPlayerName());
+            }
+        }
+        characterService.saveAll(userCharacters);
+        logger.info("Successfully purchased item " + item.getName() + " for character " + targetCharacter.getPlayerName());
+        return new PurchaseResult(true, "Purchase successful! Item will be delivered to " + targetCharacter.getPlayerName());
     }
 }

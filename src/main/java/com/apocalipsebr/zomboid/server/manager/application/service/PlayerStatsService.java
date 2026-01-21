@@ -69,4 +69,8 @@ public class PlayerStatsService {
     public int getSkillJournalCost() {
         return SKILL_JOURNAL_COST;
     }
+
+    public PlayerStats save(PlayerStats playerStats) {
+        return playerStatsRepository.save(playerStats);
+    }
 }

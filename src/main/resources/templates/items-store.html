@@ -338,8 +338,8 @@
     <div class="header">
         <h1>🛒 Apocalipse Store</h1>
         <div class="header-info">
-            <div class="header-label">Available Items</div>
-            <div class="header-value" th:text="${totalItems}">0</div>
+            <div class="header-label">Saldo</div>
+            <div class="header-value" style="color: #ffc107;" th:text="${totalCurrency != null ? totalCurrency + ' ₳' : '0 ₳'}">0 ₳</div>
         </div>
     </div>
 
@@ -384,11 +384,15 @@
                         <div class="price-label">Price</div>
                         <div class="price-value">
                             <span th:text="${item.value}">0</span>
-                            <span class="price-currency">CP</span>
+                            <span class="price-currency">₳</span>
                         </div>
                     </div>
                     <div class="product-actions">
-                        <button class="btn-buy" onclick="alert('Purchase system coming soon!')">
+                        <button class="btn-buy purchase-btn"
+                                th:data-item-id="${item.id}"
+                                th:data-item-name="${item.name}"
+                                th:data-item-value="${item.value}"
+                                th:data-item-itemid="${item.itemId}">
                             🛒 Buy
                         </button>
                         <a th:if="${!item.custom}" 
@@ -426,6 +430,215 @@
             Next →
         </a>
     </div>
+
+    <!-- Purchase Modal -->
+    <div id="purchaseModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 30px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.2); max-width: 500px; width: 90%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="color: #ff6b6b; font-size: 1.5rem;">🛒 Purchase Item</h2>
+                <button onclick="closePurchaseModal()" style="background: none; border: none; color: white; font-size: 2rem; cursor: pointer;">×</button>
+            </div>
+            
+            <div id="modalAlert" style="padding: 12px; border-radius: 8px; margin-bottom: 15px; display: none;"></div>
+            
+            <div style="margin-bottom: 20px; padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 10px;">
+                <div style="color: #aaa; font-size: 0.9rem;">Item:</div>
+                <div id="modalItemName" style="font-size: 1.2rem; font-weight: 600; margin: 5px 0;"></div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                    <div>
+                        <div style="color: #aaa; font-size: 0.85rem;">Price:</div>
+                        <div style="color: #ffc107; font-size: 1.5rem; font-weight: 700;"><span id="modalItemValue"></span> ₳</div>
+                    </div>
+                    <div>
+                        <div style="color: #aaa; font-size: 0.85rem;">Your Balance:</div>
+                        <div style="color: #4caf50; font-size: 1.5rem; font-weight: 700;"><span th:text="${totalCurrency}">0</span> ₳</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div th:if="${userCharacters != null && !userCharacters.isEmpty()}" style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 10px; color: #aaa;">Select Character to Receive Item:</label>
+                <select id="characterSelect" style="width: 100%; padding: 12px; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: white; font-size: 1rem;">
+                    <option value="" style="background: #16213e; color: #aaa;">-- Choose a character --</option>
+                    <option th:each="char : ${userCharacters}" 
+                            th:value="${char.id}"
+                            th:text="${char.playerName + ' (' + char.currencyPoints + ' ₳) - ' + (char.lastUpdate != null && char.lastUpdate.isAfter(#temporals.createNow().minusSeconds(61)) ? 'Online' : 'Offline')}"
+                            th:data-online="${char.lastUpdate != null && #temporals.format(char.lastUpdate, 'yyyy-MM-dd HH:mm:ss') > #temporals.format(#temporals.createNow().minusSeconds(61), 'yyyy-MM-dd HH:mm:ss')}"
+                            th:disabled="${char.lastUpdate == null || #temporals.format(char.lastUpdate, 'yyyy-MM-dd HH:mm:ss') <= #temporals.format(#temporals.createNow().minusSeconds(61), 'yyyy-MM-dd HH:mm:ss')}"
+                            th:style="${(char.lastUpdate != null && char.lastUpdate.isAfter(#temporals.createNow().minusSeconds(61))) ? 'background: #16213e; color: #4caf50;' : 'background: #16213e; color: #666;'}">
+                    </option>
+                </select>
+                <div style="font-size: 0.85rem; color: #888; margin-top: 5px;">⚠️ Character must be online to receive items</div>
+            </div>
+            <div th:unless="${userCharacters != null && !userCharacters.isEmpty()}" style="margin-bottom: 20px; padding: 15px; background: rgba(244, 67, 54, 0.2); border: 1px solid #f44336; border-radius: 8px; color: #f44336;">
+                You don't have any characters yet. Play on the server to create one!
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <button onclick="closePurchaseModal()" style="flex: 1; padding: 12px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white; border-radius: 8px; cursor: pointer; font-size: 1rem;">Cancel</button>
+                <button onclick="confirmPurchase()" th:if="${userCharacters != null && !userCharacters.isEmpty()}" style="flex: 1; padding: 12px; background: linear-gradient(45deg, #4caf50, #8bc34a); border: none; color: white; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 600;">Confirm Purchase</button>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    let selectedItemId = null;
+    let selectedItemName = null;
+    let selectedItemValue = null;
+    let selectedItemItemId = null;
+    let totalCurrency = /*[[${totalCurrency}]]*/ 0;
+    let statusUpdateInterval = null;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.purchase-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                selectedItemId = this.getAttribute('data-item-id');
+                selectedItemName = this.getAttribute('data-item-name');
+                selectedItemValue = parseInt(this.getAttribute('data-item-value'));
+                selectedItemItemId = this.getAttribute('data-item-itemid');
+                
+                document.getElementById('modalItemName').textContent = selectedItemName;
+                document.getElementById('modalItemValue').textContent = selectedItemValue;
+                
+                const modal = document.getElementById('purchaseModal');
+                modal.style.display = 'flex';
+                
+                document.getElementById('modalAlert').style.display = 'none';
+                
+                // Start polling for character status updates every 30 seconds
+                startStatusPolling();
+            });
+        });
+    });
+    
+    function startStatusPolling() {
+        // Update immediately when modal opens
+        updateCharacterStatuses();
+        
+        // Then update every 30 seconds while modal is open
+        statusUpdateInterval = setInterval(updateCharacterStatuses, 30000);
+    }
+    
+    function stopStatusPolling() {
+        if (statusUpdateInterval) {
+            clearInterval(statusUpdateInterval);
+            statusUpdateInterval = null;
+        }
+    }
+    
+    async function updateCharacterStatuses() {
+        try {
+            const response = await fetch('/items/characters/status');
+            const result = await response.json();
+            
+            if (result.success) {
+                totalCurrency = result.totalCurrency;
+                
+                // Update the balance display in modal
+                const balanceElement = document.querySelector('#purchaseModal .header-value span');
+                if (balanceElement) {
+                    balanceElement.textContent = result.totalCurrency;
+                }
+                
+                // Update character select options
+                const characterSelect = document.getElementById('characterSelect');
+                const currentValue = characterSelect.value;
+                
+                // Clear existing options except the first (placeholder)
+                while (characterSelect.options.length > 1) {
+                    characterSelect.remove(1);
+                }
+                
+                // Add updated character options
+                result.characters.forEach(char => {
+                    const option = document.createElement('option');
+                    option.value = char.id;
+                    option.textContent = char.playerName + ' (' + char.currencyPoints + ' ₳) - ' + (char.isOnline ? 'Online' : 'Offline');
+                    option.disabled = !char.isOnline;
+                    option.style.background = '#16213e';
+                    option.style.color = char.isOnline ? '#4caf50' : '#666';
+                    characterSelect.appendChild(option);
+                });
+                
+                // Restore selected value if it still exists
+                if (currentValue) {
+                    characterSelect.value = currentValue;
+                }
+            }
+        } catch (error) {
+            console.error('Failed to update character statuses:', error);
+        }
+    }
+    
+    function closePurchaseModal() {
+        document.getElementById('purchaseModal').style.display = 'none';
+        document.getElementById('characterSelect').value = '';
+        stopStatusPolling();
+    }
+    
+    async function confirmPurchase() {
+        const characterId = document.getElementById('characterSelect').value;
+        
+        if (!characterId) {
+            showModalAlert('Please select a character to receive the item', 'error');
+            return;
+        }
+        
+        if (selectedItemValue > totalCurrency) {
+            showModalAlert('Insufficient currency. You need ' + selectedItemValue + ' ₳ but only have ' + totalCurrency + ' ₳', 'error');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/items/purchase', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'itemId=' + selectedItemId + '&characterId=' + characterId
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showModalAlert('✅ ' + result.message, 'success');
+                
+                setTimeout(() => {
+                    window.location.reload();
+                }, 3000);
+            } else {
+                showModalAlert('❌ ' + result.message, 'error');
+            }
+        } catch (error) {
+            showModalAlert('❌ Error: ' + error.message, 'error');
+        }
+    }
+    
+    function showModalAlert(message, type) {
+        const alert = document.getElementById('modalAlert');
+        alert.textContent = message;
+        alert.style.display = 'block';
+        
+        if (type === 'success') {
+            alert.style.background = 'rgba(76, 175, 80, 0.2)';
+            alert.style.border = '1px solid #4caf50';
+            alert.style.color = '#4caf50';
+        } else {
+            alert.style.background = 'rgba(244, 67, 54, 0.2)';
+            alert.style.border = '1px solid #f44336';
+            alert.style.color = '#f44336';
+        }
+    }
+    
+    // Close modal when clicking outside
+    document.getElementById('purchaseModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closePurchaseModal();
+        }
+    });
+    /*]]>*/
+</script>
 </body>
 </html>

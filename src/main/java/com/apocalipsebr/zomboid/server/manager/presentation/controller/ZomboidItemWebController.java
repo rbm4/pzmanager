@@ -1,6 +1,10 @@
 package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
+import com.apocalipsebr.zomboid.server.manager.application.service.CharacterService;
+import com.apocalipsebr.zomboid.server.manager.application.service.ServerCommandService;
 import com.apocalipsebr.zomboid.server.manager.application.service.ZomboidItemService;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Character;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.ZomboidItem;
 
 import jakarta.servlet.http.HttpSession;
@@ -17,15 +21,20 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/items")
 public class ZomboidItemWebController {
 
     private final ZomboidItemService zomboidItemService;
+    private final CharacterService characterService;
+    private final ServerCommandService serverCommandService;
 
-    public ZomboidItemWebController(ZomboidItemService zomboidItemService) {
+    public ZomboidItemWebController(ZomboidItemService zomboidItemService, CharacterService characterService, ServerCommandService serverCommandService) {
         this.zomboidItemService = zomboidItemService;
+        this.characterService = characterService;
+        this.serverCommandService = serverCommandService;
     }
 
     @GetMapping
@@ -59,6 +68,7 @@ public class ZomboidItemWebController {
         model.addAttribute("totalPages", itemsPage.getTotalPages());
         model.addAttribute("totalItems", zomboidItemService.getTotalItemCount());
         model.addAttribute("sellableCount", zomboidItemService.getSellableItemCount());
+        model.addAttribute("categories", zomboidItemService.getAllCategories());
 
         return "items-list";
     }
@@ -124,6 +134,7 @@ public class ZomboidItemWebController {
             @RequestParam(required = false) String category,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "24") int size,
+            HttpSession session,
             Model model) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
@@ -157,8 +168,110 @@ public class ZomboidItemWebController {
         model.addAttribute("totalPages", itemsPage.getTotalPages());
         model.addAttribute("totalItems", itemsPage.getTotalElements());
         model.addAttribute("storeMode", true);
+        
+        // Add user currency and characters if logged in
+        User user = (User) session.getAttribute("user");
+        if (user != null) {
+            List<Character> userCharacters = characterService.getUserCharacters(user);
+            int totalCurrency = userCharacters.stream()
+                .mapToInt(c -> c.getCurrencyPoints() != null ? c.getCurrencyPoints() : 0)
+                .sum();
+            
+            model.addAttribute("userCharacters", userCharacters);
+            model.addAttribute("totalCurrency", totalCurrency);
+        } else {
+            model.addAttribute("totalCurrency", 0);
+        }
 
         return "items-store";
+    }
+
+    @PostMapping("/purchase")
+    @ResponseBody
+    public Map<String, Object> purchaseItem(
+            @RequestParam Long itemId,
+            @RequestParam Long characterId,
+            HttpSession session) {
+        
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            return Map.of("success", false, "message", "You must be logged in to make purchases");
+        }
+        
+        List<Character> userCharacters = characterService.getUserCharacters(user);
+        if (userCharacters.isEmpty()) {
+            return Map.of("success", false, "message", "No characters found for your account");
+        }
+        
+        ZomboidItemService.PurchaseResult result = zomboidItemService.purchaseItem(itemId, characterId, userCharacters);
+        
+        if (result.success()) {
+            // Get the target character and item for delivery command
+            Character targetCharacter = userCharacters.stream()
+                .filter(c -> c.getId().equals(characterId))
+                .findFirst()
+                .orElse(null);
+            
+            ZomboidItem item = zomboidItemService.getItemById(itemId).orElse(null);
+            
+            if (targetCharacter != null && item != null) {
+                // Execute server command server-side (security)
+                String deliveryCommand = "additem \"" + targetCharacter.getPlayerName() + "\" \"" + 
+                    item.getItemId() + "\" 1";
+                
+                try {
+                    serverCommandService.sendCommand(deliveryCommand);
+                } catch (Exception e) {
+                    return Map.of(
+                        "success", false,
+                        "message", "Purchase successful but failed to deliver item. Contact an admin."
+                    );
+                }
+                
+                // Calculate new total currency
+                int newTotalCurrency = userCharacters.stream()
+                    .mapToInt(c -> c.getCurrencyPoints() != null ? c.getCurrencyPoints() : 0)
+                    .sum();
+                
+                return Map.of(
+                    "success", true,
+                    "message", result.message(),
+                    "newTotalCurrency", newTotalCurrency
+                );
+            }
+        }
+        
+        return Map.of("success", result.success(), "message", result.message());
+    }
+
+    @GetMapping("/characters/status")
+    @ResponseBody
+    public Map<String, Object> getCharacterStatuses(HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            return Map.of("success", false, "message", "Not logged in");
+        }
+        
+        List<Character> userCharacters = characterService.getUserCharacters(user);
+        List<Map<String, Object>> characterStatuses = userCharacters.stream()
+            .map(c -> Map.of(
+                "id", (Object) c.getId(),
+                "playerName", (Object) c.getPlayerName(),
+                "currencyPoints", (Object) (c.getCurrencyPoints() != null ? c.getCurrencyPoints() : 0),
+                "isOnline", (Object) (c.getLastUpdate() != null && 
+                    c.getLastUpdate().isAfter(java.time.LocalDateTime.now().minusSeconds(61)))
+            ))
+            .toList();
+        
+        int totalCurrency = userCharacters.stream()
+            .mapToInt(c -> c.getCurrencyPoints() != null ? c.getCurrencyPoints() : 0)
+            .sum();
+        
+        return Map.of(
+            "success", true,
+            "characters", characterStatuses,
+            "totalCurrency", totalCurrency
+        );
     }
 
     @GetMapping("/manage")

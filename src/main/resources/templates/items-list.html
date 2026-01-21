@@ -476,14 +476,10 @@
                        th:value="${search}">
                 <select name="category" class="search-input" style="flex: 0.5;">
                     <option value="">All Categories</option>
-                    <option value="Accessory" th:selected="${category == 'Accessory'}">Accessory</option>
-                    <option value="Container" th:selected="${category == 'Container'}">Container</option>
-                    <option value="Food" th:selected="${category == 'Food'}">Food</option>
-                    <option value="Literature" th:selected="${category == 'Literature'}">Literature</option>
-                    <option value="Weapon" th:selected="${category == 'Weapon'}">Weapon</option>
-                    <option value="Clothing" th:selected="${category == 'Clothing'}">Clothing</option>
-                    <option value="Tool" th:selected="${category == 'Tool'}">Tool</option>
-                    <option value="Medical" th:selected="${category == 'Medical'}">Medical</option>
+                    <option th:each="cat : ${categories}" 
+                            th:value="${cat}" 
+                            th:text="${cat}"
+                            th:selected="${category == cat}">Category</option>
                 </select>
                 <button type="submit" class="search-btn">Search</button>
             </form>

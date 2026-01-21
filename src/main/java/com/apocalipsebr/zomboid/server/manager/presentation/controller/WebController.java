@@ -5,6 +5,7 @@ import com.apocalipsebr.zomboid.server.manager.application.service.PlayerStatsSe
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Character;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.PlayerStats;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
+import com.apocalipsebr.zomboid.server.manager.domain.repository.app.UserRepository;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -20,10 +21,12 @@ public class WebController {
 
     private final PlayerStatsService playerStatsService;
     private final CharacterService characterService;
+    private final UserRepository userRepository;
 
-    public WebController(PlayerStatsService playerStatsService, CharacterService characterService) {
+    public WebController(PlayerStatsService playerStatsService, CharacterService characterService, UserRepository userRepository) {
         this.playerStatsService = playerStatsService;
         this.characterService = characterService;
+        this.userRepository = userRepository;
     }
 
     @GetMapping("/")
@@ -56,18 +59,33 @@ public class WebController {
 
     @GetMapping("/player")
     public String playerPanel(HttpSession session, Model model) {
-        var user = (User) session.getAttribute("user");
-        if (user == null) {
+        var sessionUser = (User) session.getAttribute("user");
+        if (sessionUser == null) {
             return "redirect:/login";
         }
+        
+        // Refresh user from database to get updated character currency points
+        User user = userRepository.findById(sessionUser.getId())
+            .orElseThrow(() -> new IllegalStateException("User not found"));
+        
+        // Update session with refreshed user
+        session.setAttribute("user", user);
         
         PlayerStats stats = new PlayerStats(user.getUsername());
         
         // Get user's characters
         List<Character> userCharacters = characterService.getUserCharacters(user);
         
-        // Get top characters ranking
-        List<Character> topCharacters = characterService.getTopCharactersByKills();
+        // Calculate totals from the fetched characters to avoid LazyInitializationException
+        int totalKills = userCharacters.stream()
+            .mapToInt(Character::getZombieKills)
+            .sum();
+        int totalPoints = userCharacters.stream()
+            .mapToInt(Character::getCurrencyPoints)
+            .sum();
+        
+        // Get top characters ranking by hours survived
+        List<Character> topCharacters = characterService.getTopCharactersByHoursSurvived();
         
         model.addAttribute("username", user.getUsername());
         model.addAttribute("role", user.getRole());
@@ -75,28 +93,27 @@ public class WebController {
         model.addAttribute("journalCost", playerStatsService.getSkillJournalCost());
         model.addAttribute("userCharacters", userCharacters);
         model.addAttribute("topCharacters", topCharacters);
-        model.addAttribute("totalKills", user.getTotalZombieKills());
-        model.addAttribute("totalPoints", user.getTotalCurrencyPoints());
+        model.addAttribute("totalKills", totalKills);
+        model.addAttribute("totalPoints", totalPoints);
         
         return "player";
     }
-
-    @PostMapping("/player/purchase-journal")
-    public String purchaseJournal(HttpSession session, Model model) {
+    
+    @GetMapping("/my-characters")
+    public String myCharacters(HttpSession session, Model model) {
         var user = (User) session.getAttribute("user");
         if (user == null) {
             return "redirect:/login";
         }
         
-        boolean success = playerStatsService.purchaseSkillJournal(user.getUsername());
+        // Get user's characters
+        List<Character> userCharacters = characterService.getUserCharacters(user);
         
-        if (success) {
-            model.addAttribute("success", "Skill Recovery Journal purchased successfully!");
-        } else {
-            model.addAttribute("error", "Insufficient currency points or purchase failed.");
-        }
+        model.addAttribute("username", user.getUsername());
+        model.addAttribute("role", user.getRole());
+        model.addAttribute("userCharacters", userCharacters);
         
-        return "redirect:/player?purchase=" + (success ? "success" : "error");
+        return "my-characters";
     }
 
     @GetMapping("/logout")

@@ -319,13 +319,14 @@
 
     <!-- Player Rankings Section -->
     <div class="ranking-section">
-        <h2>🏆 Top Players Ranking</h2>
+        <h2>🏆 Top Survivors - Longest Time Alive</h2>
         <table class="ranking-table">
             <thead>
                 <tr>
                     <th>Rank</th>
                     <th>Character Name</th>
                     <th>Player</th>
+                    <th>Hours Survived</th>
                     <th>Zombie Kills</th>
                     <th>Status</th>
                 </tr>
@@ -339,6 +340,9 @@
                     </td>
                     <td th:text="${character.playerName}">Character Name</td>
                     <td th:text="${character.user.username}">Username</td>
+                    <td>
+                        <strong th:text="${character.hoursSurvived != null ? character.hoursSurvived + 'h' : 'N/A'}">0h</strong>
+                    </td>
                     <td th:text="${character.zombieKills}">0</td>
                     <td>
                         <span class="status-badge" 
@@ -347,28 +351,10 @@
                     </td>
                 </tr>
                 <tr th:if="${topCharacters.empty}">
-                    <td colspan="7" style="text-align: center; color: #aaa;">No character data available yet.</td>
+                    <td colspan="6" style="text-align: center; color: #aaa;">No character data available yet.</td>
                 </tr>
             </tbody>
         </table>
-    </div>
-
-    <!-- User's Characters Section -->
-    <div class="ranking-section user-characters" th:if="${!userCharacters.empty}">
-        <h2>👥 Your Characters</h2>
-        <div th:each="character : ${userCharacters}" class="character-card">
-            <div class="character-info">
-                <h4 th:text="${character.playerName}">Character Name</h4>
-                <div class="character-stats">
-                    <span>🧟 <strong th:text="${character.zombieKills}">0</strong> Kills</span>
-                    <span>⭐ <strong th:text="${character.currencyPoints}">0</strong> Points</span>
-                    <span th:if="${character.hoursSurvived != null}">⏱️ <strong th:text="${character.hoursSurvived}">0</strong>h Survived</span>
-                </div>
-            </div>
-            <span class="status-badge" 
-                  th:classappend="${character.isDead ? 'status-dead' : 'status-alive'}"
-                  th:text="${character.isDead ? '💀 Dead' : '✅ Alive'}">Status</span>
-        </div>
     </div>
 
     <!-- Stats Cards (Legacy - Hidden) -->

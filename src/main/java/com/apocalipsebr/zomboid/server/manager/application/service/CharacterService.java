@@ -85,12 +85,20 @@ public class CharacterService {
         return characterRepository.findTopActiveCharactersByKills();
     }
     
+    public List<Character> getTopCharactersByHoursSurvived() {
+        return characterRepository.findTopActiveCharactersByHoursSurvived();
+    }
+    
     public List<Character> getActiveCharacters() {
         return characterRepository.findByIsDeadFalse();
     }
     
     public Optional<Character> getCharacterById(Long id) {
         return characterRepository.findById(id);
+    }
+
+    public void saveAll(List<Character> characers){
+        characterRepository.saveAll(characers);
     }
     
     @Transactional

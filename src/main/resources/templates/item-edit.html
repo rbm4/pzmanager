@@ -267,6 +267,12 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="value">Item Value (Currency Points)</label>
+                    <input class="form-input" type="number" id="value" name="value" th:value="${item.value}" min="0" required>
+                    <div class="help-text">Cost in currency points. Set to 0 for free items.</div>
+                </div>
+
+                <div class="form-group">
                     <div class="checkbox-group">
                         <input type="checkbox" id="sellable" name="sellable" th:checked="${item.sellable}">
                         <label for="sellable" style="margin-bottom: 0;">This item is sellable in the store</label>
