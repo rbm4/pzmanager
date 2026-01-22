@@ -110,8 +110,8 @@ public class ZomboidItemService {
     }
 
     // Paginated methods
-    public Page<ZomboidItem> getAllItemsPaginated(Pageable pageable) {
-        return zomboidItemRepository.findAll(pageable);
+    public Page<ZomboidItem> getAllItemsPaginated(String search, String category, Pageable pageable) {
+        return zomboidItemRepository.list(search,category,pageable);
     }
 
     public Page<ZomboidItem> getSellableItemsPaginated(Pageable pageable) {

@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -37,4 +38,9 @@ public interface ZomboidItemRepository extends JpaRepository<ZomboidItem, Long> 
     Page<ZomboidItem> findByCategory(String category, Pageable pageable);
 
     Page<ZomboidItem> findByCategoryContainingIgnoreCaseAndSellableTrue(String category, Pageable pageable);
+
+    @Query("SELECT z FROM ZomboidItem z WHERE " +
+           "(:search IS NULL OR :search = '' OR LOWER(z.name) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(z.itemId) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
+           "(:category IS NULL OR :category = '' OR z.category = :category)")
+    Page<ZomboidItem> list(@Param("search") String search, @Param("category") String category, Pageable pageable);
 }

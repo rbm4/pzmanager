@@ -31,7 +31,8 @@ public class ZomboidItemWebController {
     private final CharacterService characterService;
     private final ServerCommandService serverCommandService;
 
-    public ZomboidItemWebController(ZomboidItemService zomboidItemService, CharacterService characterService, ServerCommandService serverCommandService) {
+    public ZomboidItemWebController(ZomboidItemService zomboidItemService, CharacterService characterService,
+            ServerCommandService serverCommandService) {
         this.zomboidItemService = zomboidItemService;
         this.characterService = characterService;
         this.serverCommandService = serverCommandService;
@@ -49,18 +50,7 @@ public class ZomboidItemWebController {
         Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
         Page<ZomboidItem> itemsPage;
 
-        if (search != null && !search.trim().isEmpty()) {
-            itemsPage = zomboidItemService.searchItemsPaginated(search, pageable);
-            model.addAttribute("search", search);
-        } else if (category != null && !category.trim().isEmpty()) {
-            itemsPage = zomboidItemService.getItemsByCategoryPaginated(category, pageable);
-            model.addAttribute("category", category);
-        } else if (Boolean.TRUE.equals(sellable)) {
-            itemsPage = zomboidItemService.getSellableItemsPaginated(pageable);
-            model.addAttribute("sellable", true);
-        } else {
-            itemsPage = zomboidItemService.getAllItemsPaginated(pageable);
-        }
+        itemsPage = zomboidItemService.getAllItemsPaginated(search, category, pageable);
 
         model.addAttribute("itemsPage", itemsPage);
         model.addAttribute("items", itemsPage.getContent());
@@ -115,7 +105,7 @@ public class ZomboidItemWebController {
             itemsPage = zomboidItemService.searchItemsPaginated(search, pageable);
             model.addAttribute("search", search);
         } else {
-            itemsPage = zomboidItemService.getAllItemsPaginated(pageable);
+            itemsPage = zomboidItemService.getAllItemsPaginated(search, null, pageable);
         }
 
         model.addAttribute("itemsPage", itemsPage);
@@ -157,15 +147,15 @@ public class ZomboidItemWebController {
         model.addAttribute("totalItems", itemsPage.getTotalElements());
         model.addAttribute("storeMode", true);
         model.addAttribute("categories", zomboidItemService.getSellableCategories());
-        
+
         // Add user currency and characters if logged in
         User user = (User) session.getAttribute("user");
         if (user != null) {
             List<Character> userCharacters = characterService.getUserCharacters(user);
             int totalCurrency = userCharacters.stream()
-                .mapToInt(c -> c.getCurrencyPoints() != null ? c.getCurrencyPoints() : 0)
-                .sum();
-            
+                    .mapToInt(c -> c.getCurrencyPoints() != null ? c.getCurrencyPoints() : 0)
+                    .sum();
+
             model.addAttribute("userCharacters", userCharacters);
             model.addAttribute("totalCurrency", totalCurrency);
         } else {
@@ -181,55 +171,54 @@ public class ZomboidItemWebController {
             @RequestParam Long itemId,
             @RequestParam Long characterId,
             HttpSession session) {
-        
+
         User user = (User) session.getAttribute("user");
         if (user == null) {
             return Map.of("success", false, "message", "You must be logged in to make purchases");
         }
-        
+
         List<Character> userCharacters = characterService.getUserCharacters(user);
         if (userCharacters.isEmpty()) {
             return Map.of("success", false, "message", "No characters found for your account");
         }
-        
+
         ZomboidItemService.PurchaseResult result = zomboidItemService.purchaseItem(itemId, characterId, userCharacters);
-        
+
         if (result.success()) {
             // Get the target character and item for delivery command
             Character targetCharacter = userCharacters.stream()
-                .filter(c -> c.getId().equals(characterId))
-                .findFirst()
-                .orElse(null);
-            
+                    .filter(c -> c.getId().equals(characterId))
+                    .findFirst()
+                    .orElse(null);
+
             ZomboidItem item = zomboidItemService.getItemById(itemId).orElse(null);
-            
+
             if (targetCharacter != null && item != null) {
                 // Execute server command server-side (security)
-                String deliveryCommand = "additem \"" + targetCharacter.getPlayerName() + "\" \"" + 
-                    item.getItemId() + "\" 1";
-                
+                String deliveryCommand = "additem \"" + targetCharacter.getPlayerName() + "\" \"" +
+                        item.getItemId() + "\" 1";
+
                 try {
                     serverCommandService.sendCommand(deliveryCommand);
                 } catch (Exception e) {
                     return Map.of(
-                        "success", false,
-                        "message", "Compra realizada com sucesso mas falhou ao entregar o item. Contate um administrador."
-                    );
+                            "success", false,
+                            "message",
+                            "Compra realizada com sucesso mas falhou ao entregar o item. Contate um administrador.");
                 }
-                
+
                 // Calculate new total currency
                 int newTotalCurrency = userCharacters.stream()
-                    .mapToInt(c -> c.getCurrencyPoints() != null ? c.getCurrencyPoints() : 0)
-                    .sum();
-                
+                        .mapToInt(c -> c.getCurrencyPoints() != null ? c.getCurrencyPoints() : 0)
+                        .sum();
+
                 return Map.of(
-                    "success", true,
-                    "message", result.message(),
-                    "newTotalCurrency", newTotalCurrency
-                );
+                        "success", true,
+                        "message", result.message(),
+                        "newTotalCurrency", newTotalCurrency);
             }
         }
-        
+
         return Map.of("success", result.success(), "message", result.message());
     }
 
@@ -240,27 +229,25 @@ public class ZomboidItemWebController {
         if (user == null) {
             return Map.of("success", false, "message", "Not logged in");
         }
-        
+
         List<Character> userCharacters = characterService.getUserCharacters(user);
         List<Map<String, Object>> characterStatuses = userCharacters.stream()
-            .map(c -> Map.of(
-                "id", (Object) c.getId(),
-                "playerName", (Object) c.getPlayerName(),
-                "currencyPoints", (Object) (c.getCurrencyPoints() != null ? c.getCurrencyPoints() : 0),
-                "isOnline", (Object) (c.getLastUpdate() != null && 
-                    c.getLastUpdate().isAfter(java.time.LocalDateTime.now().minusSeconds(61)))
-            ))
-            .toList();
-        
+                .map(c -> Map.of(
+                        "id", (Object) c.getId(),
+                        "playerName", (Object) c.getPlayerName(),
+                        "currencyPoints", (Object) (c.getCurrencyPoints() != null ? c.getCurrencyPoints() : 0),
+                        "isOnline", (Object) (c.getLastUpdate() != null &&
+                                c.getLastUpdate().isAfter(java.time.LocalDateTime.now().minusSeconds(61)))))
+                .toList();
+
         int totalCurrency = userCharacters.stream()
-            .mapToInt(c -> c.getCurrencyPoints() != null ? c.getCurrencyPoints() : 0)
-            .sum();
-        
+                .mapToInt(c -> c.getCurrencyPoints() != null ? c.getCurrencyPoints() : 0)
+                .sum();
+
         return Map.of(
-            "success", true,
-            "characters", characterStatuses,
-            "totalCurrency", totalCurrency
-        );
+                "success", true,
+                "characters", characterStatuses,
+                "totalCurrency", totalCurrency);
     }
 
     @GetMapping("/manage")
@@ -276,15 +263,7 @@ public class ZomboidItemWebController {
         Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
         Page<ZomboidItem> itemsPage;
 
-        if (search != null && !search.trim().isEmpty()) {
-            itemsPage = zomboidItemService.searchItemsPaginated(search, pageable);
-            model.addAttribute("search", search);
-        } else if (category != null && !category.trim().isEmpty()) {
-            itemsPage = zomboidItemService.getItemsByCategoryPaginated(category, pageable);
-            model.addAttribute("category", category);
-        } else {
-            itemsPage = zomboidItemService.getAllItemsPaginated(pageable);
-        }
+        itemsPage = zomboidItemService.getAllItemsPaginated(search, category, pageable);
 
         model.addAttribute("itemsPage", itemsPage);
         model.addAttribute("items", itemsPage.getContent());
@@ -292,6 +271,7 @@ public class ZomboidItemWebController {
         model.addAttribute("totalPages", itemsPage.getTotalPages());
         model.addAttribute("totalItems", zomboidItemService.getTotalItemCount());
         model.addAttribute("sellableCount", zomboidItemService.getSellableItemCount());
+        model.addAttribute("categories", zomboidItemService.getSellableCategories());
 
         return "items-manage";
     }
