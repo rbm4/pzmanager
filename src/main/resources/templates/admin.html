@@ -241,6 +241,23 @@
         </div>
 
         <div class="card-grid">
+            <!-- Send Command Card -->
+            <div class="card full-width-card">
+                <h2>💻 Send Command</h2>
+                <div id="command-alert" class="alert"></div>
+                <form onsubmit="sendCustomCommand(event)">
+                    <div class="form-group">
+                        <label for="custom-command">RCON Command</label>
+                        <input type="text" id="custom-command" placeholder='e.g., say "Hello Server!" or players' required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Execute Command</button>
+                </form>
+                <div id="command-response" style="display: none; margin-top: 15px; padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <h3 style="color: #4facfe; margin-bottom: 10px; font-size: 0.9rem;">📤 Response:</h3>
+                    <pre id="command-response-text" style="color: #38ef7d; font-family: 'Courier New', monospace; font-size: 0.85rem; white-space: pre-wrap; word-wrap: break-word; margin: 0;"></pre>
+                </div>
+            </div>
+
             <!-- Server Restart Card -->
             <div class="card">
                 <h2>🔄 Server Restart</h2>
@@ -362,6 +379,68 @@
             setTimeout(() => {
                 alert.style.display = 'none';
             }, 5000);
+        }
+        async function sendCustomCommand(event) {
+            event.preventDefault();
+            
+            const command = document.getElementById('custom-command').value;
+            const responseDiv = document.getElementById('command-response');
+            const responseText = document.getElementById('command-response-text');
+
+            try {
+                const response = await fetch(`${API_BASE}/command`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ command: command })
+                });
+
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    showAlert('command-alert', result.message, 'success');
+                    responseDiv.style.display = 'block';
+                    responseText.textContent = result.response;
+                } else {
+                    showAlert('command-alert', result.error || 'Command failed', 'error');
+                    responseDiv.style.display = 'none';
+                }
+            } catch (error) {
+                showAlert('command-alert', 'Error: ' + error.message, 'error');
+                responseDiv.style.display = 'none';
+            }
+        }
+        async function sendCustomCommand(event) {
+            event.preventDefault();
+            
+            const command = document.getElementById('custom-command').value;
+            const responseDiv = document.getElementById('command-response');
+            const responseText = document.getElementById('command-response-text');
+
+            try {
+                const response = await fetch(`${API_BASE}/command`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ command: command })
+                });
+
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    showAlert('command-alert', result.message, 'success');
+                    responseDiv.style.display = 'block';
+                    responseText.textContent = result.response;
+                } else {
+                    showAlert('command-alert', result.error || 'Command failed', 'error');
+                    responseDiv.style.display = 'none';
+                }
+            } catch (error) {
+                showAlert('command-alert', 'Error: ' + error.message, 'error');
+                responseDiv.style.display = 'none';
+            }
         }
 
         async function restartServer() {

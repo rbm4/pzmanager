@@ -28,9 +28,23 @@ public class ServerController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/command")
-    public ResponseEntity<String> sendCommand(@RequestBody CommandRequest request) {
-        var result = serverCommandService.sendCommand(request.getCommand());
-        return ResponseEntity.ok("Command sent successfully: " + request.getCommand());
+    public ResponseEntity<Map<String, Object>> sendCommand(@RequestBody CommandRequest request) {
+        try {
+            String result = serverCommandService.sendCommand(request.getCommand());
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "command", request.getCommand(),
+                "response", result != null && !result.isEmpty() ? result : "(empty response)",
+                "message", "Command executed successfully"
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of(
+                    "success", false,
+                    "command", request.getCommand(),
+                    "error", e.getMessage()
+                ));
+        }
     }
 
     @PreAuthorize("hasRole('ADMIN')")
