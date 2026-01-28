@@ -61,12 +61,16 @@ public class ScheduledRestartService {
         scheduler.schedule(() -> {
             executeScheduledRestart();
         }, delayInSeconds, TimeUnit.SECONDS);
+
+        scheduler.schedule(() -> {
+            serverRestartService.bootSequence();
+        }, 60, TimeUnit.SECONDS);
     }
 
     public long calculateDelayUntilNextRestart() {
         ZoneId zoneId = ZoneId.of(timezone);
         LocalDateTime now = LocalDateTime.now(zoneId);
-        LocalDateTime nextHour = now.plusHours(4)
+        LocalDateTime nextHour = now.plusHours(3)
                 .withMinute(0)
                 .withSecond(0)
                 .withNano(0);

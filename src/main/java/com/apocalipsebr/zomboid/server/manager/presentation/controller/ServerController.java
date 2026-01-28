@@ -29,7 +29,7 @@ public class ServerController {
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/command")
     public ResponseEntity<String> sendCommand(@RequestBody CommandRequest request) {
-        serverCommandService.sendCommand(request.getCommand());
+        var result = serverCommandService.sendCommand(request.getCommand());
         return ResponseEntity.ok("Command sent successfully: " + request.getCommand());
     }
 

@@ -22,7 +22,7 @@ public class BashCommandExecutor implements ServerCommandExecutor {
     //
 
     @Override
-    public void execute(ServerCommand command) {
+    public String execute(ServerCommand command) {
         try {
             var rcon = new Rcon("72.62.137.60", 27015,"PzRconPaswd44@key");
 
@@ -31,6 +31,7 @@ public class BashCommandExecutor implements ServerCommandExecutor {
             logger.info("Command executed successfully: " + command);
             logger.info(result);
             rcon.close();
+            return result;
         } catch (IOException e) {
             throw new ServerCommandException("Failed to execute command: " + e.getMessage(), e);
         } catch (AuthenticationException e) {

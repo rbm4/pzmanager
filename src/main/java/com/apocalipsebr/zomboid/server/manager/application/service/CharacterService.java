@@ -15,6 +15,8 @@ import java.util.logging.Logger;
 @Service
 public class CharacterService {
     
+    private static final int CURRENCY_MULTIPLIER = 2;
+
     private static final Logger logger = Logger.getLogger(CharacterService.class.getName());
     
     private final CharacterRepository characterRepository;
@@ -43,7 +45,7 @@ public class CharacterService {
             character.setZombieKills(character.getZombieKills() + dto.killsSinceLastUpdate());
             
             // Award currency points based on kills (1 point per kill)
-            character.setCurrencyPoints(character.getCurrencyPoints() + dto.killsSinceLastUpdate());
+            character.setCurrencyPoints(character.getCurrencyPoints() + (dto.killsSinceLastUpdate()*CURRENCY_MULTIPLIER));
             
             logger.info("Added " + dto.killsSinceLastUpdate() + " kills. Total: " + character.getZombieKills());
         }

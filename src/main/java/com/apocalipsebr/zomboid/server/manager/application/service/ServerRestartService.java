@@ -34,6 +34,12 @@ public class ServerRestartService {
         return restartPassword.equals(password);
     }
 
+    public void bootSequence(){
+        scheduler.schedule(() -> {
+            discordNotificationService.sendServerBooting();
+        }, 0, TimeUnit.SECONDS);
+    }
+
     public synchronized void initiateRestart() {
         if (restartInProgress) {
             throw new IllegalStateException("A restart is already in progress");

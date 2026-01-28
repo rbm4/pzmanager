@@ -74,6 +74,21 @@ public class DiscordNotificationService {
         }
     }
 
+    public void sendServerBooting() {
+        if (!notificationsEnabled || webhookUrl == null || webhookUrl.isEmpty()) {
+            return;
+        }
+
+        try {
+            Map<String, Object> payload = buildBootingMessage();
+            sendWebhook(payload);
+            logger.info("Discord server booting notification sent");
+        } catch (Exception e) {
+            logger.warning("Failed to send Discord notification: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
     private Map<String, Object> buildWarningMessage(String timeRemaining) {
         String timestamp = ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT);
         
@@ -138,6 +153,24 @@ public class DiscordNotificationService {
                     "title", "🛑 Servidor Desligando",
                     "description", "O servidor está sendo desligado agora. O servidor voltará online automaticamente após a reinicialização da VM.",
                     "color", 15158332,
+                    "timestamp", timestamp,
+                    "footer", Map.of(
+                        "text", "Apocalipse [BR] - Zomboid Server"
+                    )
+                )
+            )
+        );
+    }
+
+    private Map<String, Object> buildBootingMessage() {
+        String timestamp = ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT);
+        
+        return Map.of(
+            "embeds", List.of(
+                Map.of(
+                    "title", "🚀 Servidor Iniciado!",
+                    "description", "O servidor está iniciado! Estamos online em breve!",
+                    "color", 5763719,
                     "timestamp", timestamp,
                     "footer", Map.of(
                         "text", "Apocalipse [BR] - Zomboid Server"

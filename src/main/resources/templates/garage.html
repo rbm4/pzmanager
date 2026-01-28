@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Garagem - Apocalipse [BR]</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            margin-left: 280px;
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px;
+            background: rgba(255, 152, 0, 0.1);
+            border-radius: 10px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 152, 0, 0.3);
+        }
+
+        .header h1 {
+            background: linear-gradient(45deg, #ff9800, #ffb74d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 2.2rem;
+        }
+
+        .header-info {
+            text-align: right;
+        }
+
+        .header-label {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .header-value {
+            color: #ff9800;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .search-bar {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .search-form {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+        }
+
+        .search-btn {
+            padding: 12px 30px;
+            background: #ff9800;
+            border: none;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .search-btn:hover {
+            background: #f57c00;
+            transform: translateY(-2px);
+        }
+
+        .cars-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .car-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+        }
+
+        .car-card:hover {
+            transform: translateY(-8px);
+            border-color: #ff9800;
+            box-shadow: 0 15px 40px rgba(255, 152, 0, 0.25);
+        }
+
+        .car-image {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 30px;
+            text-align: center;
+            height: 220px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .car-icon {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+        }
+
+        .car-card:hover .car-icon {
+            transform: scale(1.05);
+        }
+
+        .car-body {
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .car-model {
+            color: #ff9800;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .car-name {
+            font-size: 1.4rem;
+            margin-bottom: 12px;
+            color: #fff;
+        }
+
+        .car-description {
+            color: #aaa;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 15px;
+            flex: 1;
+        }
+
+        .car-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .car-price {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .price-label {
+            color: #aaa;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+        }
+
+        .price-value {
+            color: #ffc107;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .price-currency {
+            font-size: 0.9rem;
+            margin-left: 5px;
+        }
+
+        .btn-view {
+            padding: 12px 24px;
+            background: linear-gradient(45deg, #ff9800, #ffb74d);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-view:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255, 152, 0, 0.4);
+        }
+
+        /* Modal for car image animation */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 15px;
+            padding: 40px;
+            max-width: 900px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            border: 2px solid rgba(255, 152, 0, 0.5);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 2rem;
+            color: #fff;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.1);
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 152, 0, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .modal-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .modal-car-name {
+            font-size: 2.5rem;
+            color: #ff9800;
+            margin-bottom: 10px;
+        }
+
+        .modal-car-model {
+            font-size: 1.2rem;
+            color: #aaa;
+        }
+
+        .carousel {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            margin-bottom: 30px;
+            overflow: hidden;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .carousel-images {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+            height: 100%;
+        }
+
+        .carousel-image {
+            min-width: 100%;
+            height: 100%;
+            object-fit: contain;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .carousel-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .carousel-btn {
+            background: rgba(255, 152, 0, 0.3);
+            border: 2px solid #ff9800;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .carousel-btn:hover {
+            background: #ff9800;
+            transform: scale(1.1);
+        }
+
+        .carousel-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 152, 0, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .indicator.active {
+            background: #ff9800;
+            transform: scale(1.3);
+        }
+
+        .modal-description {
+            color: #aaa;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .modal-price {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-price-value {
+            font-size: 3rem;
+            color: #ffc107;
+            font-weight: 700;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .btn-buy-modal {
+            padding: 15px 40px;
+            background: linear-gradient(45deg, #4caf50, #8bc34a);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-buy-modal:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 40px;
+            padding: 20px;
+        }
+
+        .pagination-btn {
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .pagination-btn:hover:not(.disabled) {
+            background: rgba(255, 152, 0, 0.3);
+            border-color: #ff9800;
+        }
+
+        .pagination-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-info {
+            color: #aaa;
+            margin: 0 10px;
+        }
+
+        .no-cars {
+            text-align: center;
+            padding: 80px 20px;
+            color: #aaa;
+        }
+
+        .no-cars h2 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin-left: 0;
+            }
+
+            body {
+                flex-direction: column;
+            }
+
+            .cars-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .carousel {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- Sidebar -->
+<div th:replace="~{sidebar-component :: sidebar}"></div>
+
+<div class="container">
+    <div class="header">
+        <h1>🚗 Garagem Apocalipse</h1>
+        <div class="header-info">
+            <div class="header-label">Saldo</div>
+            <div class="header-value" th:text="'0 ₳'">0 ₳</div>
+        </div>
+    </div>
+
+    <div class="search-bar">
+        <form class="search-form" method="get" action="/garage">
+            <input type="text" name="search" class="search-input" 
+                   placeholder="Buscar veículos por nome ou modelo..." 
+                   th:value="${search}">
+            <button type="submit" class="search-btn">🔍 Buscar</button>
+        </form>
+    </div>
+
+    <div class="cars-grid" th:if="${!#lists.isEmpty(cars)}">
+        <div th:each="car : ${cars}" class="car-card" th:onclick="'openCarModal(' + ${car.id} + ')'">
+            <div class="car-image">
+                <img th:src="${car.imageArray.length > 0 ? car.imageArray[0] : 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22150%22%3E%3Crect fill=%22%23444%22 width=%22200%22 height=%22150%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23888%22 font-size=%2240%22%3E🚗%3C/text%3E%3C/svg%3E'}" 
+                     class="car-icon" 
+                     th:alt="${car.name}">
+            </div>
+            <div class="car-body">
+                <div class="car-model" th:text="${car.model}">Modelo</div>
+                <h3 class="car-name" th:text="${car.name}">Nome do Carro</h3>
+                <p class="car-description" th:text="${car.description != null && !car.description.isEmpty() ? car.description : 'Veículo de alta qualidade para suas aventuras no apocalipse.'}">
+                    Veículo de alta qualidade para suas aventuras no apocalipse.
+                </p>
+                <div class="car-footer">
+                    <div class="car-price">
+                        <div class="price-label">Preço</div>
+                        <div class="price-value">
+                            <span th:text="${car.value}">0</span>
+                            <span class="price-currency">₳</span>
+                        </div>
+                    </div>
+                    <button class="btn-view" onclick="event.stopPropagation()">
+                        Ver Detalhes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="no-cars" th:if="${#lists.isEmpty(cars)}">
+        <h2>🚗 Nenhum veículo disponível</h2>
+        <p>Aguarde novas adições ao catálogo da garagem!</p>
+    </div>
+
+    <div th:if="${totalPages > 1}" class="pagination">
+        <a th:href="@{/garage(page=${currentPage > 0 ? currentPage - 1 : 0}, size=12, search=${search})}"
+           th:classappend="${currentPage == 0 ? 'disabled' : ''}"
+           class="pagination-btn">
+            ← Anterior
+        </a>
+        
+        <span class="pagination-info">
+            Página <span th:text="${currentPage + 1}">1</span> de <span th:text="${totalPages}">1</span>
+        </span>
+        
+        <a th:href="@{/garage(page=${currentPage < totalPages - 1 ? currentPage + 1 : currentPage}, size=12, search=${search})}"
+           th:classappend="${currentPage >= totalPages - 1 ? 'disabled' : ''}"
+           class="pagination-btn">
+            Próxima →
+        </a>
+    </div>
+</div>
+
+<!-- Modal -->
+<div id="carModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeCarModal()">&times;</span>
+        <div class="modal-header">
+            <h2 class="modal-car-name" id="modalCarName">Nome do Carro</h2>
+            <div class="modal-car-model" id="modalCarModel">Modelo</div>
+        </div>
+        
+        <div class="carousel">
+            <div class="carousel-images" id="carouselImages">
+                <!-- Images will be injected here -->
+            </div>
+        </div>
+        
+        <div class="carousel-controls">
+            <button class="carousel-btn" onclick="previousImage()">◀</button>
+            <button class="carousel-btn" onclick="nextImage()">▶</button>
+        </div>
+        
+        <div class="carousel-indicators" id="carouselIndicators">
+            <!-- Indicators will be injected here -->
+        </div>
+        
+        <div class="modal-description" id="modalDescription">
+            Descrição do veículo
+        </div>
+        
+        <div class="modal-price">
+            <div class="price-label">Preço</div>
+            <div class="modal-price-value">
+                <span id="modalPrice">0</span>
+                <span class="price-currency">₳</span>
+            </div>
+        </div>
+        
+        <div class="modal-actions">
+            <button class="btn-buy-modal" id="modalBuyBtn">🛒 Comprar Veículo</button>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const carsData = /*[[${cars}]]*/ [];
+    let currentCarIndex = 0;
+    let currentImageIndex = 0;
+    let currentCarImages = [];
+
+    function openCarModal(carId) {
+        const car = carsData.find(c => c.id === carId);
+        if (!car) return;
+
+        document.getElementById('modalCarName').textContent = car.name;
+        document.getElementById('modalCarModel').textContent = car.model;
+        document.getElementById('modalDescription').textContent = car.description || 'Veículo de alta qualidade para suas aventuras no apocalipse.';
+        document.getElementById('modalPrice').textContent = car.value;
+
+        // Parse images
+        currentCarImages = car.images ? car.images.split(',').map(img => img.trim()) : [];
+        if (currentCarImages.length === 0) {
+            currentCarImages = ['data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22800%22 height=%22400%22%3E%3Crect fill=%22%23444%22 width=%22800%22 height=%22400%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23888%22 font-size=%22100%22%3E🚗%3C/text%3E%3C/svg%3E'];
+        }
+
+        currentImageIndex = 0;
+        renderCarousel();
+        
+        document.getElementById('carModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeCarModal() {
+        document.getElementById('carModal').classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+
+    function renderCarousel() {
+        const carouselImages = document.getElementById('carouselImages');
+        const carouselIndicators = document.getElementById('carouselIndicators');
+        
+        carouselImages.innerHTML = '';
+        carouselIndicators.innerHTML = '';
+        
+        currentCarImages.forEach((imgSrc, index) => {
+            const img = document.createElement('img');
+            img.src = imgSrc;
+            img.classList.add('carousel-image');
+            img.alt = 'Car image ' + (index + 1);
+            carouselImages.appendChild(img);
+            
+            const indicator = document.createElement('div');
+            indicator.classList.add('indicator');
+            if (index === currentImageIndex) {
+                indicator.classList.add('active');
+            }
+            indicator.onclick = () => goToImage(index);
+            carouselIndicators.appendChild(indicator);
+        });
+        
+        updateCarousel();
+    }
+
+    function updateCarousel() {
+        const carouselImages = document.getElementById('carouselImages');
+        carouselImages.style.transform = `translateX(-${currentImageIndex * 100}%)`;
+        
+        const indicators = document.querySelectorAll('.indicator');
+        indicators.forEach((indicator, index) => {
+            indicator.classList.toggle('active', index === currentImageIndex);
+        });
+    }
+
+    function nextImage() {
+        currentImageIndex = (currentImageIndex + 1) % currentCarImages.length;
+        updateCarousel();
+    }
+
+    function previousImage() {
+        currentImageIndex = (currentImageIndex - 1 + currentCarImages.length) % currentCarImages.length;
+        updateCarousel();
+    }
+
+    function goToImage(index) {
+        currentImageIndex = index;
+        updateCarousel();
+    }
+
+    // Close modal on outside click
+    window.onclick = function(event) {
+        const modal = document.getElementById('carModal');
+        if (event.target === modal) {
+            closeCarModal();
+        }
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', function(event) {
+        const modal = document.getElementById('carModal');
+        if (modal.classList.contains('active')) {
+            if (event.key === 'Escape') {
+                closeCarModal();
+            } else if (event.key === 'ArrowLeft') {
+                previousImage();
+            } else if (event.key === 'ArrowRight') {
+                nextImage();
+            }
+        }
+    });
+    /*]]>*/
+</script>
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Veículo - Apocalipse [BR]</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            margin-left: 280px;
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .header {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            background: linear-gradient(45deg, #ff9800, #ffb74d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .form-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #aaa;
+            font-weight: 600;
+        }
+
+        .form-input,
+        .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #ff9800;
+        }
+
+        .form-hint {
+            font-size: 0.85rem;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox-input {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #ff9800;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #f57c00;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin-left: 0;
+            }
+
+            body {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- Sidebar -->
+<div th:replace="~{sidebar-component :: sidebar}"></div>
+
+<div class="container">
+    <div class="header">
+        <h1>✏️ Editar Veículo</h1>
+    </div>
+
+    <div class="form-card">
+        <form method="post" th:action="@{/garage/{id}/edit(id=${car.id})}">
+            <div class="form-group">
+                <label for="name" class="form-label">Nome do Veículo *</label>
+                <input type="text" id="name" name="name" class="form-input" required 
+                       th:value="${car.name}" placeholder="Ex: Carro de Luxo">
+            </div>
+
+            <div class="form-group">
+                <label for="model" class="form-label">Modelo *</label>
+                <input type="text" id="model" name="model" class="form-input" required 
+                       th:value="${car.model}" placeholder="Ex: Sedan 2024">
+            </div>
+
+            <div class="form-group">
+                <label for="value" class="form-label">Preço (₳) *</label>
+                <input type="number" id="value" name="value" class="form-input" required 
+                       min="0" th:value="${car.value}" placeholder="Ex: 50000">
+            </div>
+
+            <div class="form-group">
+                <label for="description" class="form-label">Descrição</label>
+                <textarea id="description" name="description" class="form-textarea" 
+                          th:text="${car.description}" placeholder="Descreva o veículo..."></textarea>
+                <div class="form-hint">Descrição que aparecerá na garagem</div>
+            </div>
+
+            <div class="form-group">
+                <label for="images" class="form-label">URLs das Imagens *</label>
+                <textarea id="images" name="images" class="form-textarea" required
+                          th:text="${car.images}" placeholder="https://exemplo.com/imagem1.jpg, https://exemplo.com/imagem2.jpg"></textarea>
+                <div class="form-hint">Separe as URLs das imagens por vírgulas. A primeira imagem será a principal.</div>
+            </div>
+
+            <div class="form-group">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="available" name="available" class="checkbox-input" 
+                           th:checked="${car.available}">
+                    <label for="available" class="form-label" style="margin: 0;">Disponível para venda</label>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                <a href="/garage/manage" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>
