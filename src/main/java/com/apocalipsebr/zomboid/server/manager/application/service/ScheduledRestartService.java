@@ -41,6 +41,13 @@ public class ScheduledRestartService {
     }
 
     @EventListener(ApplicationReadyEvent.class)
+    public void startupMessage() {
+        scheduler.schedule(() -> {
+            serverRestartService.bootSequence();
+        }, 150, TimeUnit.SECONDS);
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
     public void scheduleNextRestart() {
         if (!scheduledRestartEnabled) {
             logger.info("Scheduled automatic restart is disabled");
@@ -62,9 +69,6 @@ public class ScheduledRestartService {
             executeScheduledRestart();
         }, delayInSeconds, TimeUnit.SECONDS);
 
-        scheduler.schedule(() -> {
-            serverRestartService.bootSequence();
-        }, 60, TimeUnit.SECONDS);
     }
 
     public long calculateDelayUntilNextRestart() {

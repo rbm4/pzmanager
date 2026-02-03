@@ -12,8 +12,13 @@ public class ServerCommandService {
         this.commandExecutor = commandExecutor;
     }
 
-    public String sendCommand(String command) {
+    public void sendCommand(String command) {
         ServerCommand serverCommand = new ServerCommand(command);
-        return commandExecutor.execute(serverCommand);
+        commandExecutor.execute(serverCommand);
+    }
+
+    public String sendCommandResponse(String command) {
+        ServerCommand serverCommand = new ServerCommand(command);
+        return commandExecutor.executeResponse(serverCommand);
     }
 }

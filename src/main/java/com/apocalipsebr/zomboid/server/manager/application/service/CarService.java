@@ -59,7 +59,11 @@ public class CarService {
         
         car.setName(updatedCar.getName());
         car.setModel(updatedCar.getModel());
+        car.setVehicleScript(updatedCar.getVehicleScript());
         car.setValue(updatedCar.getValue());
+        car.setTrunkSize(updatedCar.getTrunkSize());
+        car.setSeats(updatedCar.getSeats());
+        car.setDoors(updatedCar.getDoors());
         car.setDescription(updatedCar.getDescription());
         car.setImages(updatedCar.getImages());
         car.setAvailable(updatedCar.getAvailable());

@@ -175,9 +175,37 @@
             </div>
 
             <div class="form-group">
+                <label for="vehicleScript" class="form-label">Script do Veículo *</label>
+                <input type="text" id="vehicleScript" name="vehicleScript" class="form-input" required 
+                       placeholder="Ex: Base.ATADodge">
+                <div class="form-hint">Script do veículo no jogo (ex: Base.ATADodge, Base.CarNormal)</div>
+            </div>
+
+            <div class="form-group">
                 <label for="value" class="form-label">Preço (₳) *</label>
                 <input type="number" id="value" name="value" class="form-input" required 
                        min="0" placeholder="Ex: 50000">
+            </div>
+
+            <div class="form-group">
+                <label for="trunkSize" class="form-label">Tamanho do Porta-Malas</label>
+                <input type="number" id="trunkSize" name="trunkSize" class="form-input" 
+                       min="0" placeholder="Ex: 50">
+                <div class="form-hint">Capacidade do porta-malas em unidades</div>
+            </div>
+
+            <div class="form-group">
+                <label for="seats" class="form-label">Número de Assentos</label>
+                <input type="number" id="seats" name="seats" class="form-input" 
+                       min="1" placeholder="Ex: 4">
+                <div class="form-hint">Quantidade de lugares no veículo</div>
+            </div>
+
+            <div class="form-group">
+                <label for="doors" class="form-label">Número de Portas</label>
+                <input type="number" id="doors" name="doors" class="form-input" 
+                       min="2" placeholder="Ex: 4">
+                <div class="form-hint">Quantidade de portas do veículo</div>
             </div>
 
             <div class="form-group">

@@ -30,7 +30,7 @@ public class ServerController {
     @PostMapping("/command")
     public ResponseEntity<Map<String, Object>> sendCommand(@RequestBody CommandRequest request) {
         try {
-            String result = serverCommandService.sendCommand(request.getCommand());
+            String result = serverCommandService.sendCommandResponse(request.getCommand());
             return ResponseEntity.ok(Map.of(
                 "success", true,
                 "command", request.getCommand(),

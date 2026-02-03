@@ -23,6 +23,6 @@ public interface CharacterRepository extends JpaRepository<Character, Long> {
     @Query("SELECT c FROM Character c JOIN FETCH c.user WHERE c.isDead = false ORDER BY c.zombieKills DESC LIMIT 10")
     List<Character> findTopActiveCharactersByKills();
     
-    @Query("SELECT c FROM Character c JOIN FETCH c.user WHERE c.isDead = false AND c.hoursSurvived IS NOT NULL ORDER BY c.hoursSurvived DESC LIMIT 10")
+    @Query("SELECT c FROM Character c JOIN FETCH c.user WHERE c.isDead = false AND c.hoursSurvived IS NOT NULL AND c.id IN (SELECT c2.id FROM Character c2 WHERE c2.isDead = false AND c2.hoursSurvived IS NOT NULL GROUP BY c2.playerName HAVING c2.zombieKills = MAX(c2.zombieKills)) ORDER BY c.hoursSurvived DESC LIMIT 10")
     List<Character> findTopActiveCharactersByHoursSurvived();
 }
