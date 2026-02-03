@@ -11,6 +11,7 @@ import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.flywaydb.core.Flyway;
 
 import javax.sql.DataSource;
 import java.io.File;
@@ -77,5 +78,14 @@ public class AppDataSourceConfig {
     public PlatformTransactionManager appTransactionManager(
             @Qualifier("appEntityManagerFactory") LocalContainerEntityManagerFactoryBean appEntityManagerFactory) {
         return new JpaTransactionManager(appEntityManagerFactory.getObject());
+    }
+
+    @Bean(name = "appFlyway")
+    public Flyway appFlyway(@Qualifier("appDataSource") DataSource dataSource) {
+        return Flyway.configure()
+                .dataSource(dataSource)
+                .locations("classpath:db/migration")
+                .baselineOnMigrate(true)
+                .load();
     }
 }
