@@ -2,24 +2,35 @@ package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
 import com.apocalipsebr.zomboid.server.manager.application.service.CarService;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Car;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
+import com.apocalipsebr.zomboid.server.manager.domain.repository.app.CharacterRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.servlet.http.HttpSession;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Controller
 @RequestMapping("/garage")
 public class CarWebController {
 
     private final CarService carService;
+    private final CharacterRepository characterRepository;
 
-    public CarWebController(CarService carService) {
+    public CarWebController(CarService carService,CharacterRepository repo) {
+        this.characterRepository = repo;
         this.carService = carService;
     }
 
@@ -151,6 +162,56 @@ public class CarWebController {
         } catch (Exception e) {
             redirectAttributes.addAttribute("error", "failed");
             return "redirect:/garage/manage";
+        }
+    }
+
+    // GET user's characters for purchase modal - AJAX endpoint
+    @GetMapping("/characters/list")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getUserCharacters(HttpSession session) {
+        Map<String, Object> response = new HashMap<>();
+        User user = (User) session.getAttribute("user");
+        try {
+            var characters = characterRepository.findByUserOrderByZombieKillsDesc(user);
+            response.put("success", true);
+            response.put("characters", characters);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Failed to load characters");
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+    // GET character online status - AJAX endpoint
+    @GetMapping("/characters/status")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getCharacterStatus(@RequestParam Long characterId) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            boolean isOnline = carService.getCharacterStatus(characterId);
+            response.put("success", true);
+            response.put("isOnline", isOnline);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Failed to get character status");
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+    // POST vehicle purchase - AJAX endpoint
+    @PostMapping("/purchase")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> purchaseVehicle(
+            @RequestParam Long carId,
+            @RequestParam Long characterId) {
+        var result = carService.purchaseVehicle(carId, characterId);
+        
+        if ((boolean) result.get("success")) {
+            return ResponseEntity.ok(result);
+        } else {
+            return ResponseEntity.status(400).body(result);
         }
     }
 }

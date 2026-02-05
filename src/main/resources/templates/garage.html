@@ -392,6 +392,35 @@
             text-align: center;
         }
 
+        .modal-specs {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .spec-item {
+            display: flex;
+            flex-direction: column;
+            border-left: 3px solid #ff9800;
+            padding-left: 12px;
+        }
+
+        .spec-label {
+            color: #aaa;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+        }
+
+        .spec-value {
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
         .modal-price {
             text-align: center;
             margin-bottom: 20px;
@@ -424,6 +453,187 @@
         .btn-buy-modal:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        /* Purchase Modal */
+        .purchase-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .purchase-modal.active {
+            display: flex;
+        }
+
+        .purchase-modal-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .purchase-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .purchase-modal-title {
+            font-size: 1.8rem;
+            color: #ff9800;
+        }
+
+        .purchase-modal-close {
+            font-size: 2rem;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.1);
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            border: none;
+            color: white;
+        }
+
+        .purchase-modal-close:hover {
+            background: rgba(255, 152, 0, 0.3);
+        }
+
+        .modal-alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .modal-alert.success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4caf50;
+            color: #4caf50;
+        }
+
+        .modal-alert.error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #f44336;
+            color: #f44336;
+        }
+
+        .vehicle-summary {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .vehicle-summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            color: #aaa;
+        }
+
+        .vehicle-summary-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .vehicle-summary-value {
+            color: #ff9800;
+            font-weight: 600;
+        }
+
+        .character-select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            margin-bottom: 15px;
+            font-size: 1rem;
+        }
+
+        .character-select option {
+            background: #16213e;
+            color: white;
+        }
+
+        .character-status {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .character-status.offline {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #f44336;
+            color: #f44336;
+            display: block;
+        }
+
+        .character-status.online {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4caf50;
+            color: #4caf50;
+            display: block;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-confirm {
+            flex: 1;
+            padding: 12px;
+            background: linear-gradient(45deg, #4caf50, #8bc34a);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-confirm:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-confirm:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-cancel {
+            flex: 1;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-cancel:hover {
+            background: rgba(255, 255, 255, 0.2);
         }
 
         .pagination {
@@ -594,6 +804,25 @@
             Descrição do veículo
         </div>
         
+        <div class="modal-specs">
+            <div class="spec-item">
+                <div class="spec-label">Script</div>
+                <div class="spec-value" id="modalVehicleScript">N/A</div>
+            </div>
+            <div class="spec-item">
+                <div class="spec-label">Assentos</div>
+                <div class="spec-value" id="modalSeats">N/A</div>
+            </div>
+            <div class="spec-item">
+                <div class="spec-label">Portas</div>
+                <div class="spec-value" id="modalDoors">N/A</div>
+            </div>
+            <div class="spec-item">
+                <div class="spec-label">Porta-malas</div>
+                <div class="spec-value" id="modalTrunkSize">N/A</div>
+            </div>
+        </div>
+        
         <div class="modal-price">
             <div class="price-label">Preço</div>
             <div class="modal-price-value">
@@ -608,12 +837,51 @@
     </div>
 </div>
 
+<!-- Purchase Modal -->
+<div id="purchaseModal" class="purchase-modal">
+    <div class="purchase-modal-content">
+        <div class="purchase-modal-header">
+            <h3 class="purchase-modal-title">🛒 Confirmar Compra</h3>
+            <button class="purchase-modal-close" onclick="closePurchaseModal()">&times;</button>
+        </div>
+        
+        <div id="modalAlert" class="modal-alert"></div>
+        
+        <div class="vehicle-summary">
+            <div class="vehicle-summary-item">
+                <span>Veículo:</span>
+                <span class="vehicle-summary-value" id="summaryVehicleName">-</span>
+            </div>
+            <div class="vehicle-summary-item">
+                <span>Preço:</span>
+                <span class="vehicle-summary-value" id="summaryVehiclePrice">0 ₳</span>
+            </div>
+        </div>
+        
+        <div>
+            <label style="color: #aaa; display: block; margin-bottom: 8px;">Selecione o Personagem:</label>
+            <select id="characterSelect" class="character-select">
+                <option value="">-- Carregando personagens --</option>
+            </select>
+        </div>
+        
+        <div id="characterStatus" class="character-status"></div>
+        
+        <div class="modal-actions">
+            <button class="btn-confirm" onclick="confirmVehiclePurchase()">✓ Confirmar</button>
+            <button class="btn-cancel" onclick="closePurchaseModal()">✕ Cancelar</button>
+        </div>
+    </div>
+</div>
+
 <script th:inline="javascript">
     /*<![CDATA[*/
     const carsData = /*[[${cars}]]*/ [];
     let currentCarIndex = 0;
     let currentImageIndex = 0;
     let currentCarImages = [];
+    let selectedCarId = null;
+    let statusUpdateInterval = null;
 
     function openCarModal(carId) {
         const car = carsData.find(c => c.id === carId);
@@ -623,6 +891,12 @@
         document.getElementById('modalCarModel').textContent = car.model;
         document.getElementById('modalDescription').textContent = car.description || 'Veículo de alta qualidade para suas aventuras no apocalipse.';
         document.getElementById('modalPrice').textContent = car.value;
+        
+        // Display vehicle specs
+        document.getElementById('modalVehicleScript').textContent = car.vehicleScript || 'N/A';
+        document.getElementById('modalSeats').textContent = car.seats || 'N/A';
+        document.getElementById('modalDoors').textContent = car.doors || 'N/A';
+        document.getElementById('modalTrunkSize').textContent = car.trunkSize || 'N/A';
 
         // Parse images
         currentCarImages = car.images ? car.images.split(',').map(img => img.trim()) : [];
@@ -632,6 +906,9 @@
 
         currentImageIndex = 0;
         renderCarousel();
+        
+        // Setup buy button
+        selectedCarId = carId;
         
         document.getElementById('carModal').classList.add('active');
         document.body.style.overflow = 'hidden';
@@ -712,6 +989,143 @@
             } else if (event.key === 'ArrowRight') {
                 nextImage();
             }
+        }
+    });
+    
+    // Buy button click handler
+    document.addEventListener('DOMContentLoaded', function() {
+        const buyBtn = document.getElementById('modalBuyBtn');
+        if (buyBtn) {
+            buyBtn.addEventListener('click', function() {
+                openPurchaseModal();
+            });
+        }
+    });
+    
+    function openPurchaseModal() {
+        const car = carsData.find(c => c.id === selectedCarId);
+        if (!car) return;
+        
+        document.getElementById('summaryVehicleName').textContent = car.name;
+        document.getElementById('summaryVehiclePrice').textContent = car.value + ' ₳';
+        document.getElementById('characterSelect').value = '';
+        document.getElementById('modalAlert').style.display = 'none';
+        
+        document.getElementById('purchaseModal').classList.add('active');
+        loadCharactersList();
+        startStatusPolling();
+    }
+    
+    function closePurchaseModal() {
+        document.getElementById('purchaseModal').classList.remove('active');
+        stopStatusPolling();
+    }
+    
+    function loadCharactersList() {
+        fetch('/garage/characters/list')
+            .then(response => response.json())
+            .then(data => {
+                const select = document.getElementById('characterSelect');
+                select.innerHTML = '<option value="">-- Selecione um personagem --</option>';
+                if (data.characters && data.characters.length > 0) {
+                    data.characters.forEach(char => {
+                        const option = document.createElement('option');
+                        option.value = char.id;
+                        option.textContent = char.playerName + ' (' + char.serverName + ')';
+                        select.appendChild(option);
+                    });
+                    select.addEventListener('change', updateCharacterStatus);
+                } else {
+                    select.innerHTML = '<option value="">Nenhum personagem encontrado</option>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading characters:', error);
+                document.getElementById('characterSelect').innerHTML = '<option value="">Erro ao carregar personagens</option>';
+            });
+    }
+    
+    function startStatusPolling() {
+        updateCharacterStatus();
+        statusUpdateInterval = setInterval(updateCharacterStatus, 30000);
+    }
+    
+    function stopStatusPolling() {
+        if (statusUpdateInterval) {
+            clearInterval(statusUpdateInterval);
+            statusUpdateInterval = null;
+        }
+    }
+    
+    async function updateCharacterStatus() {
+        const characterId = document.getElementById('characterSelect').value;
+        if (!characterId) {
+            document.getElementById('characterStatus').style.display = 'none';
+            return;
+        }
+        
+        try {
+            const response = await fetch('/garage/characters/status?characterId=' + characterId);
+            const result = await response.json();
+            const statusDiv = document.getElementById('characterStatus');
+            
+            if (result.isOnline) {
+                statusDiv.className = 'character-status online';
+                statusDiv.textContent = '✓ Personagem online';
+            } else {
+                statusDiv.className = 'character-status offline';
+                statusDiv.textContent = '✗ Personagem offline - Veículo será entregue quando o jogador se conectar';
+            }
+        } catch (error) {
+            console.error('Error checking character status:', error);
+        }
+    }
+    
+    async function confirmVehiclePurchase() {
+        const characterId = document.getElementById('characterSelect').value;
+        
+        if (!characterId) {
+            showPurchaseAlert('Por favor, selecione um personagem', 'error');
+            return;
+        }
+        
+        const car = carsData.find(c => c.id === selectedCarId);
+        if (!car) return;
+        
+        try {
+            const response = await fetch('/garage/purchase', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: 'carId=' + selectedCarId + '&characterId=' + characterId
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showPurchaseAlert('✓ Compra realizada com sucesso! Veículo entregue ao personagem.', 'success');
+                setTimeout(() => {
+                    closePurchaseModal();
+                    closeCarModal();
+                }, 2000);
+            } else {
+                showPurchaseAlert('✗ Erro: ' + result.message, 'error');
+            }
+        } catch (error) {
+            showPurchaseAlert('✗ Erro ao processar compra: ' + error.message, 'error');
+        }
+    }
+    
+    function showPurchaseAlert(message, type) {
+        const alert = document.getElementById('modalAlert');
+        alert.textContent = message;
+        alert.className = 'modal-alert ' + type;
+        alert.style.display = 'block';
+    }
+    
+    // Close purchase modal on outside click
+    document.getElementById('purchaseModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closePurchaseModal();
         }
     });
     /*]]>*/

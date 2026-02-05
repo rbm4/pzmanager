@@ -1,13 +1,22 @@
 package com.apocalipsebr.zomboid.server.manager.application.service;
 
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Car;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Character;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.CarRepository;
+import com.apocalipsebr.zomboid.server.manager.domain.repository.app.CharacterRepository;
+import com.apocalipsebr.zomboid.server.manager.domain.repository.app.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -17,9 +26,18 @@ public class CarService {
     private static final Logger logger = Logger.getLogger(CarService.class.getName());
     
     private final CarRepository carRepository;
+    private final CharacterRepository characterRepository;
+    private final UserRepository userRepository;
+    private final ServerCommandService serverCommandService;
 
-    public CarService(CarRepository carRepository) {
+    public CarService(CarRepository carRepository, 
+                     CharacterRepository characterRepository,
+                     UserRepository userRepository,
+                     ServerCommandService serverCommandService) {
         this.carRepository = carRepository;
+        this.characterRepository = characterRepository;
+        this.userRepository = userRepository;
+        this.serverCommandService = serverCommandService;
     }
 
     @Transactional
@@ -94,5 +112,133 @@ public class CarService {
 
     public long getAvailableCarCount() {
         return carRepository.findByAvailableTrue().size();
+    }
+
+    /**
+     * Get all characters for the currently authenticated user
+     * @param user 
+     */
+    public List<Character> getUserCharacters(User user) {
+        if (user == null) {
+            return List.of();
+        }
+        return characterRepository.findByUserOrderByZombieKillsDesc(user);
+    }
+
+    /**
+     * Check if a character is currently online (last update within 5 minutes)
+     */
+    public boolean getCharacterStatus(Long characterId) {
+        Optional<Character> character = characterRepository.findById(characterId);
+        
+        if (character.isEmpty()) {
+            return false;
+        }
+        
+        LocalDateTime lastUpdate = character.get().getLastUpdate();
+        if (lastUpdate == null) {
+            return false;
+        }
+        
+        // Character is online if they updated within last 1 minutes
+        return lastUpdate.isAfter(LocalDateTime.now().minusMinutes(1));
+    }
+
+    /**
+     * Process vehicle purchase: deduct points and spawn vehicle for player
+     */
+    @Transactional
+    public Map<String, Object> purchaseVehicle(Long carId, Long characterId) {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // Get current user
+            User user = getCurrentUser();
+            if (user == null) {
+                result.put("success", false);
+                result.put("message", "User not authenticated");
+                return result;
+            }
+            
+            // Get the car being purchased
+            Car car = carRepository.findById(carId)
+                .orElseThrow(() -> new IllegalArgumentException("Car not found"));
+            
+            // Get the target character
+            Character targetCharacter = characterRepository.findById(characterId)
+                .orElseThrow(() -> new IllegalArgumentException("Character not found"));
+            
+            // Verify the character belongs to the user
+            if (!targetCharacter.getUser().getId().equals(user.getId())) {
+                result.put("success", false);
+                result.put("message", "This character does not belong to you");
+                return result;
+            }
+            
+            // Check if character has enough currency points
+            Integer characterPoints = targetCharacter.getCurrencyPoints() != null ? 
+                targetCharacter.getCurrencyPoints() : 0;
+            
+            if (characterPoints < car.getValue()) {
+                result.put("success", false);
+                result.put("message", "Insufficient currency points. You have " + characterPoints + 
+                          " ₳ but need " + car.getValue() + " ₳");
+                return result;
+            }
+            
+            // Deduct points from character
+            int newPoints = characterPoints - car.getValue();
+            targetCharacter.setCurrencyPoints(newPoints);
+            characterRepository.save(targetCharacter);
+            logger.info("Deducted " + car.getValue() + " ₳ from character: " + targetCharacter.getPlayerName());
+            
+            // Execute server command to spawn vehicle
+            String vehicleCommand = String.format("addVehicle \"%s\" \"%s\"", 
+                targetCharacter.getPlayerName(), car.getVehicleScript());
+            
+            try {
+                serverCommandService.sendCommand(vehicleCommand);
+                logger.info("Spawned vehicle " + car.getName() + " (" + car.getVehicleScript() + 
+                           ") for player: " + targetCharacter.getPlayerName());
+            } catch (Exception e) {
+                logger.warning("Failed to spawn vehicle via RCon: " + e.getMessage());
+                // Vehicle will be spawned when player reconnects
+            }
+            
+            result.put("success", true);
+            result.put("message", "Vehicle purchase successful! The vehicle has been spawned for " + 
+                      targetCharacter.getPlayerName());
+            result.put("newPoints", newPoints);
+            result.put("pointsDeducted", car.getValue());
+            
+        } catch (IllegalArgumentException e) {
+            result.put("success", false);
+            result.put("message", e.getMessage());
+        } catch (Exception e) {
+            logger.severe("Error during vehicle purchase: " + e.getMessage());
+            result.put("success", false);
+            result.put("message", "An error occurred during purchase. Please try again.");
+        }
+        
+        return result;
+    }
+
+    /**
+     * Get the currently authenticated user from Spring Security context
+     */
+    private User getCurrentUser() {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return null;
+            }
+            
+            String username = authentication.getName();
+            Optional<User> user = userRepository.findByUsername(username);
+            return user.orElse(null);
+        } catch (Exception e) {
+            logger.warning("Error getting current user: " + e.getMessage());
+            return null;
+        }
     }
 }
