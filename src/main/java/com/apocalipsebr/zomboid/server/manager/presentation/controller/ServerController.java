@@ -3,13 +3,20 @@ package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 import com.apocalipsebr.zomboid.server.manager.application.service.ServerCommandService;
 import com.apocalipsebr.zomboid.server.manager.application.service.ServerRestartService;
 import com.apocalipsebr.zomboid.server.manager.application.service.ScheduledRestartService;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Character;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
+import com.apocalipsebr.zomboid.server.manager.domain.repository.app.CharacterRepository;
+import com.apocalipsebr.zomboid.server.manager.domain.repository.app.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/server")
@@ -17,13 +24,19 @@ public class ServerController {
     private final ServerCommandService serverCommandService;
     private final ServerRestartService serverRestartService;
     private final ScheduledRestartService scheduledRestartService;
+    private final CharacterRepository characterRepository;
+    private final UserRepository userRepository;
 
     public ServerController(ServerCommandService serverCommandService, 
                           ServerRestartService serverRestartService,
-                          ScheduledRestartService scheduledRestartService) {
+                          ScheduledRestartService scheduledRestartService,
+                          CharacterRepository characterRepository,
+                          UserRepository userRepository) {
         this.serverCommandService = serverCommandService;
         this.serverRestartService = serverRestartService;
         this.scheduledRestartService = scheduledRestartService;
+        this.characterRepository = characterRepository;
+        this.userRepository = userRepository;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -97,6 +110,58 @@ public class ServerController {
         ));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/add-currency")
+    public ResponseEntity<Map<String, Object>> addCurrency(@RequestBody AddCurrencyRequest request) {
+        try {
+            // Find user by username
+            Optional<User> userOpt = userRepository.findByUsername(request.getUsername());
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of(
+                        "success", false,
+                        "message", "Usuário não encontrado: " + request.getUsername()
+                    ));
+            }
+
+            User user = userOpt.get();
+            List<Character> userCharacters = characterRepository.findByUserOrderByZombieKillsDesc(user);
+            
+            if (userCharacters.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of(
+                        "success", false,
+                        "message", "Nenhum personagem encontrado para o usuário: " + request.getUsername()
+                    ));
+            }
+
+            // Get character with most zombie kills (already ordered by kills desc)
+            Character topCharacter = userCharacters.get(0);
+            
+            // Add currency
+            int currentCurrency = topCharacter.getCurrencyPoints() != null ? topCharacter.getCurrencyPoints() : 0;
+            int newCurrency = currentCurrency + request.getAmount();
+            topCharacter.setCurrencyPoints(newCurrency);
+            characterRepository.save(topCharacter);
+
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Moeda adicionada com sucesso!",
+                "character", topCharacter.getPlayerName(),
+                "zombieKills", topCharacter.getZombieKills(),
+                "previousCurrency", currentCurrency,
+                "addedAmount", request.getAmount(),
+                "newCurrency", newCurrency
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of(
+                    "success", false,
+                    "message", "Erro ao adicionar moeda: " + e.getMessage()
+                ));
+        }
+    }
+
     public static class RestartRequest {
         private String password;
 
@@ -132,6 +197,35 @@ public class ServerController {
 
         public void setCommand(String command) {
             this.command = command;
+        }
+    }
+
+    public static class AddCurrencyRequest {
+        private String username;
+        private int amount;
+
+        public AddCurrencyRequest() {
+        }
+
+        public AddCurrencyRequest(String username, int amount) {
+            this.username = username;
+            this.amount = amount;
+        }
+
+        public String getUsername() {
+            return username;
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
+        }
+
+        public int getAmount() {
+            return amount;
+        }
+
+        public void setAmount(int amount) {
+            this.amount = amount;
         }
     }
 }

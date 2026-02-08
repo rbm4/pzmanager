@@ -336,6 +336,26 @@
                     <button type="submit" class="btn btn-success">Give Item</button>
                 </form>
             </div>
+
+            <!-- Add Currency Card -->
+            <div class="card">
+                <h2>💰 Add Currency</h2>
+                <div id="currency-alert" class="alert"></div>
+                <form onsubmit="addCurrency(event)">
+                    <div class="form-group">
+                        <label for="currency-username">Username</label>
+                        <input type="text" id="currency-username" placeholder="Enter username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="currency-amount">Amount (₳)</label>
+                        <input type="number" id="currency-amount" min="1" value="1000" required>
+                    </div>
+                    <div style="padding: 12px; border-radius: 8px; margin-bottom: 15px; background: rgba(79, 172, 254, 0.1); border: 1px solid rgba(79, 172, 254, 0.3); color: #4facfe; font-size: 0.85rem;">
+                        ℹ️ Currency will be added to the character with the most zombie kills.
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Currency</button>
+                </form>
+            </div>
         </div>
 
         <!-- Import Items Card (Full Width) -->
@@ -526,6 +546,44 @@
                 }
             } catch (error) {
                 showAlert('item-alert', 'Error: ' + error.message, 'error');
+            }
+        }
+
+        async function addCurrency(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('currency-username').value;
+            const amount = parseInt(document.getElementById('currency-amount').value);
+
+            try {
+                const response = await fetch(`${API_BASE}/add-currency`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        username: username,
+                        amount: amount
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    showAlert('currency-alert', 
+                        `✅ ${result.message}\n` +
+                        `Personagem: ${result.character}\n` +
+                        `Zombie Kills: ${result.zombieKills}\n` +
+                        `Moeda anterior: ${result.previousCurrency} ₳\n` +
+                        `Moeda adicionada: +${result.addedAmount} ₳\n` +
+                        `Nova moeda: ${result.newCurrency} ₳`, 
+                        'success');
+                    event.target.reset();
+                } else {
+                    showAlert('currency-alert', result.message || 'Failed to add currency', 'error');
+                }
+            } catch (error) {
+                showAlert('currency-alert', 'Error: ' + error.message, 'error');
             }
         }
 
