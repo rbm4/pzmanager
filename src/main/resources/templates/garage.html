@@ -709,8 +709,8 @@
     <div class="header">
         <h1>🚗 Garagem Apocalipse</h1>
         <div class="header-info">
-            <div class="header-label">Saldo</div>
-            <div class="header-value" th:text="'0 ₳'">0 ₳</div>
+            <div class="header-label">Saldo Total</div>
+            <div class="header-value" id="headerBalance" style="color: #ffc107;" th:text="${totalCurrency != null ? totalCurrency + ' ₳' : '0 ₳'}">0 ₳</div>
         </div>
     </div>
 
@@ -856,20 +856,29 @@
                 <span>Preço:</span>
                 <span class="vehicle-summary-value" id="summaryVehiclePrice">0 ₳</span>
             </div>
+            <div class="vehicle-summary-item">
+                <span>Seu Saldo:</span>
+                <span class="vehicle-summary-value" id="summaryUserBalance" style="color: #4caf50;">0 ₳</span>
+            </div>
+        </div>
+
+        <div style="padding: 12px; border-radius: 8px; margin-bottom: 15px; background: rgba(255, 152, 0, 0.15); border: 1px solid rgba(255, 152, 0, 0.5); color: #ffb74d; font-size: 0.9rem; line-height: 1.5;">
+            ⚠️ <strong>Atenção:</strong> O personagem deve estar <strong>online</strong>, <strong>fora de edifícios</strong> e com <strong>espaço livre ao redor</strong> para que o veículo seja entregue corretamente.
         </div>
         
-        <div>
-            <label style="color: #aaa; display: block; margin-bottom: 8px;">Selecione o Personagem:</label>
+        <div style="margin-bottom: 15px;">
+            <label style="color: #aaa; display: block; margin-bottom: 8px;">Selecione o Personagem para Receber o Veículo:</label>
             <select id="characterSelect" class="character-select">
                 <option value="">-- Carregando personagens --</option>
             </select>
+            <div style="font-size: 0.85rem; color: #888; margin-top: 5px;">⚠️ O personagem deve estar online para receber o veículo</div>
         </div>
         
         <div id="characterStatus" class="character-status"></div>
         
         <div class="modal-actions">
-            <button class="btn-confirm" onclick="confirmVehiclePurchase()">✓ Confirmar</button>
             <button class="btn-cancel" onclick="closePurchaseModal()">✕ Cancelar</button>
+            <button class="btn-confirm" id="btnConfirmPurchase" onclick="confirmVehiclePurchase()">✓ Confirmar Compra</button>
         </div>
     </div>
 </div>
@@ -882,6 +891,7 @@
     let currentCarImages = [];
     let selectedCarId = null;
     let statusUpdateInterval = null;
+    let totalCurrency = /*[[${totalCurrency}]]*/ 0;
 
     function openCarModal(carId) {
         const car = carsData.find(c => c.id === carId);
@@ -990,6 +1000,10 @@
                 nextImage();
             }
         }
+        const purchaseModal = document.getElementById('purchaseModal');
+        if (purchaseModal.classList.contains('active') && event.key === 'Escape') {
+            closePurchaseModal();
+        }
     });
     
     // Buy button click handler
@@ -1008,8 +1022,9 @@
         
         document.getElementById('summaryVehicleName').textContent = car.name;
         document.getElementById('summaryVehiclePrice').textContent = car.value + ' ₳';
-        document.getElementById('characterSelect').value = '';
+        document.getElementById('summaryUserBalance').textContent = totalCurrency + ' ₳';
         document.getElementById('modalAlert').style.display = 'none';
+        document.getElementById('characterStatus').style.display = 'none';
         
         document.getElementById('purchaseModal').classList.add('active');
         loadCharactersList();
@@ -1022,32 +1037,16 @@
     }
     
     function loadCharactersList() {
-        fetch('/garage/characters/list')
-            .then(response => response.json())
-            .then(data => {
-                const select = document.getElementById('characterSelect');
-                select.innerHTML = '<option value="">-- Selecione um personagem --</option>';
-                if (data.characters && data.characters.length > 0) {
-                    data.characters.forEach(char => {
-                        const option = document.createElement('option');
-                        option.value = char.id;
-                        option.textContent = char.playerName + ' (' + char.serverName + ')';
-                        select.appendChild(option);
-                    });
-                    select.addEventListener('change', updateCharacterStatus);
-                } else {
-                    select.innerHTML = '<option value="">Nenhum personagem encontrado</option>';
-                }
-            })
-            .catch(error => {
-                console.error('Error loading characters:', error);
-                document.getElementById('characterSelect').innerHTML = '<option value="">Erro ao carregar personagens</option>';
-            });
+        // Initial load via polling endpoint
+        updateCharacterStatuses();
     }
     
     function startStatusPolling() {
-        updateCharacterStatus();
-        statusUpdateInterval = setInterval(updateCharacterStatus, 30000);
+        // Update immediately when modal opens
+        updateCharacterStatuses();
+        
+        // Then update every 30 seconds while modal is open
+        statusUpdateInterval = setInterval(updateCharacterStatuses, 30000);
     }
     
     function stopStatusPolling() {
@@ -1057,40 +1056,108 @@
         }
     }
     
-    async function updateCharacterStatus() {
+    async function updateCharacterStatuses() {
+        try {
+            const response = await fetch('/garage/characters/statuses');
+            const result = await response.json();
+            
+            if (result.success) {
+                totalCurrency = result.totalCurrency;
+                
+                // Update the balance display in header
+                document.getElementById('headerBalance').textContent = result.totalCurrency + ' ₳';
+                
+                // Update balance in purchase modal
+                const balanceEl = document.getElementById('summaryUserBalance');
+                if (balanceEl) {
+                    balanceEl.textContent = result.totalCurrency + ' ₳';
+                }
+                
+                // Update character select options
+                const characterSelect = document.getElementById('characterSelect');
+                const currentValue = characterSelect.value;
+                
+                // Clear existing options except the first (placeholder)
+                characterSelect.innerHTML = '<option value="" style="background: #16213e; color: #aaa;">-- Escolha um personagem --</option>';
+                
+                // Add updated character options
+                if (result.characters && result.characters.length > 0) {
+                    result.characters.forEach(char => {
+                        const option = document.createElement('option');
+                        option.value = char.id;
+                        option.textContent = char.playerName + ' (' + char.currencyPoints + ' ₳) - ' + (char.isOnline ? 'Online' : 'Offline');
+                        option.disabled = !char.isOnline;
+                        option.style.background = '#16213e';
+                        option.style.color = char.isOnline ? '#4caf50' : '#666';
+                        characterSelect.appendChild(option);
+                    });
+                } else {
+                    characterSelect.innerHTML = '<option value="" style="background: #16213e; color: #f44336;">Nenhum personagem encontrado</option>';
+                }
+                
+                // Restore selected value if it still exists and is online
+                if (currentValue) {
+                    const stillExists = Array.from(characterSelect.options).find(o => o.value === currentValue && !o.disabled);
+                    if (stillExists) {
+                        characterSelect.value = currentValue;
+                    }
+                }
+                
+                // Update status display for selected character
+                updateSelectedCharacterStatus(result.characters);
+            }
+        } catch (error) {
+            console.error('Falha ao atualizar status dos personagens:', error);
+        }
+    }
+    
+    function updateSelectedCharacterStatus(characters) {
         const characterId = document.getElementById('characterSelect').value;
-        if (!characterId) {
-            document.getElementById('characterStatus').style.display = 'none';
+        const statusDiv = document.getElementById('characterStatus');
+        
+        if (!characterId || !characters) {
+            statusDiv.style.display = 'none';
             return;
         }
         
-        try {
-            const response = await fetch('/garage/characters/status?characterId=' + characterId);
-            const result = await response.json();
-            const statusDiv = document.getElementById('characterStatus');
-            
-            if (result.isOnline) {
+        const char = characters.find(c => c.id == characterId);
+        if (char) {
+            if (char.isOnline) {
                 statusDiv.className = 'character-status online';
-                statusDiv.textContent = '✓ Personagem online';
+                statusDiv.textContent = '✓ Personagem online - pronto para receber o veículo';
             } else {
                 statusDiv.className = 'character-status offline';
-                statusDiv.textContent = '✗ Personagem offline - Veículo será entregue quando o jogador se conectar';
+                statusDiv.textContent = '✗ Personagem offline - o personagem precisa estar online para receber o veículo';
             }
-        } catch (error) {
-            console.error('Error checking character status:', error);
         }
     }
+    
+    // Update status when character selection changes
+    document.getElementById('characterSelect').addEventListener('change', function() {
+        updateCharacterStatuses();
+    });
     
     async function confirmVehiclePurchase() {
         const characterId = document.getElementById('characterSelect').value;
         
         if (!characterId) {
-            showPurchaseAlert('Por favor, selecione um personagem', 'error');
+            showPurchaseAlert('Por favor, selecione um personagem para receber o veículo', 'error');
             return;
         }
         
         const car = carsData.find(c => c.id === selectedCarId);
         if (!car) return;
+        
+        // Client-side balance check
+        if (car.value > totalCurrency) {
+            showPurchaseAlert('Moeda insuficiente. Você precisa de ' + car.value + ' ₳ mas só tem ' + totalCurrency + ' ₳', 'error');
+            return;
+        }
+        
+        // Disable button to prevent double-click
+        const confirmBtn = document.getElementById('btnConfirmPurchase');
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = '⏳ Processando...';
         
         try {
             const response = await fetch('/garage/purchase', {
@@ -1102,16 +1169,29 @@
             const result = await response.json();
             
             if (result.success) {
-                showPurchaseAlert('✓ Compra realizada com sucesso! Veículo entregue ao personagem.', 'success');
+                showPurchaseAlert('✅ ' + result.message, 'success');
+                
+                // Update balance
+                if (result.newPoints !== undefined) {
+                    totalCurrency = totalCurrency - result.pointsDeducted;
+                    document.getElementById('headerBalance').textContent = totalCurrency + ' ₳';
+                    document.getElementById('summaryUserBalance').textContent = totalCurrency + ' ₳';
+                }
+                
                 setTimeout(() => {
                     closePurchaseModal();
                     closeCarModal();
-                }, 2000);
+                    window.location.reload();
+                }, 3000);
             } else {
-                showPurchaseAlert('✗ Erro: ' + result.message, 'error');
+                showPurchaseAlert('❌ ' + result.message, 'error');
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = '✓ Confirmar Compra';
             }
         } catch (error) {
-            showPurchaseAlert('✗ Erro ao processar compra: ' + error.message, 'error');
+            showPurchaseAlert('❌ Erro ao processar compra: ' + error.message, 'error');
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = '✓ Confirmar Compra';
         }
     }
     

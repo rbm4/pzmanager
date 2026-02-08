@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciamento de Sandbox - Apocalipse [BR]</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            margin-left: 280px;
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header h1 {
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-info {
+            display: flex;
+            gap: 30px;
+            font-size: 0.9rem;
+        }
+
+        .info-stat {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-stat .label {
+            color: #aaa;
+        }
+
+        .info-stat .value {
+            font-weight: 600;
+            color: #4facfe;
+        }
+
+        .controls-section {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+        }
+
+        .search-box input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #4facfe;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .category-filter {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .category-btn {
+            padding: 10px 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .category-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .category-btn.active {
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            border-color: #4facfe;
+            color: white;
+        }
+
+        .properties-grid {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        }
+
+        .property-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .property-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(79, 172, 254, 0.5);
+            box-shadow: 0 6px 20px rgba(79, 172, 254, 0.2);
+        }
+
+        .property-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .property-key {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #4facfe;
+            word-break: break-word;
+            flex: 1;
+        }
+
+        .property-category {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            background: rgba(79, 172, 254, 0.2);
+            border: 1px solid rgba(79, 172, 254, 0.5);
+            color: #4facfe;
+            margin-left: 10px;
+            white-space: nowrap;
+        }
+
+        .property-description {
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .property-info {
+            display: grid;
+            gap: 8px;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .info-label {
+            color: #aaa;
+        }
+
+        .info-value {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .info-value.current {
+            color: #4facfe;
+        }
+
+        .info-value.default {
+            color: #38ef7d;
+        }
+
+        .property-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .property-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 0.9rem;
+        }
+
+        .property-input:focus {
+            outline: none;
+            border-color: #4facfe;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .property-input[type="checkbox"] {
+            width: auto;
+            cursor: pointer;
+        }
+
+        .btn-update {
+            padding: 10px 20px;
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .btn-update:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-update:active {
+            transform: translateY(0);
+        }
+
+        .btn-reset {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            color: #aaa;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .btn-reset:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        .alert-success {
+            background: rgba(56, 239, 125, 0.2);
+            border: 1px solid rgba(56, 239, 125, 0.5);
+            color: #38ef7d;
+        }
+
+        .alert-error {
+            background: rgba(255, 107, 107, 0.2);
+            border: 1px solid rgba(255, 107, 107, 0.5);
+            color: #ff6b6b;
+        }
+
+        .alert-info {
+            background: rgba(79, 172, 254, 0.2);
+            border: 1px solid rgba(79, 172, 254, 0.5);
+            color: #4facfe;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #aaa;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: #4facfe;
+        }
+
+        .spinner {
+            border: 3px solid rgba(79, 172, 254, 0.2);
+            border-top: 3px solid #4facfe;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 0.8s linear infinite;
+            margin-right: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .property-status {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 8px;
+        }
+
+        .property-status.saving {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+
+        .property-status.saved {
+            background: rgba(56, 239, 125, 0.2);
+            color: #38ef7d;
+        }
+
+        .property-status.error {
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+        }
+
+        @media (max-width: 1024px) {
+            .properties-grid {
+                grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin-left: 0;
+                padding: 15px;
+            }
+
+            .properties-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header-info {
+                flex-direction: column;
+                gap: 15px;
+                font-size: 0.85rem;
+            }
+
+            .controls-section {
+                flex-direction: column;
+            }
+
+            .search-box {
+                min-width: 100%;
+            }
+
+            .category-filter {
+                width: 100%;
+            }
+
+            .property-card {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- Sidebar -->
+<div th:replace="~{sidebar-component :: sidebar}"></div>
+
+<div class="container">
+    <!-- Alerts -->
+    <div id="successAlert" class="alert alert-success"></div>
+    <div id="errorAlert" class="alert alert-error"></div>
+    <div id="infoAlert" class="alert alert-info"></div>
+
+    <!-- Header -->
+    <div class="header">
+        <h1>⚙️ Gerenciamento de Propriedades Sandbox</h1>
+        <div class="header-info">
+            <div class="info-stat">
+                <span class="label">Total de Propriedades:</span>
+                <span class="value" th:text="${totalProperties}">0</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls-section">
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="🔍 Buscar propriedades..." autocomplete="off">
+        </div>
+    </div>
+
+    <!-- Category Filter -->
+    <div class="category-filter" id="categoryFilter">
+        <button class="category-btn active" data-category="all">📋 Todas</button>
+    </div>
+
+    <!-- Properties Grid -->
+    <div id="loadingIndicator" class="loading" style="display: none;">
+        <div class="spinner"></div>
+        <span>Carregando propriedades...</span>
+    </div>
+
+    <div id="propertiesContainer" class="properties-grid">
+        <!-- Properties will be rendered here by JavaScript -->
+        <div th:each="property : ${properties}" class="property-card" th:data-key="${property.key}">
+            <div class="property-header">
+                <span class="property-key" th:text="${property.key}">Property</span>
+                <span class="property-category" th:text="${property.category}">Category</span>
+            </div>
+
+            <div class="property-description" th:text="${property.description}">Description</div>
+
+            <div class="property-info">
+                <div class="info-row">
+                    <span class="info-label">Tipo de Dados:</span>
+                    <span class="info-value" th:text="${property.dataType}">TYPE</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Valor Atual:</span>
+                    <span class="info-value current" th:text="${property.currentValue}">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Valor Padrão:</span>
+                    <span class="info-value default" th:text="${property.defaultValue}">-</span>
+                </div>
+                <div class="info-row" th:if="${property.minValue != null or property.maxValue != null}">
+                    <span class="info-label">Intervalo:</span>
+                    <span class="info-value">
+                        <span th:if="${property.minValue != null}" th:text="${property.minValue}">min</span>
+                        <span th:text="${property.minValue != null ? ' - ' : ''}"></span>
+                        <span th:if="${property.maxValue != null}" th:text="${property.maxValue}">max</span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="property-controls">
+                <input 
+                    th:if="${property.dataType == 'BOOLEAN'}"
+                    type="checkbox" 
+                    class="property-input" 
+                    th:checked="${property.currentValue}"
+                    th:data-key="${property.key}">
+                <input 
+                    th:unless="${property.dataType == 'BOOLEAN'}"
+                    type="text" 
+                    class="property-input" 
+                    th:value="${property.currentValue}"
+                    th:data-key="${property.key}"
+                    th:placeholder="${property.dataType}">
+                <button class="btn-update" th:data-key="${property.key}">Salvar</button>
+                <button class="btn-reset" th:data-key="${property.key}">Redefinir</button>
+            </div>
+
+            <div class="property-status" style="display: none;" th:data-key="${property.key}"></div>
+        </div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="emptyState" class="empty-state" style="display: none;">
+        <div class="empty-state-icon">📭</div>
+        <p>Nenhuma propriedade encontrada</p>
+    </div>
+</div>
+
+<script>
+    // Property data
+    const propertiesData = {
+        th: {
+            if: document.querySelectorAll('[th\\:data-key]')
+        }
+    };
+
+    // Get all property cards
+    function getAllPropertyCards() {
+        return document.querySelectorAll('.property-card');
+    }
+
+    // Show alert
+    function showAlert(type, message, duration = 4000) {
+        const alertElement = document.getElementById(type + 'Alert');
+        alertElement.textContent = message;
+        alertElement.classList.add('show');
+
+        setTimeout(() => {
+            alertElement.classList.remove('show');
+        }, duration);
+    }
+
+    // Update property via API
+    async function updateProperty(key, value) {
+        try {
+            const response = await fetch(`/admin/sandbox/api/properties/${key}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ value: value })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showAlert('success', `✓ ${key} atualizado com sucesso!`);
+                updatePropertyDisplay(key, value);
+                return true;
+            } else {
+                showAlert('error', `✗ Erro: ${data.error}`);
+                return false;
+            }
+        } catch (error) {
+            showAlert('error', `✗ Erro na conexão: ${error.message}`);
+            return false;
+        }
+    }
+
+    // Update property display
+    function updatePropertyDisplay(key, newValue) {
+        const card = document.querySelector(`.property-card[data-key="${key}"]`);
+        if (card) {
+            const input = card.querySelector('.property-input');
+            const currentValueSpan = card.querySelector('.info-value.current');
+
+            if (input.type === 'checkbox') {
+                input.checked = newValue === 'true' || newValue === true;
+            } else {
+                input.value = newValue;
+            }
+
+            if (currentValueSpan) {
+                currentValueSpan.textContent = newValue;
+            }
+        }
+    }
+
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const cards = getAllPropertyCards();
+
+        let visibleCount = 0;
+
+        cards.forEach(card => {
+            const key = card.querySelector('.property-key').textContent.toLowerCase();
+            const description = card.querySelector('.property-description').textContent.toLowerCase();
+
+            if (key.includes(searchTerm) || description.includes(searchTerm)) {
+                card.style.display = '';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        updateEmptyState(visibleCount, cards.length);
+    });
+
+    // Category filter (if categories exist)
+    function initializeCategoryFilter() {
+        const categoryFilter = document.getElementById('categoryFilter');
+        const uniqueCategories = new Set();
+
+        getAllPropertyCards().forEach(card => {
+            const category = card.querySelector('.property-category').textContent;
+            uniqueCategories.add(category);
+        });
+
+        uniqueCategories.forEach(category => {
+            const btn = document.createElement('button');
+            btn.className = 'category-btn';
+            btn.textContent = category;
+            btn.dataset.category = category;
+
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+
+                const selectedCategory = this.dataset.category;
+                let visibleCount = 0;
+
+                getAllPropertyCards().forEach(card => {
+                    if (selectedCategory === 'all') {
+                        card.style.display = '';
+                        visibleCount++;
+                    } else {
+                        const cardCategory = card.querySelector('.property-category').textContent;
+                        if (cardCategory === selectedCategory) {
+                            card.style.display = '';
+                            visibleCount++;
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    }
+                });
+
+                updateEmptyState(visibleCount, getAllPropertyCards().length);
+            });
+
+            categoryFilter.appendChild(btn);
+        });
+    }
+
+    // Update/Save button handler
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('btn-update')) {
+            const card = e.target.closest('.property-card');
+            const key = card.dataset.key;
+            const input = card.querySelector('.property-input');
+            let value = input.type === 'checkbox' ? input.checked : input.value;
+
+            const statusEl = card.querySelector('.property-status');
+            statusEl.textContent = '⏳ Salvando...';
+            statusEl.className = 'property-status saving';
+            statusEl.style.display = 'block';
+
+            updateProperty(key, value).then(success => {
+                if (success) {
+                    statusEl.textContent = '✓ Salvo';
+                    statusEl.className = 'property-status saved';
+                } else {
+                    statusEl.textContent = '✗ Erro ao salvar';
+                    statusEl.className = 'property-status error';
+                }
+
+                setTimeout(() => {
+                    statusEl.style.display = 'none';
+                }, 3000);
+            });
+        }
+
+        if (e.target.classList.contains('btn-reset')) {
+            const card = e.target.closest('.property-card');
+            const key = card.dataset.key;
+            const input = card.querySelector('.property-input');
+            const defaultValue = card.querySelector('.info-value.default').textContent;
+
+            input.value = defaultValue;
+        }
+    });
+
+    // Update empty state visibility
+    function updateEmptyState(visibleCount, totalCount) {
+        const emptyState = document.getElementById('emptyState');
+        const container = document.getElementById('propertiesContainer');
+
+        if (visibleCount === 0) {
+            emptyState.style.display = 'block';
+        } else {
+            emptyState.style.display = 'none';
+        }
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeCategoryFilter();
+        updateEmptyState(getAllPropertyCards().length, getAllPropertyCards().length);
+    });
+</script>
+</body>
+</html>

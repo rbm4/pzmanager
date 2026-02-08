@@ -156,7 +156,7 @@ public class CarService {
             User user = getCurrentUser();
             if (user == null) {
                 result.put("success", false);
-                result.put("message", "User not authenticated");
+                result.put("message", "Usuário não autenticado");
                 return result;
             }
             
@@ -171,7 +171,7 @@ public class CarService {
             // Verify the character belongs to the user
             if (!targetCharacter.getUser().getId().equals(user.getId())) {
                 result.put("success", false);
-                result.put("message", "This character does not belong to you");
+                result.put("message", "Este personagem não pertence a você");
                 return result;
             }
             
@@ -181,8 +181,8 @@ public class CarService {
             
             if (characterPoints < car.getValue()) {
                 result.put("success", false);
-                result.put("message", "Insufficient currency points. You have " + characterPoints + 
-                          " ₳ but need " + car.getValue() + " ₳");
+                result.put("message", "Moeda insuficiente. Você tem " + characterPoints + 
+                          " ₳ mas precisa de " + car.getValue() + " ₳");
                 return result;
             }
             
@@ -194,7 +194,7 @@ public class CarService {
             
             // Execute server command to spawn vehicle
             String vehicleCommand = String.format("addVehicle \"%s\" \"%s\"", 
-                targetCharacter.getPlayerName(), car.getVehicleScript());
+                car.getVehicleScript(), targetCharacter.getPlayerName());
             
             try {
                 serverCommandService.sendCommand(vehicleCommand);
@@ -206,7 +206,7 @@ public class CarService {
             }
             
             result.put("success", true);
-            result.put("message", "Vehicle purchase successful! The vehicle has been spawned for " + 
+            result.put("message", "Compra realizada com sucesso! O veículo foi gerado para " + 
                       targetCharacter.getPlayerName());
             result.put("newPoints", newPoints);
             result.put("pointsDeducted", car.getValue());
@@ -217,7 +217,7 @@ public class CarService {
         } catch (Exception e) {
             logger.severe("Error during vehicle purchase: " + e.getMessage());
             result.put("success", false);
-            result.put("message", "An error occurred during purchase. Please try again.");
+            result.put("message", "Ocorreu um erro durante a compra. Tente novamente.");
         }
         
         return result;
@@ -233,9 +233,8 @@ public class CarService {
                 return null;
             }
             
-            String username = authentication.getName();
-            Optional<User> user = userRepository.findByUsername(username);
-            return user.orElse(null);
+            User username = (User) authentication.getPrincipal();
+            return username;
         } catch (Exception e) {
             logger.warning("Error getting current user: " + e.getMessage());
             return null;

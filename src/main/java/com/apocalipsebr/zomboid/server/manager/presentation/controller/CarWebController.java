@@ -1,10 +1,11 @@
 package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
 import com.apocalipsebr.zomboid.server.manager.application.service.CarService;
+import com.apocalipsebr.zomboid.server.manager.application.service.CharacterService;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Car;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Character;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.CharacterRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -28,10 +30,12 @@ public class CarWebController {
 
     private final CarService carService;
     private final CharacterRepository characterRepository;
+    private final CharacterService characterService;
 
-    public CarWebController(CarService carService,CharacterRepository repo) {
+    public CarWebController(CarService carService, CharacterRepository repo, CharacterService characterService) {
         this.characterRepository = repo;
         this.carService = carService;
+        this.characterService = characterService;
     }
 
     // Garage Store - Public view for buying cars
@@ -40,6 +44,7 @@ public class CarWebController {
             @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size,
+            HttpSession session,
             Model model) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
@@ -49,6 +54,20 @@ public class CarWebController {
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", carsPage.getTotalPages());
         model.addAttribute("search", search);
+
+        // Add user currency and characters if logged in
+        User user = (User) session.getAttribute("user");
+        if (user != null) {
+            List<Character> userCharacters = characterService.getUserCharacters(user);
+            int totalCurrency = userCharacters.stream()
+                    .mapToInt(c -> c.getCurrencyPoints() != null ? c.getCurrencyPoints() : 0)
+                    .sum();
+
+            model.addAttribute("userCharacters", userCharacters);
+            model.addAttribute("totalCurrency", totalCurrency);
+        } else {
+            model.addAttribute("totalCurrency", 0);
+        }
 
         return "garage";
     }
@@ -183,7 +202,7 @@ public class CarWebController {
         }
     }
 
-    // GET character online status - AJAX endpoint
+    // GET character online status - AJAX endpoint (single character)
     @GetMapping("/characters/status")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> getCharacterStatus(@RequestParam Long characterId) {
@@ -195,7 +214,45 @@ public class CarWebController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             response.put("success", false);
-            response.put("message", "Failed to get character status");
+            response.put("message", "Falha ao verificar status do personagem");
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+    // GET all characters statuses - AJAX endpoint for polling (like items store)
+    @GetMapping("/characters/statuses")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getCharacterStatuses(HttpSession session) {
+        Map<String, Object> response = new HashMap<>();
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            response.put("success", false);
+            response.put("message", "Não autenticado");
+            return ResponseEntity.status(401).body(response);
+        }
+
+        try {
+            List<Character> userCharacters = characterService.getUserCharacters(user);
+            List<Map<String, Object>> characterStatuses = userCharacters.stream()
+                    .map(c -> Map.of(
+                            "id", (Object) c.getId(),
+                            "playerName", (Object) c.getPlayerName(),
+                            "currencyPoints", (Object) (c.getCurrencyPoints() != null ? c.getCurrencyPoints() : 0),
+                            "isOnline", (Object) (c.getLastUpdate() != null &&
+                                    c.getLastUpdate().isAfter(java.time.LocalDateTime.now().minusSeconds(61)))))
+                    .toList();
+
+            int totalCurrency = userCharacters.stream()
+                    .mapToInt(c -> c.getCurrencyPoints() != null ? c.getCurrencyPoints() : 0)
+                    .sum();
+
+            response.put("success", true);
+            response.put("characters", characterStatuses);
+            response.put("totalCurrency", totalCurrency);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Falha ao carregar personagens");
             return ResponseEntity.status(500).body(response);
         }
     }
