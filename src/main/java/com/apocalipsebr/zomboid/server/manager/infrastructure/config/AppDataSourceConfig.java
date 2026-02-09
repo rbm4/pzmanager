@@ -11,6 +11,9 @@ import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+
+import jakarta.annotation.PostConstruct;
+
 import org.flywaydb.core.Flyway;
 
 import javax.sql.DataSource;
@@ -52,7 +55,7 @@ public class AppDataSourceConfig {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
         dataSource.setDriverClassName(driverClassName);
         dataSource.setUrl(url);
-        
+        appFlyway(dataSource).migrate();
         return dataSource;
     }
 
@@ -86,6 +89,7 @@ public class AppDataSourceConfig {
                 .dataSource(dataSource)
                 .locations("classpath:db/migration")
                 .baselineOnMigrate(true)
+                .mixed(true)
                 .load();
     }
 }

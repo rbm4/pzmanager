@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Região - Apocalipse [BR]</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff; min-height: 100vh; display: flex;
+        }
+        .container { max-width: 900px; margin: 0 auto; margin-left: 280px; flex: 1; padding: 30px; overflow-y: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 10px; margin-bottom: 30px; backdrop-filter: blur(10px); }
+        .header h1 { background: linear-gradient(45deg, #4facfe, #00f2fe); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .nav-link { padding: 10px 20px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; text-decoration: none; border-radius: 8px; transition: all 0.3s ease; }
+        .nav-link:hover { background: rgba(255,255,255,0.2); }
+        .form-card { background: rgba(255,255,255,0.05); border-radius: 10px; padding: 30px; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        .form-section { margin-bottom: 25px; }
+        .form-section-title { font-size: 1.1rem; font-weight: 600; color: #4facfe; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #ccc; font-weight: 500; }
+        .form-input { width: 100%; padding: 12px; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; background: rgba(255,255,255,0.1); color: white; font-size: 1rem; }
+        .form-input::placeholder { color: rgba(255,255,255,0.4); }
+        .form-input:focus { outline: none; border-color: #4facfe; box-shadow: 0 0 0 2px rgba(79,172,254,0.2); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-row-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 15px; }
+        .checkbox-group { display: flex; align-items: center; gap: 10px; }
+        .checkbox-group input[type="checkbox"] { width: 20px; height: 20px; accent-color: #4facfe; }
+        .submit-btn { padding: 14px 40px; background: linear-gradient(45deg, #4facfe, #00f2fe); border: none; color: white; border-radius: 8px; cursor: pointer; font-size: 1.1rem; font-weight: 600; transition: all 0.3s ease; width: 100%; }
+        .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(79,172,254,0.4); }
+        .alert { padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .alert-error { background: rgba(244,67,54,0.2); border: 1px solid #f44336; color: #f44336; }
+        /* Custom Properties Section */
+        .props-container { display: flex; flex-direction: column; gap: 10px; }
+        .prop-row { display: flex; gap: 10px; align-items: center; }
+        .prop-row input { flex: 1; }
+        .add-prop-btn { padding: 10px 20px; background: rgba(76,175,80,0.2); border: 1px solid #4caf50; color: #4caf50; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; font-size: 0.9rem; }
+        .add-prop-btn:hover { background: rgba(76,175,80,0.3); }
+        .remove-prop-btn { padding: 10px 14px; background: rgba(244,67,54,0.2); border: 1px solid #f44336; color: #f44336; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; font-size: 0.9rem; }
+        .remove-prop-btn:hover { background: rgba(244,67,54,0.3); }
+        .help-text { font-size: 0.85rem; color: #888; margin-top: 4px; }
+        @media (max-width: 768px) { .container { margin-left: 0; } body { flex-direction: column; } .form-row, .form-row-4 { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<div th:replace="~{sidebar-component :: sidebar}"></div>
+<div class="container">
+    <div class="header">
+        <h1>➕ Criar Região</h1>
+        <a href="/regions/manage" class="nav-link">← Voltar</a>
+    </div>
+
+    <div th:if="${error}" class="alert alert-error" th:text="${error}">Erro</div>
+
+    <div class="form-card">
+        <form method="post" action="/regions/create">
+            <!-- Basic Info -->
+            <div class="form-section">
+                <div class="form-section-title">📋 Informações Básicas</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="code">Código (ID no JSON)</label>
+                        <input type="text" id="code" name="code" class="form-input" placeholder="ex: lousville_test_area" required>
+                        <div class="help-text">Identificador único, será o "id" no JSON exportado</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="name">Nome</label>
+                        <input type="text" id="name" name="name" class="form-input" placeholder="ex: Lousville test area" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="categories">Categorias</label>
+                    <input type="text" id="categories" name="categories" class="form-input" placeholder="ex: PVP,SPRINTERS,SAFE_ZONE">
+                    <div class="help-text">Separadas por vírgula. Ex: PVP,SPRINTERS</div>
+                </div>
+            </div>
+
+            <!-- Coordinates -->
+            <div class="form-section">
+                <div class="form-section-title">📍 Coordenadas</div>
+                <div class="form-row-4">
+                    <div class="form-group">
+                        <label for="x1">X1</label>
+                        <input type="number" id="x1" name="x1" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="y1">Y1</label>
+                        <input type="number" id="y1" name="y1" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="x2">X2</label>
+                        <input type="number" id="x2" name="x2" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="y2">Y2</label>
+                        <input type="number" id="y2" name="y2" class="form-input" required>
+                    </div>
+                </div>
+                <div class="form-group" style="max-width: 200px;">
+                    <label for="z">Z (Nível)</label>
+                    <input type="number" id="z" name="z" class="form-input" value="0">
+                </div>
+            </div>
+
+            <!-- Flags -->
+            <div class="form-section">
+                <div class="form-section-title">⚙️ Configurações</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="enabled" name="enabled" value="true" checked>
+                            <label for="enabled" style="margin-bottom: 0;">Região Ativa</label>
+                        </div>
+                        <div class="help-text">Regiões ativas aparecerão no JSON exportado</div>
+                    </div>
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="permanent" name="permanent" value="true">
+                            <label for="permanent" style="margin-bottom: 0;">Região Permanente</label>
+                        </div>
+                        <div class="help-text">Regiões permanentes não podem ser deletadas</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Custom Properties -->
+            <div class="form-section">
+                <div class="form-section-title">🔧 Propriedades Customizadas</div>
+                <div class="help-text" style="margin-bottom: 15px;">Estas propriedades serão incluídas no campo "customProperties" do JSON exportado</div>
+                <div id="propsContainer" class="props-container">
+                    <!-- Dynamic rows will be added here -->
+                </div>
+                <button type="button" class="add-prop-btn" onclick="addPropertyRow()" style="margin-top: 10px;">
+                    ➕ Adicionar Propriedade
+                </button>
+            </div>
+
+            <button type="submit" class="submit-btn">Criar Região</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function addPropertyRow(name, value) {
+        const container = document.getElementById('propsContainer');
+        const row = document.createElement('div');
+        row.className = 'prop-row';
+        row.innerHTML = `
+            <input type="text" name="propNames" class="form-input" placeholder="Nome (ex: pvpEnabled)" value="${name || ''}">
+            <input type="text" name="propValues" class="form-input" placeholder="Valor (ex: true)" value="${value || ''}">
+            <button type="button" class="remove-prop-btn" onclick="this.parentElement.remove()">✕</button>
+        `;
+        container.appendChild(row);
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Regiões - Apocalipse [BR]</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff; min-height: 100vh; display: flex;
+        }
+        .container { max-width: 1400px; margin: 0 auto; margin-left: 280px; flex: 1; padding: 30px; overflow-y: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 10px; margin-bottom: 30px; backdrop-filter: blur(10px); }
+        .header h1 { background: linear-gradient(45deg, #4facfe, #00f2fe); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .nav-links { display: flex; gap: 15px; }
+        .nav-link { padding: 10px 20px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; text-decoration: none; border-radius: 8px; transition: all 0.3s ease; }
+        .nav-link:hover { background: rgba(255,255,255,0.2); }
+        .stats { display: flex; gap: 20px; margin-bottom: 20px; }
+        .stat-card { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; flex: 1; text-align: center; }
+        .stat-number { font-size: 2rem; font-weight: bold; color: #4facfe; }
+        .stat-label { color: #aaa; margin-top: 5px; }
+        .search-bar { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; margin-bottom: 20px; backdrop-filter: blur(10px); }
+        .search-form { display: flex; gap: 10px; flex-wrap: wrap; }
+        .search-input { flex: 1; min-width: 200px; padding: 12px; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; background: rgba(255,255,255,0.1); color: white; font-size: 1rem; }
+        .search-input::placeholder { color: rgba(255,255,255,0.5); }
+        .search-btn { padding: 12px 30px; background: #4facfe; border: none; color: white; border-radius: 8px; cursor: pointer; font-size: 1rem; transition: all 0.3s ease; }
+        .search-btn:hover { background: #3a8fd4; }
+        .regions-table { background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: rgba(79,172,254,0.2); padding: 15px; text-align: left; font-weight: 600; white-space: nowrap; }
+        td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); white-space: nowrap; }
+        tr:hover { background: rgba(255,255,255,0.05); }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 5px; font-size: 0.8rem; font-weight: bold; margin-right: 4px; margin-bottom: 4px; }
+        .badge-category { background: rgba(156,39,176,0.3); color: #ce93d8; }
+        .enabled-badge { padding: 5px 10px; border-radius: 5px; font-size: 0.85rem; font-weight: bold; }
+        .enabled-yes { background: rgba(76,175,80,0.3); color: #4caf50; }
+        .enabled-no { background: rgba(244,67,54,0.3); color: #f44336; }
+        .permanent-badge { background: rgba(255,152,0,0.3); color: #ffb74d; padding: 5px 10px; border-radius: 5px; font-size: 0.85rem; font-weight: bold; }
+        .action-btn { padding: 8px 15px; border-radius: 5px; text-decoration: none; display: inline-block; margin-right: 5px; margin-bottom: 4px; transition: all 0.3s ease; cursor: pointer; border: none; color: white; font-size: 0.9rem; }
+        .edit-btn { background: #2196f3; } .edit-btn:hover { background: #1976d2; }
+        .toggle-btn { background: #ff9800; } .toggle-btn:hover { background: #f57c00; }
+        .delete-btn { background: #f44336; } .delete-btn:hover { background: #d32f2f; }
+        .export-btn { background: #4caf50; } .export-btn:hover { background: #388e3c; }
+        .alert { padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .alert-success { background: rgba(76,175,80,0.2); border: 1px solid #4caf50; color: #4caf50; }
+        .alert-error { background: rgba(244,67,54,0.2); border: 1px solid #f44336; color: #f44336; }
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 30px; padding: 20px; }
+        .pagination-btn { padding: 10px 16px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 6px; cursor: pointer; text-decoration: none; transition: all 0.3s ease; }
+        .pagination-btn:hover:not(.disabled) { background: rgba(255,255,255,0.2); }
+        .pagination-btn.active { background: #4facfe; border-color: #4facfe; }
+        .pagination-btn.disabled { opacity: 0.5; cursor: not-allowed; }
+        .pagination-info { color: #aaa; margin: 0 10px; }
+        .coords { font-family: monospace; font-size: 0.85rem; color: #aaa; }
+        .json-preview-btn { padding: 10px 20px; background: rgba(76,175,80,0.2); border: 1px solid #4caf50; color: #4caf50; text-decoration: none; border-radius: 8px; transition: all 0.3s ease; cursor: pointer; }
+        .json-preview-btn:hover { background: rgba(76,175,80,0.3); }
+        @media (max-width: 768px) { .container { margin-left: 0; } body { flex-direction: column; } }
+    </style>
+</head>
+<body>
+<div th:replace="~{sidebar-component :: sidebar}"></div>
+<div class="container">
+    <div class="header">
+        <h1>🗺️ Gerenciar Regiões</h1>
+        <div class="nav-links">
+            <a href="/regions/create" class="nav-link">➕ Criar Nova Região</a>
+            <a href="/regions/export" class="json-preview-btn">📥 Exportar JSON</a>
+            <a href="/regions/preview-json" target="_blank" class="json-preview-btn">👁️ Preview JSON</a>
+        </div>
+    </div>
+
+    <!-- Alerts -->
+    <div th:if="${param.success}" class="alert alert-success">
+        <span th:if="${param.success[0] == 'created'}">Região criada com sucesso!</span>
+        <span th:if="${param.success[0] == 'updated'}">Região atualizada com sucesso!</span>
+        <span th:if="${param.success[0] == 'toggled'}">Status alterado com sucesso!</span>
+        <span th:if="${param.success[0] == 'deleted'}">Região deletada com sucesso!</span>
+    </div>
+    <div th:if="${param.error}" class="alert alert-error">
+        <span th:if="${param.error[0] == 'notfound'}">Região não encontrada!</span>
+        <span th:if="${param.error[0] == 'permanent'}">Não é possível deletar uma região permanente!</span>
+        <span th:if="${param.error[0] == 'failed'}">Operação falhou. Tente novamente.</span>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-number" th:text="${totalRegions}">0</div>
+            <div class="stat-label">Total de Regiões</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" th:text="${enabledCount}">0</div>
+            <div class="stat-label">Regiões Ativas</div>
+        </div>
+    </div>
+
+    <!-- Search / Filters -->
+    <div class="search-bar">
+        <form class="search-form" method="get" action="/regions/manage">
+            <input type="text" name="search" class="search-input" placeholder="Buscar por nome ou código..." th:value="${search}">
+            <input type="text" name="category" class="search-input" style="max-width: 200px;" placeholder="Filtrar por categoria..." th:value="${category}">
+            <button type="submit" class="search-btn">Buscar</button>
+        </form>
+    </div>
+
+    <!-- Regions Table -->
+    <div class="regions-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Nome</th>
+                    <th>Categorias</th>
+                    <th>Coordenadas</th>
+                    <th>Z</th>
+                    <th>Ativa</th>
+                    <th>Permanente</th>
+                    <th>Props</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="region : ${regions}">
+                    <td>
+                        <code th:text="${region.code}" style="color: #4facfe;">code</code>
+                    </td>
+                    <td th:text="${region.name}">Nome da Região</td>
+                    <td>
+                        <span th:each="cat : ${region.categoryArray}" class="badge badge-category" th:text="${cat}">CAT</span>
+                        <span th:if="${#arrays.length(region.categoryArray) == 0}" style="color: #666;">—</span>
+                    </td>
+                    <td class="coords">
+                        (<span th:text="${region.x1}">0</span>, <span th:text="${region.y1}">0</span>) →
+                        (<span th:text="${region.x2}">0</span>, <span th:text="${region.y2}">0</span>)
+                    </td>
+                    <td th:text="${region.z}">0</td>
+                    <td>
+                        <span th:class="${region.enabled ? 'enabled-badge enabled-yes' : 'enabled-badge enabled-no'}"
+                              th:text="${region.enabled ? 'SIM' : 'NÃO'}">NÃO</span>
+                    </td>
+                    <td>
+                        <span th:if="${region.permanent}" class="permanent-badge">🔒 SIM</span>
+                        <span th:unless="${region.permanent}" style="color: #666;">NÃO</span>
+                    </td>
+                    <td>
+                        <span th:text="${#lists.size(region.customProperties)}" style="color: #aaa;">0</span>
+                    </td>
+                    <td>
+                        <a th:href="@{/regions/{id}/edit(id=${region.id})}" class="action-btn edit-btn">Editar</a>
+                        <form th:action="@{/regions/{id}/toggle-enabled(id=${region.id})}" method="post" style="display: inline;">
+                            <button type="submit" class="action-btn toggle-btn">Alternar</button>
+                        </form>
+                        <form th:action="@{/regions/{id}/delete(id=${region.id})}" method="post" style="display: inline;"
+                              onsubmit="return confirm('Tem certeza que deseja deletar esta região?');">
+                            <button type="submit" class="action-btn delete-btn" th:disabled="${region.permanent}">Deletar</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(regions)}">
+                    <td colspan="9" style="text-align: center; padding: 40px; color: #aaa;">Nenhuma região encontrada.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div th:if="${totalPages > 1}" class="pagination">
+        <a th:href="@{/regions/manage(page=${currentPage > 0 ? currentPage - 1 : 0}, size=20, search=${search}, category=${category})}"
+           th:classappend="${currentPage == 0 ? 'disabled' : ''}" class="pagination-btn">← Anterior</a>
+        <span class="pagination-info">Página <span th:text="${currentPage + 1}">1</span> de <span th:text="${totalPages}">1</span></span>
+        <a th:href="@{/regions/manage(page=${currentPage < totalPages - 1 ? currentPage + 1 : currentPage}, size=20, search=${search}, category=${category})}"
+           th:classappend="${currentPage >= totalPages - 1 ? 'disabled' : ''}" class="pagination-btn">Próxima →</a>
+    </div>
+</div>
+</body>
+</html>
