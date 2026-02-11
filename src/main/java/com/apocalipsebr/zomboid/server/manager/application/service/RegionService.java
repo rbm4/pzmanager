@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -95,7 +96,7 @@ public class RegionService {
         regionRepository.save(region); // flush removal
         saveCustomProperties(region, propNames, propValues);
 
-        return regionRepository.save(region);
+        return region;
     }
 
     @Transactional
@@ -142,17 +143,30 @@ public class RegionService {
 
     /**
      * Generates the JSON content for the RegionManager_Regions.json file
-     * using only enabled regions.
+     * using only enabled regions that are either permanent or not expired.
      */
     public String generateRegionsJson() {
         List<Region> enabledRegions = regionRepository.findByEnabledTrue();
+        LocalDate today = LocalDate.now();
+        
+        // Filter: include only permanent regions OR regions that haven't expired yet
+        List<Region> validRegions = enabledRegions.stream()
+            .filter(region -> {
+                if (Boolean.TRUE.equals(region.getPermanent())) {
+                    return true; // Permanent regions always included
+                }
+                // Non-permanent regions must not be expired
+                return region.getExpirationDate() == null || region.getExpirationDate().isAfter(today);
+            })
+            .toList();
+        
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
         JsonObject root = new JsonObject();
         root.addProperty("lastUpdated", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
 
         JsonArray regionsArray = new JsonArray();
-        for (Region region : enabledRegions) {
+        for (Region region : validRegions) {
             JsonObject regionObj = new JsonObject();
             regionObj.addProperty("id", region.getCode());
             regionObj.addProperty("name", region.getName());

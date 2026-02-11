@@ -1,6 +1,7 @@
 package com.apocalipsebr.zomboid.server.manager.domain.entity.app;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,13 +43,16 @@ public class Region {
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT false")
     private Boolean permanent = false;
 
+    @Column(name = "expiration_date")
+    private LocalDate expirationDate;
+
     @OneToMany(mappedBy = "region", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<RegionCustomProperty> customProperties = new ArrayList<>();
 
     public Region() {
     }
 
-    public Region(String code, String name, String categories, Integer x1, Integer x2, Integer y1, Integer y2, Integer z, Boolean enabled, Boolean permanent) {
+    public Region(String code, String name, String categories, Integer x1, Integer x2, Integer y1, Integer y2, Integer z, Boolean enabled, Boolean permanent, LocalDate expirationDate) {
         this.code = code;
         this.name = name;
         this.categories = categories;
@@ -59,6 +63,7 @@ public class Region {
         this.z = z;
         this.enabled = enabled;
         this.permanent = permanent;
+        this.expirationDate = expirationDate;
     }
 
     // Utility: get categories as array
@@ -118,6 +123,8 @@ public class Region {
     public void setEnabled(Boolean enabled) { this.enabled = enabled; }
     public Boolean getPermanent() { return permanent; }
     public void setPermanent(Boolean permanent) { this.permanent = permanent; }
+    public LocalDate getExpirationDate() { return expirationDate; }
+    public void setExpirationDate(LocalDate expirationDate) { this.expirationDate = expirationDate; }
     public List<RegionCustomProperty> getCustomProperties() { return customProperties; }
     public void setCustomProperties(List<RegionCustomProperty> customProperties) { this.customProperties = customProperties; }
 }

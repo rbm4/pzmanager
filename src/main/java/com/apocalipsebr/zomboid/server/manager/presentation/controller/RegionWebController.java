@@ -1,5 +1,6 @@
 package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
+import com.apocalipsebr.zomboid.server.manager.application.constants.RegionProperty;
 import com.apocalipsebr.zomboid.server.manager.application.service.RegionService;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Region;
 
@@ -59,6 +60,7 @@ public class RegionWebController {
     @GetMapping("/create")
     public String showCreateForm(Model model) {
         model.addAttribute("region", new Region());
+        model.addAttribute("regionProperties",RegionProperty.values());
         return "region-create";
     }
 
@@ -87,6 +89,7 @@ public class RegionWebController {
         return regionService.getRegionById(id)
                 .map(region -> {
                     model.addAttribute("region", region);
+                    model.addAttribute("regionProperties", RegionProperty.values());
                     return "region-edit";
                 })
                 .orElseGet(() -> {
