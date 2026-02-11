@@ -145,19 +145,8 @@
                         <button type="button" class="remove-prop-btn" onclick="this.parentElement.remove()">✕</button>
                     </div>
                 </div>
-                <div style="margin-top: 15px; padding: 15px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
-                    <div class="help-text" style="margin-bottom: 10px; font-weight: 600; color: #aaa;">Propriedades Conhecidas (clique para adicionar):</div>
-                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                        <button type="button" class="add-prop-btn" style="padding: 6px 12px; font-size: 0.85rem;"
-                                th:each="knownProp : ${regionProperties}"
-                                th:onclick="'addPropertyRow(\'' + ${knownProp.properties.name} + '\', \'' + ${knownProp.properties.suggestedValue} + '\')'"
-                                th:text="${knownProp.properties.name}">
-                            Property Name
-                        </button>
-                    </div>
-                </div>
                 <button type="button" class="add-prop-btn" onclick="addPropertyRow()" style="margin-top: 10px;">
-                    ➕ Adicionar Propriedade Customizada
+                    ➕ Adicionar Propriedade
                 </button>
             </div>
 
