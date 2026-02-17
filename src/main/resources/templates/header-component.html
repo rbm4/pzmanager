@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Header Component -->
+<header class="site-header" th:fragment="header">
+    <style>
+        body {
+            padding-top: 56px !important;
+        }
+
+        .site-header {
+            background: rgba(13, 13, 26, 0.95);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 14px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1100;
+            backdrop-filter: blur(12px);
+            height: 56px;
+        }
+
+        .site-header .hdr-logo {
+            font-size: 1.4rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a6f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-decoration: none;
+        }
+
+        .site-header .hdr-nav {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .site-header .hdr-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #ccc;
+            font-size: 0.9rem;
+        }
+
+        .site-header .hdr-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .site-header .hdr-btn {
+            display: inline-block;
+            padding: 8px 24px;
+            font-size: 0.9rem;
+            text-decoration: none;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            font-weight: 600;
+        }
+
+        .site-header .hdr-btn-login {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a6f);
+            color: white !important;
+            -webkit-text-fill-color: white;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .site-header .hdr-btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+        }
+
+        .site-header .hdr-btn-logout {
+            background: rgba(244, 67, 54, 0.15);
+            border: 1px solid rgba(244, 67, 54, 0.4);
+            color: #f44336 !important;
+            -webkit-text-fill-color: #f44336;
+        }
+
+        .site-header .hdr-btn-logout:hover {
+            background: rgba(244, 67, 54, 0.25);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .site-header {
+                padding: 12px 16px;
+            }
+
+            .site-header .hdr-logo {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+
+    <a href="/" class="hdr-logo">Apocalipse [BR]</a>
+
+    <nav class="hdr-nav">
+        <!-- Logged in -->
+        <th:block th:if="${session != null and session.user != null}">
+            <div class="hdr-user">
+                <img th:src="${session.user.avatarUrl}" alt="Avatar" class="hdr-avatar">
+                <span th:text="${session.user.username}">User</span>
+            </div>
+            <a href="/logout" class="hdr-btn hdr-btn-logout">Sair</a>
+        </th:block>
+
+        <!-- Not logged in -->
+        <th:block th:if="${session == null or session.user == null}">
+            <a href="/login" class="hdr-btn hdr-btn-login">Entrar</a>
+        </th:block>
+    </nav>
+</header>
+</body>
+</html>

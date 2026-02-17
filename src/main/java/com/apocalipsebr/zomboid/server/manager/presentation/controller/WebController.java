@@ -30,13 +30,14 @@ public class WebController {
     }
 
     @GetMapping("/")
-    public String home(HttpSession session) {
-        var user = (User) session.getAttribute("user");
-        if (user == null) {
-            return "redirect:/login";
-        }
-        // Redirect authenticated users to their player panel
-        return "redirect:/player";
+    public String home() {
+        // Show index page for everyone (public landing page)
+        return "index";
+    }
+    
+    @GetMapping("/index")
+    public String index() {
+        return "index";
     }
 
     @GetMapping("/login")

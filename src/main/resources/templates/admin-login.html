@@ -18,6 +18,15 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            padding: 0;
+        }
+
+        /* ── Header ── */
+        /* handled by header-component */
+
+        .login-wrapper {
+            flex: 1;
+            display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
@@ -126,6 +135,9 @@
     </style>
 </head>
 <body>
+    <div th:replace="~{header-component :: header}"></div>
+
+    <div class="login-wrapper">
     <div class="login-container">
         <h1>🔐 Admin Access</h1>
 
@@ -153,5 +165,6 @@
 
         <a href="/player" class="back-link">← Back to Home</a>
     </div>
+    </div><!-- end login-wrapper -->
 </body>
 </html>

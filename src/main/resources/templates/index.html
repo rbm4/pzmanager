@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,46 +14,20 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            background: #0d0d1a;
             color: #fff;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
         }
 
-        .container {
-            text-align: center;
-            max-width: 600px;
-            padding: 40px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-        }
-
-        h1 {
-            font-size: 3rem;
-            margin-bottom: 10px;
-            background: linear-gradient(45deg, #ff6b6b, #ee5a6f);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .subtitle {
-            font-size: 1.2rem;
-            color: #aaa;
-            margin-bottom: 40px;
-        }
+        /* ── Header ── */
+        /* handled by header-component */
 
         .btn {
             display: inline-block;
-            padding: 15px 40px;
-            margin: 10px;
-            font-size: 1.1rem;
+            padding: 12px 32px;
+            font-size: 1rem;
             text-decoration: none;
             border-radius: 50px;
             transition: all 0.3s ease;
@@ -61,9 +36,15 @@
             font-weight: 600;
         }
 
+        .btn-sm {
+            padding: 8px 24px;
+            font-size: 0.9rem;
+        }
+
         .btn-primary {
             background: linear-gradient(45deg, #ff6b6b, #ee5a6f);
-            color: white;
+            color: white !important;
+            -webkit-text-fill-color: white;
             box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
         }
 
@@ -72,69 +53,352 @@
             box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
         }
 
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 2px solid rgba(255, 255, 255, 0.3);
+        /* ── Hero ── */
+        .hero {
+            flex: 0 0 auto;
+            text-align: center;
+            padding: 80px 20px 60px;
+            background: linear-gradient(180deg, #1a1a2e 0%, #0d0d1a 100%);
         }
 
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 12px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a6f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
-        .features {
-            margin-top: 40px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        .hero .subtitle {
+            font-size: 1.25rem;
+            color: #aaa;
+            margin-bottom: 32px;
+        }
+
+        .hero .btn {
+            font-size: 1.15rem;
+            padding: 15px 48px;
+        }
+
+        /* ── Feature Sections ── */
+        .feature-section {
+            padding: 80px 20px;
+            max-width: 1100px;
+            margin: 0 auto;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 60px;
+        }
+
+        .feature-section:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+
+        .feature-section + .feature-section {
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .feature-img {
+            flex: 0 0 420px;
+            height: 280px;
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .feature-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .feature-img-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 5rem;
+        }
+
+        .feature-img-placeholder.ranking   { background: linear-gradient(135deg, #ff6b6b22, #ee5a6f33); }
+        .feature-img-placeholder.store      { background: linear-gradient(135deg, #4caf5022, #8bc34a33); }
+        .feature-img-placeholder.events     { background: linear-gradient(135deg, #ff980022, #ffb74d33); }
+        .feature-img-placeholder.community  { background: linear-gradient(135deg, #5865F222, #7289da33); }
+
+        .feature-text {
+            flex: 1;
+        }
+
+        .feature-text h2 {
+            font-size: 2rem;
+            margin-bottom: 16px;
+        }
+
+        .feature-text h2 .accent {
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .feature-text h2 .accent-red    { background: linear-gradient(45deg, #ff6b6b, #ee5a6f); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .feature-text h2 .accent-green  { background: linear-gradient(45deg, #4caf50, #8bc34a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .feature-text h2 .accent-orange { background: linear-gradient(45deg, #ff9800, #ffb74d); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .feature-text h2 .accent-blue   { background: linear-gradient(45deg, #5865F2, #7289da); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+        .feature-text p {
+            color: #aaa;
+            line-height: 1.8;
+            font-size: 1.05rem;
+            margin-bottom: 20px;
+        }
+
+        .feature-tag {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-right: 8px;
+            border: 1px solid;
+        }
+
+        .tag-red    { color: #ff6b6b; border-color: rgba(255,107,107,0.3); background: rgba(255,107,107,0.1); }
+        .tag-green  { color: #4caf50; border-color: rgba(76,175,80,0.3);  background: rgba(76,175,80,0.1); }
+        .tag-orange { color: #ff9800; border-color: rgba(255,152,0,0.3);  background: rgba(255,152,0,0.1); }
+        .tag-blue   { color: #5865F2; border-color: rgba(88,101,242,0.3); background: rgba(88,101,242,0.1); }
+
+        /* ── Discord section ── */
+        .discord-section {
+            padding: 60px 20px;
+            max-width: 960px;
+            margin: 0 auto;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 48px;
+        }
+
+        .discord-info {
+            flex: 1;
+        }
+
+        .discord-info h2 {
+            font-size: 2rem;
+            margin-bottom: 12px;
+        }
+
+        .discord-info h2 span {
+            background: linear-gradient(45deg, #5865F2, #7289da);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .discord-info p {
+            color: #aaa;
+            line-height: 1.7;
+            margin-bottom: 20px;
+            font-size: 1.05rem;
+        }
+
+        .discord-widget {
+            flex: 0 0 auto;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .discord-widget iframe {
+            display: block;
+            border: none;
+        }
+
+        /* ── Footer ── */
+        footer {
+            margin-top: auto;
+            background: rgba(255, 255, 255, 0.02);
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 32px 40px;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 960px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .footer-copy {
+            color: #555;
+            font-size: 0.85rem;
+        }
+
+        .footer-links {
+            display: flex;
             gap: 20px;
         }
 
-        .feature {
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        .footer-links a {
+            color: #666;
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: color 0.2s;
         }
 
-        .feature-icon {
-            font-size: 2rem;
-            margin-bottom: 10px;
+        .footer-links a:hover {
+            color: #ff6b6b;
         }
 
-        .feature-title {
+        .footer-links .btn {
+            color: white !important;
+            -webkit-text-fill-color: white;
             font-size: 0.9rem;
-            color: #aaa;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.4rem;
+            }
+
+            .feature-section,
+            .feature-section:nth-child(even) {
+                flex-direction: column;
+                padding: 48px 20px;
+                gap: 32px;
+            }
+
+            .feature-img {
+                flex: 0 0 auto;
+                width: 100%;
+                height: 220px;
+            }
+
+            .feature-text {
+                text-align: center;
+            }
+
+            .discord-section {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .discord-widget iframe {
+                width: 100%;
+                max-width: 350px;
+            }
+
+            .footer-content {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+
+            .feature-img {
+                height: 180px;
+            }
         }
     </style>
 </head>
+
 <body>
-    <div class="container">
+
+    <!-- Header -->
+    <div th:replace="~{header-component :: header}"></div>
+
+    <!-- Hero -->
+    <section class="hero">
         <h1>Apocalipse [BR]</h1>
         <p class="subtitle">Servidor Brasileiro de Project Zomboid</p>
-        
-        <div>
-            <a href="/login" class="btn btn-primary">Entrar</a>
-        </div>
+        <a href="/login" class="btn btn-primary">Comece Agora</a>
+    </section>
 
-        <div class="features">
-            <div class="feature">
-                <div class="feature-icon">🏆</div>
-                <div class="feature-title">Ranking</div>
-            </div>
-            <div class="feature">
-                <div class="feature-icon">🛍️</div>
-                <div class="feature-title">Loja</div>
-            </div>
-            <div class="feature">
-                <div class="feature-icon">🎉</div>
-                <div class="feature-title">Eventos</div>
-            </div>
-            <div class="feature">
-                <div class="feature-icon">👥</div>
-                <div class="feature-title">Comunidade</div>
+    <!-- Features -->
+    <section class="feature-section">
+        <div class="feature-img">
+            <div class="feature-img-placeholder ranking">🏆</div>
+        </div>
+        <div class="feature-text">
+            <h2>Sistema de <span class="accent-red">Ranking</span></h2>
+            <p>Compita com outros jogadores e suba no ranking do servidor. Acompanhe suas kills de zumbis, tempo de sobrevivência e conquistas.</p>
+            <span class="feature-tag tag-red">Competitivo</span>
+            <span class="feature-tag tag-red">Placar Global</span>
+        </div>
+    </section>
+
+    <section class="feature-section">
+        <div class="feature-img">
+            <div class="feature-img-placeholder store">🛍️</div>
+        </div>
+        <div class="feature-text">
+            <h2><span class="accent-green">Loja</span> de Itens</h2>
+            <p>Adquira itens e equipamentos exclusivos com os pontos que você ganha jogando. Armas, veículos, suprimentos médicos e muito mais.</p>
+            <span class="feature-tag tag-green">Exclusivos</span>
+            <span class="feature-tag tag-green">Recompensas</span>
+        </div>
+    </section>
+
+    <section class="feature-section">
+        <div class="feature-img">
+            <div class="feature-img-placeholder events">🎉</div>
+        </div>
+        <div class="feature-text">
+            <h2><span class="accent-orange">Eventos</span> Especiais</h2>
+            <p>Participe de eventos especiais organizados pela equipe do servidor. Desafios de sobrevivência, invasões de hordas e missões cooperativas.</p>
+            <span class="feature-tag tag-orange">Semanal</span>
+            <span class="feature-tag tag-orange">Prêmios</span>
+        </div>
+    </section>
+
+    <section class="feature-section">
+        <div class="feature-img">
+            <div class="feature-img-placeholder community">👥</div>
+        </div>
+        <div class="feature-text">
+            <h2>Nossa <span class="accent-blue">Comunidade</span></h2>
+            <p>Junte-se a centenas de sobreviventes brasileiros. Forme alianças, troque itens e construa bases juntos nesse apocalipse zumbi.</p>
+            <span class="feature-tag tag-blue">Discord</span>
+            <span class="feature-tag tag-blue">Ativo 24/7</span>
+        </div>
+    </section>
+
+    <!-- Discord -->
+    <section class="discord-section">
+        <div class="discord-info">
+            <h2>Entre no nosso <span>Discord</span></h2>
+            <p>Fique por dentro das novidades, participe de eventos e converse com outros sobreviventes da comunidade.
+            </p>
+        </div>
+        <div class="discord-widget">
+            <iframe src="https://discord.com/widget?id=1458828572516159534&theme=dark" width="350" height="700"
+                allowtransparency="true" frameborder="0"
+                sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"></iframe>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <span class="footer-copy">&copy; 2026 Apocalipse [BR]. Todos os direitos reservados.</span>
+            <div class="footer-links">
+                <a href="/login" class="btn btn-primary btn-sm">Entrar</a>
             </div>
         </div>
-    </div>
+    </footer>
+
 </body>
+
 </html>

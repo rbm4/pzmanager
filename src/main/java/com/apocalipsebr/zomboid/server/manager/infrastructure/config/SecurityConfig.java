@@ -23,7 +23,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/login/**", "/auth/**", "/error", "/login.png").permitAll()
+                .requestMatchers("/", "/index", "/login/**", "/auth/**", "/error", "/login.png").permitAll()
                 .requestMatchers("/api/system/**").permitAll() // For deployment endpoint
                 .requestMatchers("/api/zombie-kills/**").permitAll() // For game server updates
                 .requestMatchers("/items/manage", "/items/*/edit", "/items/*/toggle-sellable").hasRole("ADMIN") // Admin item management
