@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transações - Apocalipse [BR]</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            margin-left: 280px;
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            flex: 1;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+
+        .stat-label {
+            color: #aaa;
+            margin-top: 5px;
+        }
+
+        .search-bar {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .search-form {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+        }
+
+        .search-input::placeholder {
+            color: #888;
+        }
+
+        .filter-select {
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .filter-select option {
+            background: #1a1a2e;
+            color: white;
+        }
+
+        .search-btn {
+            padding: 12px 30px;
+            background: #ff6b6b;
+            border: none;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-btn:hover {
+            background: #ee5a24;
+        }
+
+        .logs-table {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: rgba(255, 107, 107, 0.2);
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .type-badge {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        .type-item {
+            background: rgba(76, 175, 80, 0.3);
+            color: #4caf50;
+        }
+
+        .type-car {
+            background: rgba(255, 152, 0, 0.3);
+            color: #ff9800;
+        }
+
+        .type-cashback {
+            background: rgba(156, 39, 176, 0.3);
+            color: #ce93d8;
+        }
+
+        .cashback-badge {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        .cashback-yes {
+            background: rgba(156, 39, 176, 0.3);
+            color: #ce93d8;
+        }
+
+        .cashback-no {
+            background: rgba(255, 255, 255, 0.1);
+            color: #aaa;
+        }
+
+        .cashback-btn {
+            padding: 8px 15px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            color: white;
+            background: #9c27b0;
+        }
+
+        .cashback-btn:hover {
+            background: #7b1fa2;
+        }
+
+        .cashback-btn:disabled {
+            background: rgba(255, 255, 255, 0.1);
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .amount-cell {
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+
+        .balance-cell {
+            color: #4caf50;
+            font-weight: bold;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 30px;
+            padding: 20px;
+        }
+
+        .pagination-btn {
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .pagination-btn:hover:not(.disabled) {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .pagination-btn.active {
+            background: #ff6b6b;
+            border-color: #ff6b6b;
+        }
+
+        .pagination-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-info {
+            color: #aaa;
+            margin: 0 10px;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4caf50;
+            color: #4caf50;
+        }
+
+        .alert-error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #f44336;
+            color: #f44336;
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            top: 80px;
+            right: 30px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            z-index: 9999;
+            display: none;
+            animation: slideIn 0.3s ease;
+            max-width: 400px;
+        }
+
+        .toast.success {
+            background: rgba(76, 175, 80, 0.9);
+            border: 1px solid #4caf50;
+        }
+
+        .toast.error {
+            background: rgba(244, 67, 54, 0.9);
+            border: 1px solid #f44336;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Confirm dialog */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9998;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .modal-content h3 {
+            margin-bottom: 15px;
+            color: #ff6b6b;
+        }
+
+        .modal-content p {
+            margin-bottom: 20px;
+            color: #ccc;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .modal-btn {
+            padding: 10px 25px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn.confirm {
+            background: #9c27b0;
+            color: white;
+        }
+
+        .modal-btn.confirm:hover {
+            background: #7b1fa2;
+        }
+
+        .modal-btn.cancel {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .modal-btn.cancel:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin-left: 0;
+            }
+
+            body {
+                flex-direction: column;
+            }
+
+            .stats {
+                flex-direction: column;
+            }
+
+            .search-form {
+                flex-direction: column;
+            }
+
+            table {
+                font-size: 0.85rem;
+            }
+
+            td, th {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{header-component :: header}"></div>
+<div th:replace="~{sidebar-component :: sidebar}"></div>
+
+<div class="container">
+    <div class="header">
+        <h1>💰 Log de Transações</h1>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-number" th:text="${totalTransactions}">0</div>
+            <div class="stat-label">Total de Transações</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" th:text="${cashbackCount}">0</div>
+            <div class="stat-label">Cashbacks Realizados</div>
+        </div>
+    </div>
+
+    <div class="search-bar">
+        <form class="search-form" method="get" action="/admin/transactions">
+            <input type="text" name="search" class="search-input"
+                   placeholder="Buscar por jogador, personagem ou item..."
+                   th:value="${search}">
+            <select name="type" class="filter-select">
+                <option value="">Todos os Tipos</option>
+                <option value="ITEM_PURCHASE" th:selected="${type == 'ITEM_PURCHASE'}">Compra de Item</option>
+                <option value="CAR_PURCHASE" th:selected="${type == 'CAR_PURCHASE'}">Compra de Veículo</option>
+            </select>
+            <button type="submit" class="search-btn">Buscar</button>
+        </form>
+    </div>
+
+    <div class="logs-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Data</th>
+                    <th>Tipo</th>
+                    <th>Jogador</th>
+                    <th>Personagem</th>
+                    <th>Item</th>
+                    <th>Valor</th>
+                    <th>Saldo Após</th>
+                    <th>Cashback</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="log : ${logs}">
+                    <td th:text="${log.id}">#</td>
+                    <td th:text="${#temporals.format(log.createdAt, 'dd/MM/yyyy HH:mm')}">01/01/2026 12:00</td>
+                    <td>
+                        <span th:class="${log.transactionType == 'ITEM_PURCHASE' ? 'type-badge type-item' : 
+                                          (log.transactionType == 'CAR_PURCHASE' ? 'type-badge type-car' : 'type-badge type-cashback')}"
+                              th:text="${log.transactionType == 'ITEM_PURCHASE' ? 'Item' : 
+                                         (log.transactionType == 'CAR_PURCHASE' ? 'Veículo' : 'Cashback')}">
+                            Tipo
+                        </span>
+                    </td>
+                    <td th:text="${log.playerUsername}">Player</td>
+                    <td th:text="${log.characterName}">Character</td>
+                    <td th:text="${log.itemName}">Item Name</td>
+                    <td class="amount-cell" th:text="${log.amount + ' ₳'}">0 ₳</td>
+                    <td class="balance-cell" th:text="${log.balanceAfter + ' ₳'}">0 ₳</td>
+                    <td>
+                        <span th:if="${log.cashback}" class="cashback-badge cashback-yes"
+                              th:title="${'Por: ' + log.cashbackBy + ' em ' + #temporals.format(log.cashbackAt, 'dd/MM/yyyy HH:mm')}">
+                            REEMBOLSADO
+                        </span>
+                        <span th:unless="${log.cashback}" class="cashback-badge cashback-no">—</span>
+                    </td>
+                    <td>
+                        <button th:unless="${log.cashback}"
+                                class="cashback-btn"
+                                th:data-id="${log.id}"
+                                th:data-player="${log.playerUsername}"
+                                th:data-character="${log.characterName}"
+                                th:data-item="${log.itemName}"
+                                th:data-amount="${log.amount}"
+                                onclick="confirmCashback(this)">
+                            💸 Cashback
+                        </button>
+                        <button th:if="${log.cashback}" class="cashback-btn" disabled>
+                            ✅ Reembolsado
+                        </button>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(logs)}">
+                    <td colspan="10" style="text-align: center; padding: 40px; color: #aaa;">
+                        Nenhuma transação encontrada.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div th:if="${totalPages > 1}" class="pagination">
+        <a th:href="@{/admin/transactions(page=${currentPage > 0 ? currentPage - 1 : 0}, size=20, search=${search}, type=${type})}"
+           th:classappend="${currentPage == 0 ? 'disabled' : ''}"
+           class="pagination-btn">
+            ← Anterior
+        </a>
+
+        <span class="pagination-info">
+            Página <span th:text="${currentPage + 1}">1</span> de <span th:text="${totalPages}">1</span>
+        </span>
+
+        <a th:href="@{/admin/transactions(page=${currentPage < totalPages - 1 ? currentPage + 1 : currentPage}, size=20, search=${search}, type=${type})}"
+           th:classappend="${currentPage >= totalPages - 1 ? 'disabled' : ''}"
+           class="pagination-btn">
+            Próxima →
+        </a>
+    </div>
+</div>
+
+<!-- Confirm Cashback Modal -->
+<div id="cashbackModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3>💸 Confirmar Cashback</h3>
+        <p id="cashbackDetails">Tem certeza que deseja reembolsar esta transação?</p>
+        <div class="modal-buttons">
+            <button class="modal-btn cancel" onclick="closeCashbackModal()">Cancelar</button>
+            <button class="modal-btn confirm" id="confirmCashbackBtn" onclick="executeCashback()">Confirmar Cashback</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast notification -->
+<div id="toast" class="toast"></div>
+
+<script>
+    let pendingCashbackId = null;
+
+    function confirmCashback(btn) {
+        pendingCashbackId = btn.dataset.id;
+        const player = btn.dataset.player;
+        const character = btn.dataset.character;
+        const item = btn.dataset.item;
+        const amount = btn.dataset.amount;
+
+        document.getElementById('cashbackDetails').innerHTML =
+            `Reembolsar <strong>${amount} ₳</strong> para o personagem <strong>${character}</strong> (${player})?<br><br>` +
+            `Item: <strong>${item}</strong>`;
+
+        document.getElementById('cashbackModal').classList.add('active');
+    }
+
+    function closeCashbackModal() {
+        document.getElementById('cashbackModal').classList.remove('active');
+        pendingCashbackId = null;
+    }
+
+    function executeCashback() {
+        if (!pendingCashbackId) return;
+
+        const btn = document.getElementById('confirmCashbackBtn');
+        btn.disabled = true;
+        btn.textContent = 'Processando...';
+
+        fetch(`/admin/transactions/${pendingCashbackId}/cashback`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            closeCashbackModal();
+            btn.disabled = false;
+            btn.textContent = 'Confirmar Cashback';
+
+            if (data.success) {
+                showToast(data.message, 'success');
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                showToast(data.message || 'Erro ao processar cashback', 'error');
+            }
+        })
+        .catch(error => {
+            closeCashbackModal();
+            btn.disabled = false;
+            btn.textContent = 'Confirmar Cashback';
+            showToast('Erro de conexão. Tente novamente.', 'error');
+        });
+    }
+
+    function showToast(message, type) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.className = 'toast ' + type;
+        toast.style.display = 'block';
+
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 4000);
+    }
+</script>
+</body>
+</html>

@@ -6,6 +6,7 @@ import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.CarRepository;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.CharacterRepository;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.UserRepository;
+import com.apocalipsebr.zomboid.server.manager.application.service.TransactionLogService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
@@ -29,15 +30,18 @@ public class CarService {
     private final CharacterRepository characterRepository;
     private final UserRepository userRepository;
     private final ServerCommandService serverCommandService;
+    private final TransactionLogService transactionLogService;
 
     public CarService(CarRepository carRepository, 
                      CharacterRepository characterRepository,
                      UserRepository userRepository,
-                     ServerCommandService serverCommandService) {
+                     ServerCommandService serverCommandService,
+                     TransactionLogService transactionLogService) {
         this.carRepository = carRepository;
         this.characterRepository = characterRepository;
         this.userRepository = userRepository;
         this.serverCommandService = serverCommandService;
+        this.transactionLogService = transactionLogService;
     }
 
     @Transactional
@@ -205,6 +209,16 @@ public class CarService {
                 // Vehicle will be spawned when player reconnects
             }
             
+            // Log the transaction
+            try {
+                transactionLogService.logTransaction(
+                    user, targetCharacter, "CAR_PURCHASE",
+                    car.getName() + " (" + car.getModel() + ")",
+                    car.getVehicleScript(), car.getValue(), newPoints);
+            } catch (Exception logEx) {
+                logger.warning("Failed to log car purchase transaction: " + logEx.getMessage());
+            }
+
             result.put("success", true);
             result.put("message", "Compra realizada com sucesso! O veículo foi gerado para " + 
                       targetCharacter.getPlayerName());

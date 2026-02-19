@@ -2,6 +2,7 @@ package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
 import com.apocalipsebr.zomboid.server.manager.application.service.CharacterService;
 import com.apocalipsebr.zomboid.server.manager.application.service.ServerCommandService;
+import com.apocalipsebr.zomboid.server.manager.application.service.TransactionLogService;
 import com.apocalipsebr.zomboid.server.manager.application.service.ZomboidItemService;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Character;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
@@ -30,12 +31,14 @@ public class ZomboidItemWebController {
     private final ZomboidItemService zomboidItemService;
     private final CharacterService characterService;
     private final ServerCommandService serverCommandService;
+    private final TransactionLogService transactionLogService;
 
     public ZomboidItemWebController(ZomboidItemService zomboidItemService, CharacterService characterService,
-            ServerCommandService serverCommandService) {
+            ServerCommandService serverCommandService, TransactionLogService transactionLogService) {
         this.zomboidItemService = zomboidItemService;
         this.characterService = characterService;
         this.serverCommandService = serverCommandService;
+        this.transactionLogService = transactionLogService;
     }
 
     @GetMapping
@@ -211,6 +214,16 @@ public class ZomboidItemWebController {
                 int newTotalCurrency = userCharacters.stream()
                         .mapToInt(c -> c.getCurrencyPoints() != null ? c.getCurrencyPoints() : 0)
                         .sum();
+
+                // Log the transaction
+                try {
+                    transactionLogService.logTransaction(
+                        user, targetCharacter, "ITEM_PURCHASE",
+                        item.getName(), item.getItemId(),
+                        item.getValue(), newTotalCurrency);
+                } catch (Exception logEx) {
+                    // Don't fail the purchase if logging fails
+                }
 
                 return Map.of(
                         "success", true,
