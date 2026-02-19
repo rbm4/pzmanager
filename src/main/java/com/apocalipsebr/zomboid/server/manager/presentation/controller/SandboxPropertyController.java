@@ -1,8 +1,12 @@
 package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
-import com.apocalipsebr.zomboid.server.manager.application.constants.SandboxProperty;
 import com.apocalipsebr.zomboid.server.manager.application.service.SandboxPropertyService;
-import com.apocalipsebr.zomboid.server.manager.presentation.dto.SandboxPropertyDTO;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.SandboxSetting;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.SandboxSetting.ConfigType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -11,224 +15,185 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
- * Controller for managing Zomboid Sandbox Properties
+ * Controller for managing Zomboid Sandbox Settings.
+ * Uses SandboxSetting entity backed by parsed servertest.ini data.
  */
 @Controller
 @RequestMapping("/admin/sandbox")
 @PreAuthorize("hasRole('ADMIN')")
 public class SandboxPropertyController {
-    
+
     private final SandboxPropertyService sandboxPropertyService;
 
     public SandboxPropertyController(SandboxPropertyService sandboxPropertyService) {
         this.sandboxPropertyService = sandboxPropertyService;
     }
 
+    // ==================== THYMELEAF VIEW ====================
+
     /**
-     * Display the sandbox property management view
+     * Display the sandbox settings management page (paginated).
      */
     @GetMapping
     public String showSandboxManagement(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "25") int size,
+            @RequestParam(value = "search", required = false) String search,
             @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "configType", required = false) String configTypeStr,
             Model model) {
         try {
-            // Get all categories
-            List<Map<String, Object>> categories = sandboxPropertyService.getAllCategories();
-            model.addAttribute("categories", categories);
-
-            // Get property count by category
-            Map<String, Integer> countByCategory = sandboxPropertyService.getPropertyCountByCategory();
-            model.addAttribute("countByCategory", countByCategory);
-
-            // Get properties (filtered by category if provided)
-            List<Map<String, Object>> properties;
-            if (category != null && !category.isEmpty()) {
-                properties = sandboxPropertyService.getPropertiesByCategory(category);
-                model.addAttribute("selectedCategory", category);
-            } else {
-                properties = sandboxPropertyService.getAllProperties();
+            ConfigType configType = null;
+            if (configTypeStr != null && !configTypeStr.isEmpty()) {
+                try {
+                    configType = ConfigType.valueOf(configTypeStr);
+                } catch (IllegalArgumentException ignored) {}
             }
 
-            // Convert to DTOs
-            List<SandboxPropertyDTO> propertyDTOs = properties.stream()
-                    .map(m -> {
-                        SandboxProperty prop = (SandboxProperty) m.get("property");
-                        Object currentValue = m.get("currentValue");
-                        return new SandboxPropertyDTO(prop, currentValue);
-                    })
-                    .collect(Collectors.toList());
+            Pageable pageable = PageRequest.of(page, size, Sort.by("category").ascending().and(Sort.by("settingKey").ascending()));
+            Page<SandboxSetting> settingsPage = configType != null
+                    ? sandboxPropertyService.getSettings(search, category, configType, pageable)
+                    : sandboxPropertyService.getSettings(search, category, pageable);
 
-            model.addAttribute("properties", propertyDTOs);
-            model.addAttribute("totalProperties", propertyDTOs.size());
+            model.addAttribute("settingsPage", settingsPage);
+            model.addAttribute("settings", settingsPage.getContent());
+            model.addAttribute("currentPage", page);
+            model.addAttribute("totalPages", settingsPage.getTotalPages());
+            model.addAttribute("totalSettings", settingsPage.getTotalElements());
+            model.addAttribute("search", search != null ? search : "");
+            model.addAttribute("selectedCategory", category != null ? category : "");
+            model.addAttribute("selectedConfigType", configTypeStr != null ? configTypeStr : "");
+
+            // Stats
+            model.addAttribute("totalCount", sandboxPropertyService.getTotalCount());
+            model.addAttribute("modifiedCount", sandboxPropertyService.getModifiedCount());
+            model.addAttribute("overwriteCount", sandboxPropertyService.getOverwriteCount());
+
+            // Config types for filter dropdown
+            model.addAttribute("configTypes", ConfigType.values());
+
+            // Categories for filter dropdown
+            model.addAttribute("categories", configType != null
+                    ? sandboxPropertyService.getCategoriesByConfigType(configType)
+                    : sandboxPropertyService.getAllCategories());
 
             return "sandbox-management";
         } catch (Exception e) {
-            model.addAttribute("error", "Error loading sandbox properties: " + e.getMessage());
+            model.addAttribute("error", "Erro ao carregar configurações: " + e.getMessage());
             return "sandbox-management";
         }
     }
 
-    /**
-     * REST API: Get all properties as JSON
-     */
-    @GetMapping("/api/properties")
-    @ResponseBody
-    public ResponseEntity<Map<String, Object>> getAllProperties(
-            @RequestParam(value = "category", required = false) String category) {
-        try {
-            List<Map<String, Object>> properties;
-            
-            if (category != null && !category.isEmpty()) {
-                properties = sandboxPropertyService.getPropertiesByCategory(category);
-            } else {
-                properties = sandboxPropertyService.getAllProperties();
-            }
-
-            List<SandboxPropertyDTO> dtos = properties.stream()
-                    .map(m -> {
-                        SandboxProperty prop = (SandboxProperty) m.get("property");
-                        Object currentValue = m.get("currentValue");
-                        return new SandboxPropertyDTO(prop, currentValue);
-                    })
-                    .collect(Collectors.toList());
-
-            return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "count", dtos.size(),
-                    "properties", dtos
-            ));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of(
-                            "success", false,
-                            "error", e.getMessage()
-                    ));
-        }
-    }
+    // ==================== REST API ====================
 
     /**
-     * REST API: Get specific property by key
+     * Update a setting's appliedValue and overwriteAtStartup flag.
      */
-    @GetMapping("/api/properties/{key}")
+    @PostMapping("/api/settings/{id}")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> getPropertyByKey(@PathVariable String key) {
-        try {
-            Optional<Map<String, Object>> property = sandboxPropertyService.getPropertyByKey(key);
-            
-            if (property.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of(
-                                "success", false,
-                                "error", "Property not found: " + key
-                        ));
-            }
-
-            Map<String, Object> prop = property.get();
-            SandboxProperty sandboxProp = (SandboxProperty) prop.get("property");
-            Object currentValue = prop.get("currentValue");
-            SandboxPropertyDTO dto = new SandboxPropertyDTO(sandboxProp, currentValue);
-
-            return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "property", dto
-            ));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of(
-                            "success", false,
-                            "error", e.getMessage()
-                    ));
-        }
-    }
-
-    /**
-     * REST API: Update a property value
-     */
-    @PostMapping("/api/properties/{key}")
-    @ResponseBody
-    public ResponseEntity<Map<String, Object>> updateProperty(
-            @PathVariable String key,
+    public ResponseEntity<Map<String, Object>> updateSetting(
+            @PathVariable Long id,
             @RequestBody Map<String, Object> request) {
         try {
-            Object newValue = request.get("value");
+            String newValue = (String) request.get("value");
+            Boolean overwrite = request.containsKey("overwriteAtStartup")
+                    ? Boolean.valueOf(request.get("overwriteAtStartup").toString())
+                    : null;
 
-            if (newValue == null) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of(
-                                "success", false,
-                                "error", "Value cannot be null"
-                        ));
+            if (newValue == null || newValue.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "error", "Valor não pode ser vazio"
+                ));
             }
 
-            // Get property to validate
-            Optional<SandboxProperty> property = SandboxProperty.fromKey(key);
-            if (property.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of(
-                                "success", false,
-                                "error", "Property not found: " + key
-                        ));
-            }
-
-            // Convert value to correct type
-            Object convertedValue = property.get().getDataType().parse(newValue.toString());
-
-            // Update property
-            boolean success = sandboxPropertyService.updateProperty(key, convertedValue);
-
-            if (!success) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of(
-                                "success", false,
-                                "error", "Failed to update property. Invalid value or constraint violation."
-                        ));
-            }
+            SandboxSetting updated = sandboxPropertyService.updateSetting(id, newValue, overwrite);
 
             return ResponseEntity.ok(Map.of(
                     "success", true,
-                    "message", "Property updated successfully",
-                    "key", key,
-                    "newValue", convertedValue
+                    "message", "Configuração atualizada com sucesso",
+                    "setting", settingToMap(updated)
             ));
-        } catch (NumberFormatException e) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of(
-                            "success", false,
-                            "error", "Invalid value format: " + e.getMessage()
-                    ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "success", false,
+                    "error", e.getMessage()
+            ));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of(
-                            "success", false,
-                            "error", e.getMessage()
-                    ));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "success", false,
+                    "error", e.getMessage()
+            ));
         }
     }
 
     /**
-     * REST API: Get all available categories
+     * Toggle the overwriteAtStartup flag for a setting.
      */
-    @GetMapping("/api/categories")
+    @PostMapping("/api/settings/{id}/toggle-overwrite")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> getCategories() {
+    public ResponseEntity<Map<String, Object>> toggleOverwrite(@PathVariable Long id) {
         try {
-            List<Map<String, Object>> categories = sandboxPropertyService.getAllCategories();
-            Map<String, Integer> countByCategory = sandboxPropertyService.getPropertyCountByCategory();
+            SandboxSetting updated = sandboxPropertyService.toggleOverwrite(id);
 
             return ResponseEntity.ok(Map.of(
                     "success", true,
-                    "categories", categories,
-                    "countByCategory", countByCategory
+                    "message", "Overwrite " + (updated.getOverwriteAtStartup() ? "ativado" : "desativado"),
+                    "overwriteAtStartup", updated.getOverwriteAtStartup()
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "success", false,
+                    "error", e.getMessage()
             ));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of(
-                            "success", false,
-                            "error", e.getMessage()
-                    ));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "success", false,
+                    "error", e.getMessage()
+            ));
         }
+    }
+
+    /**
+     * Clear the appliedValue (revert to original ini value).
+     */
+    @PostMapping("/api/settings/{id}/clear")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> clearAppliedValue(@PathVariable Long id) {
+        try {
+            SandboxSetting updated = sandboxPropertyService.clearAppliedValue(id);
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Valor aplicado removido, usando valor original do ini"
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "success", false,
+                    "error", e.getMessage()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "success", false,
+                    "error", e.getMessage()
+            ));
+        }
+    }
+
+    // ==================== HELPERS ====================
+
+    private Map<String, Object> settingToMap(SandboxSetting s) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("id", s.getId());
+        map.put("settingKey", s.getSettingKey());
+        map.put("currentValue", s.getCurrentValue());
+        map.put("appliedValue", s.getAppliedValue());
+        map.put("overwriteAtStartup", s.getOverwriteAtStartup());
+        map.put("category", s.getCategory());
+        map.put("description", s.getDescription());
+        map.put("configType", s.getConfigType() != null ? s.getConfigType().name() : null);
+        return map;
     }
 }
