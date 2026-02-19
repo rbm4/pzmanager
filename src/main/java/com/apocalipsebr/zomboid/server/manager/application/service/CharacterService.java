@@ -15,7 +15,7 @@ import java.util.logging.Logger;
 @Service
 public class CharacterService {
     
-    private static final int CURRENCY_MULTIPLIER = 2;
+    private static final int CURRENCY_MULTIPLIER = 6;
 
     private static final Logger logger = Logger.getLogger(CharacterService.class.getName());
     
