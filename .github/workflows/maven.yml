@@ -24,14 +24,111 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
     - name: Set up JDK 25
       uses: actions/setup-java@v4
       with:
         java-version: '25'
         distribution: 'temurin'
         cache: maven
+    
+    # Extract version from pom.xml
+    - name: Extract version from pom.xml
+      id: extract_version
+      run: |
+        VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout --file pom.xml)
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Detected version: $VERSION"
+
+    # Check if a release with this version already exists
+    - name: Check if release exists
+      if: github.event_name == 'push'
+      id: check_release
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        VERSION="v${{ steps.extract_version.outputs.version }}"
+        if gh release view "$VERSION" --repo ${{ github.repository }} > /dev/null 2>&1; then
+          echo "Release $VERSION already exists. Bumping patch version..."
+          echo "exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "Release $VERSION does not exist. Proceeding."
+          echo "exists=false" >> $GITHUB_OUTPUT
+        fi
+    # Bump patch version in pom.xml if release already exists
+    - name: Bump version if release exists
+      if: github.event_name == 'push' && steps.check_release.outputs.exists == 'true'
+      id: bump_version
+      run: |
+        CURRENT="${{ steps.extract_version.outputs.version }}"
+        # Parse major.minor.patch
+        IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+        # Strip any suffix from PATCH (e.g. -SNAPSHOT)
+        PATCH_NUM=$(echo "$PATCH" | grep -oE '^[0-9]+')
+        SUFFIX=$(echo "$PATCH" | sed "s/^$PATCH_NUM//")
+        NEW_PATCH=$((PATCH_NUM + 1))
+        NEW_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}${SUFFIX}"
+        echo "Bumping version from $CURRENT to $NEW_VERSION"
+        mvn versions:set -DnewVersion="$NEW_VERSION" -DgenerateBackupPoms=false --file pom.xml
+        echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+    # Re-read final version after potential bump
+    - name: Resolve final version
+      if: github.event_name == 'push'
+      id: final_version
+      run: |
+        VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout --file pom.xml)
+        ARTIFACT_ID=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout --file pom.xml)
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "artifact_id=$ARTIFACT_ID" >> $GITHUB_OUTPUT
+        echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+        echo "Final version for release: $VERSION"
+
     - name: Build with Maven
       run: mvn -B package --file pom.xml
+
+    # Commit bumped version back to main (only if version was changed)
+    - name: Commit version bump
+      if: github.event_name == 'push' && steps.check_release.outputs.exists == 'true'
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add pom.xml
+        git commit -m "ci: bump version to ${{ steps.final_version.outputs.version }}"
+        git push
+        
+    # Create GitHub Release and upload JAR
+    - name: Create Release and Upload Artifact
+      if: github.event_name == 'push'
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        TAG="${{ steps.final_version.outputs.tag }}"
+        VERSION="${{ steps.final_version.outputs.version }}"
+        ARTIFACT_ID="${{ steps.final_version.outputs.artifact_id }}"
+        JAR_PATH="target/${ARTIFACT_ID}-${VERSION}.jar"
+
+        if [ ! -f "$JAR_PATH" ]; then
+          echo "JAR not found at $JAR_PATH. Searching target/ for .jar files..."
+          JAR_PATH=$(find target -maxdepth 1 -name "*.jar" ! -name "*-sources.jar" ! -name "*-javadoc.jar" ! -name "original-*.jar" | head -n 1)
+          echo "Using JAR: $JAR_PATH"
+        fi
+
+        if [ -z "$JAR_PATH" ] || [ ! -f "$JAR_PATH" ]; then
+          echo "::error::No JAR artifact found in target/"
+          exit 1
+        fi
+
+        echo "Creating release $TAG with artifact $JAR_PATH"
+
+        gh release create "$TAG" \
+          "$JAR_PATH" \
+          --repo "${{ github.repository }}" \
+          --title "Release $VERSION" \
+          --generate-notes \
+          --latest
 
     # Optional: Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
     - name: Update dependency graph
