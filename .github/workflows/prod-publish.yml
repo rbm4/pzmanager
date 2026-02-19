@@ -1,8 +1,18 @@
 name: Deploy to Production
 
 on:
-  release:
-    types: [published]
+  workflow_call:
+    inputs:
+      version:
+        description: 'Release tag to deploy (e.g. v0.0.12)'
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release tag to deploy (e.g. v0.0.12). Leave empty to deploy the latest release.'
+        required: false
+        type: string
 
 jobs:
   deploy:
@@ -11,8 +21,16 @@ jobs:
     steps:
       - name: Resolve expected version
         id: version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="${{ github.event.release.tag_name }}"
+          INPUT_VERSION="${{ inputs.version }}"
+          if [ -z "$INPUT_VERSION" ]; then
+            TAG=$(gh release view --repo ${{ github.repository }} --json tagName -q .tagName 2>/dev/null)
+            echo "No version specified — resolved latest release: $TAG"
+          else
+            TAG="$INPUT_VERSION"
+          fi
           echo "Expected version after deployment: $TAG"
           echo "tag=$TAG" >> $GITHUB_OUTPUT
       
