@@ -69,7 +69,7 @@ public class SystemController {
     public ResponseEntity<Map<String, Object>> health() {
         Map<String, Object> response = new HashMap<>();
         response.put("status", "UP");
-        response.put("version", appVersion);
+        response.put("version", "v" + appVersion);
         response.put("timestamp", System.currentTimeMillis());
         response.put("uptime", ManagementFactory.getRuntimeMXBean().getUptime());
         return ResponseEntity.ok(response);
