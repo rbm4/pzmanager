@@ -19,6 +19,9 @@ public class SystemController {
     @Value("${server.restart.password}")
     private String restartPassword;
     
+    @Value("${app.version:unknown}")
+    private String appVersion;
+    
     /**
      * Restart the application
      * POST /api/system/restart
@@ -66,6 +69,7 @@ public class SystemController {
     public ResponseEntity<Map<String, Object>> health() {
         Map<String, Object> response = new HashMap<>();
         response.put("status", "UP");
+        response.put("version", appVersion);
         response.put("timestamp", System.currentTimeMillis());
         response.put("uptime", ManagementFactory.getRuntimeMXBean().getUptime());
         return ResponseEntity.ok(response);
