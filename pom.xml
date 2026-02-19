@@ -11,7 +11,7 @@
 	</parent>
 	<groupId>com.apocalipsebr.zomboid.server</groupId>
 	<artifactId>manager</artifactId>
-	<version>0.0.14</version>
+	<version>0.0.15</version>
 	<name>manager</name>
 	<description>Demo project for Spring Boot</description>
 	<url />
