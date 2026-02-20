@@ -21,4 +21,6 @@ public interface TransactionLogRepository extends JpaRepository<TransactionLog, 
     Page<TransactionLog> search(@Param("search") String search, @Param("type") String type, Pageable pageable);
 
     long countByCashbackTrue();
+
+    java.util.List<TransactionLog> findByItemIdRefAndTransactionTypeAndCashbackFalse(String itemIdRef, String transactionType);
 }

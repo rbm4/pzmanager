@@ -36,12 +36,20 @@ public class ScheduledRestartService {
     @Value("${server.restart.password}")
     private String restartPassword;
 
+    @Value("${server.boot.sequence.enabled:true}")
+    private boolean bootSequenceEnabled;
+
     public ScheduledRestartService(ServerRestartService serverRestartService) {
         this.serverRestartService = serverRestartService;
     }
 
     @EventListener(ApplicationReadyEvent.class)
     public void startupMessage() {
+        if (!bootSequenceEnabled) {
+            logger.info("Boot sequence is disabled, skipping startup message scheduler");
+            return;
+        }
+
         scheduler.schedule(() -> {
             serverRestartService.bootSequence();
         }, 150, TimeUnit.SECONDS);

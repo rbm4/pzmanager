@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Evento - Apocalipse [BR]</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            margin-left: 280px;
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px;
+            background: rgba(79, 172, 254, 0.1);
+            border-radius: 10px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(79, 172, 254, 0.3);
+        }
+
+        .page-header h1 {
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 2rem;
+        }
+
+        .balance-display {
+            text-align: right;
+        }
+
+        .balance-label { color: #aaa; font-size: 0.85rem; }
+        .balance-value { color: #ffc107; font-size: 1.5rem; font-weight: 700; }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .btn-back:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* ==================== FORM SECTIONS ==================== */
+
+        .form-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title.sandbox { color: #ce93d8; }
+        .section-title.region { color: #ffb74d; }
+        .section-title.info { color: #4facfe; }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #aaa;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+
+        .form-input::placeholder { color: rgba(255, 255, 255, 0.3); }
+
+        textarea.form-input { resize: vertical; min-height: 80px; }
+
+        /* ==================== PROPERTY CHECKBOXES ==================== */
+
+        .property-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 15px;
+        }
+
+        .property-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 15px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .property-item:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .property-item.selected {
+            border-color: #4facfe;
+            background: rgba(79, 172, 254, 0.1);
+        }
+
+        .property-item.selected.sandbox {
+            border-color: #ce93d8;
+            background: rgba(156, 39, 176, 0.1);
+        }
+
+        .property-item.selected.region {
+            border-color: #ffb74d;
+            background: rgba(255, 152, 0, 0.1);
+        }
+
+        .property-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .property-checkbox {
+            width: 20px;
+            height: 20px;
+            accent-color: #4facfe;
+            cursor: pointer;
+        }
+
+        .property-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .property-description {
+            color: #888;
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .property-cost-hint {
+            font-size: 0.75rem;
+            color: #666;
+        }
+
+        .property-value-select {
+            margin-top: 10px;
+            display: none;
+        }
+
+        .property-item.selected .property-value-select {
+            display: block;
+        }
+
+        .tier-buttons {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .tier-btn {
+            padding: 6px 14px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #ccc;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .tier-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .tier-btn.active {
+            background: rgba(79, 172, 254, 0.3);
+            border-color: #4facfe;
+            color: #4facfe;
+            font-weight: 700;
+        }
+
+        .tier-cost {
+            display: block;
+            font-size: 0.65rem;
+            color: #ffc107;
+            margin-top: 2px;
+        }
+
+        /* ==================== REGION COORDINATES ==================== */
+
+        .coords-section {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255, 152, 0, 0.05);
+            border: 1px solid rgba(255, 152, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        .coords-section.visible { display: block; }
+
+        .coords-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 12px;
+        }
+
+        .coord-input {
+            padding: 10px;
+            border: 1px solid rgba(255, 152, 0, 0.3);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+            font-size: 0.95rem;
+            width: 100%;
+            text-align: center;
+        }
+
+        .coord-label {
+            font-size: 0.8rem;
+            color: #ffb74d;
+            margin-bottom: 4px;
+            display: block;
+            text-align: center;
+        }
+
+        /* ==================== COST SUMMARY ==================== */
+
+        .cost-summary {
+            background: rgba(255, 193, 7, 0.05);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            position: sticky;
+            bottom: 20px;
+        }
+
+        .cost-title {
+            color: #ffc107;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .cost-items {
+            margin-bottom: 15px;
+        }
+
+        .cost-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 0.9rem;
+            color: #ddd;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .cost-item-value { color: #ffc107; font-weight: 600; }
+
+        .cost-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 15px;
+            border-top: 2px solid rgba(255, 193, 7, 0.3);
+        }
+
+        .cost-total-label {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .cost-total-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #ffc107;
+        }
+
+        .cost-balance-check {
+            margin-top: 10px;
+            font-size: 0.85rem;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+
+        .cost-balance-check.sufficient {
+            background: rgba(76, 175, 80, 0.15);
+            color: #4caf50;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+
+        .cost-balance-check.insufficient {
+            background: rgba(255, 152, 0, 0.15);
+            color: #ff9800;
+            border: 1px solid rgba(255, 152, 0, 0.3);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            color: #1a1a2e;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* ==================== CONFIRM MODAL ==================== */
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 600px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            color: #4facfe;
+            font-size: 1.4rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+        }
+
+        .modal-alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .confirm-summary {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .confirm-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 0.9rem;
+        }
+
+        .confirm-row .label { color: #aaa; }
+        .confirm-row .value { font-weight: 600; }
+
+        .confirm-props {
+            margin: 15px 0;
+        }
+
+        .confirm-prop-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 10px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 6px;
+            margin-bottom: 4px;
+            font-size: 0.85rem;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            font-weight: 700;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn.cancel {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .modal-btn.create {
+            background: linear-gradient(45deg, #ff9800, #ffc107);
+            color: #1a1a2e;
+        }
+
+        .modal-btn.activate {
+            background: linear-gradient(45deg, #4caf50, #8bc34a);
+            color: #1a1a2e;
+        }
+
+        .modal-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .container { margin-left: 0; }
+            body { flex-direction: column; }
+            .property-grid { grid-template-columns: 1fr; }
+            .coords-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{header-component :: header}"></div>
+<div th:replace="~{sidebar-component :: sidebar}"></div>
+
+<div class="container">
+    <a href="/events" class="btn-back">← Voltar aos Eventos</a>
+
+    <div class="page-header">
+        <h1>✨ Criar Evento</h1>
+        <div class="balance-display">
+            <div class="balance-label">Seu Saldo</div>
+            <div class="balance-value" th:text="${userBalance + ' ₳'}">0 ₳</div>
+            <div style="margin-top: 6px; font-size: 0.8rem; color: #aaa;">
+                Eventos esta semana: <span th:text="${3 - weeklyEventsRemaining}">0</span>/3
+                <span th:if="${weeklyEventsRemaining > 0}" style="color: #4caf50;">
+                    (<span th:text="${weeklyEventsRemaining}">3</span> restantes)
+                </span>
+                <span th:if="${weeklyEventsRemaining <= 0}" style="color: #f44336;">
+                    (Limite atingido)
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Info -->
+    <div class="form-section">
+        <div class="section-title info">📝 Informações do Evento</div>
+
+        <!-- Weekly Limit Warning -->
+        <div th:if="${weeklyEventsRemaining <= 0}" style="background: rgba(244, 67, 54, 0.15); border: 1px solid rgba(244, 67, 54, 0.4); border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+            <span style="color: #f44336; font-weight: 600;">🚫 Limite Semanal Atingido</span>
+            <p style="color: #e57373; font-size: 0.85rem; margin-top: 5px;">Você já criou 3 eventos esta semana. Aguarde para criar novos eventos.</p>
+        </div>
+
+        <!-- Sensitive Language Warning -->
+        <div style="background: rgba(255, 152, 0, 0.1); border: 1px solid rgba(255, 152, 0, 0.3); border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+            <span style="color: #ff9800; font-weight: 600;">⚠️ Aviso Importante</span>
+            <p style="color: #ffb74d; font-size: 0.85rem; margin-top: 5px;">O uso de linguagem ofensiva, conteúdo sensível ou inapropriado no título, descrição ou nome da região resultará em <strong style="color: #f44336;">banimento permanente</strong> da plataforma.</p>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Título do Evento *</label>
+            <input type="text" id="eventTitle" class="form-input" placeholder="Ex: Semana de XP Duplo" maxlength="100"
+                   th:disabled="${weeklyEventsRemaining <= 0}">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Descrição (opcional)</label>
+            <textarea id="eventDescription" class="form-input" placeholder="Descreva o objetivo do evento..."
+                      th:disabled="${weeklyEventsRemaining <= 0}"></textarea>
+        </div>
+    </div>
+
+    <!-- Sandbox Properties -->
+    <div class="form-section">
+        <div class="section-title sandbox">🌐 Efeitos Globais (Servidor)</div>
+        <p style="color: #888; font-size: 0.85rem; margin-bottom: 15px;">
+            Estas propriedades afetam o servidor inteiro. Selecione as que deseja incluir no evento.
+        </p>
+        <div class="property-grid">
+            <div th:each="suggestion : ${sandboxSuggestions}"
+                 class="property-item sandbox"
+                 th:data-key="${suggestion.name()}"
+                 th:data-target="SANDBOX"
+                 th:data-value-type="${suggestion.valueType.name()}"
+                 th:data-base-cost="${suggestion.baseCost}"
+                 onclick="toggleProperty(this)">
+                <div class="property-header">
+                    <input type="checkbox" class="property-checkbox" onclick="event.stopPropagation();"
+                           onchange="togglePropertyFromCheckbox(this)">
+                    <span class="property-name" th:text="${suggestion.displayName}">Property</span>
+                </div>
+                <div class="property-description" th:text="${suggestion.description}">Description</div>
+                <div class="property-cost-hint">
+                    Custo base: <span th:text="${suggestion.baseCost}">0</span> ₳
+                </div>
+                <div class="property-value-select">
+                    <div th:if="${suggestion.valueType.name() == 'PERCENTAGE'}" class="tier-buttons">
+                        <th:block th:each="tier, iterStat : ${percentageTiers}">
+                            <button type="button" class="tier-btn"
+                                    th:data-tier="${tier}"
+                                    th:data-cost="${suggestion.baseCost * percentageCostMultipliers[iterStat.index]}"
+                                    onclick="event.stopPropagation(); selectTier(this)">
+                                <span th:text="${tier + '%'}">5%</span>
+                                <span class="tier-cost" th:text="${suggestion.baseCost * percentageCostMultipliers[iterStat.index] + ' ₳'}">0 ₳</span>
+                            </button>
+                        </th:block>
+                    </div>
+                    <div th:if="${suggestion.valueType.name() == 'BOOLEAN'}" style="margin-top: 5px;">
+                        <span style="color: #4caf50; font-size: 0.9rem; font-weight: 600;">✅ Ativado quando selecionado</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Region Properties -->
+    <div class="form-section">
+        <div class="section-title region">🗺️ Efeitos de Zona (Região)</div>
+        <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">
+            Estas propriedades criam uma zona no mapa com efeitos especiais. Defina as coordenadas e escolha os efeitos.
+        </p>
+        <div style="background: rgba(79, 172, 254, 0.08); border: 1px solid rgba(79, 172, 254, 0.25); border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+            <span style="color: #4facfe; font-size: 0.85rem;">ℹ️ <strong>Regiões são opcionais.</strong> Você pode criar um evento apenas com efeitos globais (servidor) sem selecionar nenhuma propriedade de região.</span>
+        </div>
+        <div class="property-grid">
+            <div th:each="suggestion : ${regionSuggestions}"
+                 class="property-item region"
+                 th:data-key="${suggestion.name()}"
+                 th:data-target="REGION"
+                 th:data-value-type="${suggestion.valueType.name()}"
+                 th:data-base-cost="${suggestion.baseCost}"
+                 onclick="toggleProperty(this)">
+                <div class="property-header">
+                    <input type="checkbox" class="property-checkbox" onclick="event.stopPropagation();"
+                           onchange="togglePropertyFromCheckbox(this)">
+                    <span class="property-name" th:text="${suggestion.displayName}">Property</span>
+                </div>
+                <div class="property-description" th:text="${suggestion.description}">Description</div>
+                <div class="property-cost-hint">
+                    Custo base: <span th:text="${suggestion.baseCost}">0</span> ₳
+                </div>
+                <div class="property-value-select">
+                    <div th:if="${suggestion.valueType.name() == 'PERCENTAGE'}" class="tier-buttons">
+                        <th:block th:each="tier, iterStat : ${percentageTiers}">
+                            <button type="button" class="tier-btn"
+                                    th:data-tier="${tier}"
+                                    th:data-cost="${suggestion.baseCost * percentageCostMultipliers[iterStat.index]}"
+                                    onclick="event.stopPropagation(); selectTier(this)">
+                                <span th:text="${tier + '%'}">5%</span>
+                                <span class="tier-cost" th:text="${suggestion.baseCost * percentageCostMultipliers[iterStat.index] + ' ₳'}">0 ₳</span>
+                            </button>
+                        </th:block>
+                    </div>
+                    <div th:if="${suggestion.valueType.name() == 'BOOLEAN'}" style="margin-top: 5px;">
+                        <span style="color: #4caf50; font-size: 0.9rem; font-weight: 600;">✅ Ativado quando selecionado</span>
+                    </div>
+                    <div th:if="${suggestion.valueType.name() == 'TEXT'}" style="margin-top: 8px;">
+                        <input type="text" class="form-input text-value-input"
+                               placeholder="Digite o texto..."
+                               maxlength="200"
+                               onclick="event.stopPropagation();"
+                               style="font-size: 0.9rem; padding: 8px;">
+                        <span style="color: #888; font-size: 0.75rem; margin-top: 4px; display: block;">Máximo 200 caracteres</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Zone Coordinates -->
+        <div id="coordsSection" class="coords-section">
+            <div class="section-title region" style="font-size: 1rem;">📍 Coordenadas da Zona</div>
+            <p style="color: #888; font-size: 0.8rem; margin-bottom: 12px;">
+                Defina a área retangular no mapa onde os efeitos serão aplicados. A zona não pode sobrepor regiões existentes.
+            </p>
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label class="form-label" style="color: #ffb74d;">Nome da Região *</label>
+                <input type="text" id="regionName" class="form-input" placeholder="Ex: Zona de Guerra Downtown"
+                       maxlength="80" style="border-color: rgba(255, 152, 0, 0.3);">
+                <span style="color: #888; font-size: 0.75rem; margin-top: 4px; display: block;">Nome que será exibido para identificar esta região no mapa.</span>
+            </div>
+            <div class="coords-grid">
+                <div>
+                    <label class="coord-label">X1</label>
+                    <input type="number" id="regionX1" class="coord-input" placeholder="0">
+                </div>
+                <div>
+                    <label class="coord-label">Y1</label>
+                    <input type="number" id="regionY1" class="coord-input" placeholder="0">
+                </div>
+                <div>
+                    <label class="coord-label">X2</label>
+                    <input type="number" id="regionX2" class="coord-input" placeholder="0">
+                </div>
+                <div>
+                    <label class="coord-label">Y2</label>
+                    <input type="number" id="regionY2" class="coord-input" placeholder="0">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cost Summary -->
+    <div class="cost-summary" id="costSummary" style="display: none;">
+        <div class="cost-title">💰 Resumo de Custos</div>
+        <div class="cost-items" id="costItems"></div>
+        <div class="cost-total">
+            <span class="cost-total-label">Total:</span>
+            <span class="cost-total-value" id="costTotalValue">0 ₳</span>
+        </div>
+        <div class="cost-balance-check" id="balanceCheck"></div>
+        <button class="btn-submit" id="submitBtn" onclick="openConfirmModal()" style="margin-top: 15px;">
+            ⚡ Revisar e Confirmar
+        </button>
+    </div>
+</div>
+
+<!-- ==================== CONFIRM MODAL ==================== -->
+<div id="confirmModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>⚡ Confirmar Evento</h2>
+            <button class="modal-close" onclick="closeConfirmModal()">×</button>
+        </div>
+        <div id="confirmAlert" class="modal-alert"></div>
+
+        <div class="confirm-summary">
+            <div class="confirm-row">
+                <span class="label">Título:</span>
+                <span class="value" id="confirmTitle"></span>
+            </div>
+            <div class="confirm-row">
+                <span class="label">Duração:</span>
+                <span class="value">7 dias</span>
+            </div>
+            <div class="confirm-row">
+                <span class="label">Seu Saldo:</span>
+                <span class="value" style="color: #ffc107;" id="confirmBalance"></span>
+            </div>
+            <div class="confirm-row">
+                <span class="label">Custo Total:</span>
+                <span class="value" style="color: #ff9800;" id="confirmCost"></span>
+            </div>
+        </div>
+
+        <h3 style="color: #ce93d8; font-size: 0.95rem; margin-bottom: 10px;">Propriedades selecionadas:</h3>
+        <div class="confirm-props" id="confirmProps"></div>
+
+        <div id="confirmActions" class="modal-buttons"></div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const userBalance = /*[[${userBalance}]]*/ 0;
+    const disabledTiersMap = /*[[${disabledTiersMap}]]*/ {};
+
+    // Apply disabled tiers on page load
+    (function applyDisabledTiers() {
+        Object.keys(disabledTiersMap).forEach(key => {
+            const disabledStr = disabledTiersMap[key];
+            if (!disabledStr) return;
+            const disabled = disabledStr.split(',').map(Number);
+            const item = document.querySelector('.property-item[data-key="' + key + '"]');
+            if (!item) return;
+            item.querySelectorAll('.tier-btn').forEach(btn => {
+                const tier = parseInt(btn.getAttribute('data-tier'));
+                if (disabled.includes(tier)) {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.3';
+                    btn.style.cursor = 'not-allowed';
+                    btn.title = 'Indisponível — excederia o valor máximo do servidor';
+                }
+            });
+        });
+    })();
+
+    function toggleProperty(el) {
+        const checkbox = el.querySelector('.property-checkbox');
+        checkbox.checked = !checkbox.checked;
+        el.classList.toggle('selected', checkbox.checked);
+
+        // Reset tier selection when deselecting
+        if (!checkbox.checked) {
+            el.querySelectorAll('.tier-btn').forEach(b => b.classList.remove('active'));
+        } else {
+            // Auto-select first AVAILABLE tier for percentage types
+            const valueType = el.getAttribute('data-value-type');
+            if (valueType === 'PERCENTAGE') {
+                const firstAvailable = el.querySelector('.tier-btn:not([disabled])');
+                if (firstAvailable && !el.querySelector('.tier-btn.active')) {
+                    firstAvailable.classList.add('active');
+                }
+            }
+        }
+
+        updateCostSummary();
+        updateCoordsVisibility();
+    }
+
+    function togglePropertyFromCheckbox(checkbox) {
+        const item = checkbox.closest('.property-item');
+        item.classList.toggle('selected', checkbox.checked);
+        if (!checkbox.checked) {
+            item.querySelectorAll('.tier-btn').forEach(b => b.classList.remove('active'));
+        } else {
+            const valueType = item.getAttribute('data-value-type');
+            if (valueType === 'PERCENTAGE') {
+                const firstAvailable = item.querySelector('.tier-btn:not([disabled])');
+                if (firstAvailable && !item.querySelector('.tier-btn.active')) {
+                    firstAvailable.classList.add('active');
+                }
+            }
+        }
+        updateCostSummary();
+        updateCoordsVisibility();
+    }
+
+    function selectTier(btn) {
+        if (btn.disabled) return; // Prevent selecting disabled tiers
+        const item = btn.closest('.property-item');
+        item.querySelectorAll('.tier-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        // Ensure the property is selected
+        const checkbox = item.querySelector('.property-checkbox');
+        if (!checkbox.checked) {
+            checkbox.checked = true;
+            item.classList.add('selected');
+        }
+
+        updateCostSummary();
+    }
+
+    function updateCoordsVisibility() {
+        const hasRegion = document.querySelectorAll('.property-item.region.selected').length > 0;
+        document.getElementById('coordsSection').classList.toggle('visible', hasRegion);
+    }
+
+    function getSelectedProperties() {
+        const selected = [];
+        document.querySelectorAll('.property-item.selected').forEach(item => {
+            const key = item.getAttribute('data-key');
+            const target = item.getAttribute('data-target');
+            const valueType = item.getAttribute('data-value-type');
+            const baseCost = parseInt(item.getAttribute('data-base-cost'));
+            const name = item.querySelector('.property-name').textContent;
+
+            let value, cost;
+
+            if (valueType === 'BOOLEAN') {
+                value = 'true';
+                cost = baseCost;
+            } else if (valueType === 'TEXT') {
+                const textInput = item.querySelector('.text-value-input');
+                value = textInput ? textInput.value.trim() : '';
+                cost = baseCost;
+            } else if (valueType === 'PERCENTAGE') {
+                const activeTier = item.querySelector('.tier-btn.active');
+                if (activeTier) {
+                    value = activeTier.getAttribute('data-tier');
+                    cost = parseInt(activeTier.getAttribute('data-cost'));
+                } else {
+                    return; // Skip if no tier selected
+                }
+            } else {
+                value = '0';
+                cost = baseCost;
+            }
+
+            selected.push({ key, target, valueType, name, value, cost });
+        });
+        return selected;
+    }
+
+    function updateCostSummary() {
+        const selected = getSelectedProperties();
+        const costSummary = document.getElementById('costSummary');
+        const costItems = document.getElementById('costItems');
+        const costTotal = document.getElementById('costTotalValue');
+        const balanceCheck = document.getElementById('balanceCheck');
+        const submitBtn = document.getElementById('submitBtn');
+
+        if (selected.length === 0) {
+            costSummary.style.display = 'none';
+            return;
+        }
+
+        costSummary.style.display = 'block';
+
+        let html = '';
+        let total = 0;
+        selected.forEach(p => {
+            let valueDisplay = p.valueType === 'BOOLEAN' ? 'Ativado' : (p.valueType === 'TEXT' ? '📝 Texto' : p.value + '%');
+            html += '<div class="cost-item"><span>' + (p.target === 'SANDBOX' ? '🌐' : '🗺️') + ' ' + p.name + ' (' + valueDisplay + ')</span><span class="cost-item-value">' + p.cost + ' ₳</span></div>';
+            total += p.cost;
+        });
+
+        costItems.innerHTML = html;
+        costTotal.textContent = total + ' ₳';
+
+        if (userBalance >= total) {
+            balanceCheck.className = 'cost-balance-check sufficient';
+            balanceCheck.innerHTML = '✅ Saldo suficiente para ativar o evento instantaneamente!';
+            submitBtn.disabled = false;
+        } else {
+            balanceCheck.className = 'cost-balance-check insufficient';
+            balanceCheck.innerHTML = '⏳ Saldo insuficiente para ativação instantânea. O evento será criado para financiamento coletivo (faltam ' + (total - userBalance) + ' ₳).';
+            submitBtn.disabled = false;
+        }
+    }
+
+    function openConfirmModal() {
+        const title = document.getElementById('eventTitle').value.trim();
+        if (!title) {
+            alert('Informe o título do evento!');
+            return;
+        }
+
+        const selected = getSelectedProperties();
+        if (selected.length === 0) {
+            alert('Selecione pelo menos uma propriedade!');
+            return;
+        }
+
+        // Check region coords if needed
+        const hasRegion = selected.some(p => p.target === 'REGION');
+        if (hasRegion) {
+            const x1 = document.getElementById('regionX1').value;
+            const y1 = document.getElementById('regionY1').value;
+            const x2 = document.getElementById('regionX2').value;
+            const y2 = document.getElementById('regionY2').value;
+            const rName = document.getElementById('regionName').value.trim();
+            if (!x1 || !y1 || !x2 || !y2) {
+                alert('Informe as coordenadas da zona!');
+                return;
+            }
+            if (!rName) {
+                alert('Informe o nome da região!');
+                return;
+            }
+        }
+
+        // Check TEXT properties have values
+        const emptyText = selected.find(p => p.valueType === 'TEXT' && (!p.value || p.value.trim() === ''));
+        if (emptyText) {
+            alert('Preencha o texto para: ' + emptyText.name);
+            return;
+        }
+
+        const total = selected.reduce((sum, p) => sum + p.cost, 0);
+
+        document.getElementById('confirmTitle').textContent = title;
+        document.getElementById('confirmBalance').textContent = userBalance + ' ₳';
+        document.getElementById('confirmCost').textContent = total + ' ₳';
+
+        let propsHtml = '';
+        selected.forEach(p => {
+            let valueDisplay = p.valueType === 'BOOLEAN' ? 'Ativado' : (p.valueType === 'TEXT' ? '📝 Texto' : p.value + '%');
+            let icon = p.target === 'SANDBOX' ? '🌐' : '🗺️';
+            propsHtml += '<div class="confirm-prop-item"><span>' + icon + ' ' + p.name + ' (' + valueDisplay + ')</span><span style="color: #ffc107;">' + p.cost + ' ₳</span></div>';
+        });
+        document.getElementById('confirmProps').innerHTML = propsHtml;
+
+        // Build action buttons
+        let actionsHtml = '<button class="modal-btn cancel" onclick="closeConfirmModal()">Voltar</button>';
+        if (userBalance >= total) {
+            actionsHtml += '<button class="modal-btn create" onclick="submitEvent(false)">📋 Criar Evento</button>';
+            actionsHtml += '<button class="modal-btn activate" onclick="submitEvent(true)">⚡ Pagar e Ativar (' + total + ' ₳)</button>';
+        } else {
+            actionsHtml += '<button class="modal-btn create" onclick="submitEvent(false)">📋 Criar para Financiamento</button>';
+        }
+        document.getElementById('confirmActions').innerHTML = actionsHtml;
+
+        hideModalAlert('confirmAlert');
+        document.getElementById('confirmModal').classList.add('active');
+    }
+
+    function closeConfirmModal() {
+        document.getElementById('confirmModal').classList.remove('active');
+    }
+
+    async function submitEvent(instantActivate) {
+        const title = document.getElementById('eventTitle').value.trim();
+        const description = document.getElementById('eventDescription').value.trim();
+        const selected = getSelectedProperties();
+
+        const params = new URLSearchParams();
+        params.append('title', title);
+        if (description) params.append('description', description);
+
+        selected.forEach(p => {
+            params.append('suggestionKeys', p.key);
+            params.append('selectedValues', p.value);
+        });
+
+        // Add region coordinates if needed
+        const hasRegion = selected.some(p => p.target === 'REGION');
+        if (hasRegion) {
+            params.append('regionX1', document.getElementById('regionX1').value);
+            params.append('regionX2', document.getElementById('regionX2').value);
+            params.append('regionY1', document.getElementById('regionY1').value);
+            params.append('regionY2', document.getElementById('regionY2').value);
+            params.append('regionZ', '0');
+            const regionNameVal = document.getElementById('regionName').value.trim();
+            if (regionNameVal) {
+                params.append('regionName', regionNameVal);
+            }
+        }
+
+        try {
+            const response = await fetch('/events/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: params.toString()
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                if (instantActivate && result.eventId) {
+                    // Pay full amount to activate immediately
+                    showModalAlert('confirmAlert', '✅ Evento criado! Processando pagamento...', 'success');
+                    const activateResponse = await fetch('/events/' + result.eventId + '/activate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                    });
+                    const activateResult = await activateResponse.json();
+                    if (activateResult.success ) {
+                        showModalAlert('confirmAlert', '⚡ ' + activateResult.message, 'success');
+                    } else {
+                        showModalAlert('confirmAlert', '⚠️ Evento criado, mas ativação falhou: ' + activateResult.message, 'error');
+                    }
+                } else {
+                    showModalAlert('confirmAlert', '✅ ' + result.message, 'success');
+                }
+                setTimeout(() => window.location.href = '/events', 2500);
+            } else {
+                showModalAlert('confirmAlert', '❌ ' + result.message, 'error');
+            }
+        } catch (err) {
+            showModalAlert('confirmAlert', '❌ Erro: ' + err.message, 'error');
+        }
+    }
+
+    function showModalAlert(id, message, type) {
+        const el = document.getElementById(id);
+        el.textContent = message;
+        el.style.display = 'block';
+        el.style.background = type === 'success' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(244, 67, 54, 0.2)';
+        el.style.border = '1px solid ' + (type === 'success' ? '#4caf50' : '#f44336');
+        el.style.color = type === 'success' ? '#4caf50' : '#f44336';
+    }
+
+    function hideModalAlert(id) {
+        document.getElementById(id).style.display = 'none';
+    }
+
+    // Close modal on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) this.classList.remove('active');
+        });
+    });
+    /*]]>*/
+</script>
+</body>
+</html>

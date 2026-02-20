@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eventos - Apocalipse [BR]</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            margin-left: 280px;
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px;
+            background: rgba(79, 172, 254, 0.1);
+            border-radius: 10px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(79, 172, 254, 0.3);
+        }
+
+        .page-header h1 {
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 2.2rem;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .stat-box {
+            text-align: center;
+        }
+
+        .stat-label {
+            color: #aaa;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .stat-value.balance { color: #ffc107; }
+        .stat-value.active { color: #4caf50; }
+        .stat-value.pending { color: #ff9800; }
+
+        .btn-create {
+            padding: 12px 24px;
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            color: #1a1a2e;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-create:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(79, 172, 254, 0.4);
+        }
+
+        .search-bar {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .search-form {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+        }
+
+        .search-input option { background: #16213e; color: white; }
+
+        .search-btn {
+            padding: 12px 24px;
+            background: #4facfe;
+            border: none;
+            color: #1a1a2e;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .search-btn:hover {
+            background: #00f2fe;
+            transform: translateY(-2px);
+        }
+
+        /* ==================== EVENT CARDS ==================== */
+
+        .events-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .event-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 14px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .event-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 15px 40px rgba(79, 172, 254, 0.2);
+        }
+
+        .event-card.status-ACTIVE { border-color: rgba(76, 175, 80, 0.5); }
+        .event-card.status-PENDING { border-color: rgba(255, 152, 0, 0.5); }
+        .event-card.status-FUNDED { border-color: rgba(33, 150, 243, 0.5); }
+        .event-card.status-EXPIRED { border-color: rgba(158, 158, 158, 0.3); opacity: 0.7; }
+        .event-card.status-CANCELLED { border-color: rgba(244, 67, 54, 0.3); opacity: 0.6; }
+
+        .card-header {
+            padding: 20px 20px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #fff;
+            flex: 1;
+            margin-right: 10px;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+
+        .status-badge.ACTIVE { background: rgba(76, 175, 80, 0.2); color: #4caf50; border: 1px solid #4caf50; }
+        .status-badge.PENDING { background: rgba(255, 152, 0, 0.2); color: #ff9800; border: 1px solid #ff9800; }
+        .status-badge.FUNDED { background: rgba(33, 150, 243, 0.2); color: #2196f3; border: 1px solid #2196f3; }
+        .status-badge.EXPIRED { background: rgba(158, 158, 158, 0.2); color: #9e9e9e; border: 1px solid #9e9e9e; }
+        .status-badge.CANCELLED { background: rgba(244, 67, 54, 0.2); color: #f44336; border: 1px solid #f44336; }
+
+        .card-body {
+            padding: 0 20px 15px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-description {
+            color: #bbb;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 15px;
+            max-height: 60px;
+            overflow: hidden;
+        }
+
+        .card-meta {
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 12px;
+        }
+
+        .card-meta span { margin-right: 15px; }
+
+        .card-properties {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 15px;
+        }
+
+        .prop-badge {
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .prop-badge.sandbox {
+            background: rgba(156, 39, 176, 0.2);
+            color: #ce93d8;
+            border: 1px solid rgba(156, 39, 176, 0.4);
+        }
+
+        .prop-badge.region {
+            background: rgba(255, 152, 0, 0.2);
+            color: #ffb74d;
+            border: 1px solid rgba(255, 152, 0, 0.4);
+        }
+
+        /* Progress bar */
+        .funding-section {
+            margin-bottom: 15px;
+        }
+
+        .funding-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .funding-label {
+            font-size: 0.85rem;
+            color: #aaa;
+        }
+
+        .funding-amount {
+            font-size: 0.85rem;
+            color: #ffc107;
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-fill.low { background: linear-gradient(90deg, #f44336, #ff9800); }
+        .progress-fill.mid { background: linear-gradient(90deg, #ff9800, #ffc107); }
+        .progress-fill.high { background: linear-gradient(90deg, #ffc107, #4caf50); }
+        .progress-fill.full { background: linear-gradient(90deg, #4caf50, #00e676); }
+
+        .card-footer {
+            padding: 15px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-timer {
+            font-size: 0.85rem;
+            color: #aaa;
+        }
+
+        .card-timer .time-value {
+            color: #4facfe;
+            font-weight: 600;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-contribute {
+            padding: 8px 18px;
+            background: linear-gradient(45deg, #ffc107, #ff9800);
+            color: #1a1a2e;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-contribute:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+        }
+
+        .btn-detail {
+            padding: 8px 14px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-detail:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 40px;
+            padding: 20px;
+        }
+
+        .pagination-btn {
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .pagination-btn:hover:not(.disabled) {
+            background: rgba(79, 172, 254, 0.3);
+            border-color: #4facfe;
+        }
+
+        .pagination-btn.disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .pagination-info { color: #aaa; margin: 0 10px; }
+
+        .no-events {
+            text-align: center;
+            padding: 80px 20px;
+            color: #aaa;
+        }
+
+        .no-events h2 { font-size: 2rem; margin-bottom: 10px; }
+
+        /* ==================== MODALS ==================== */
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            color: #4facfe;
+            font-size: 1.5rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+        }
+
+        .modal-alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .modal-alert.success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4caf50;
+            color: #4caf50;
+        }
+
+        .modal-alert.error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #f44336;
+            color: #f44336;
+        }
+
+        .contribute-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1.2rem;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .contribute-info {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .contribute-info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .contribute-info-label { color: #aaa; font-size: 0.9rem; }
+        .contribute-info-value { font-weight: 600; }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn.cancel {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .modal-btn.confirm {
+            background: linear-gradient(45deg, #ffc107, #ff9800);
+            color: #1a1a2e;
+        }
+
+        .modal-btn.confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+        }
+
+        /* Detail modal properties list */
+        .detail-props { margin: 15px 0; }
+
+        .detail-prop-item {
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .detail-prop-name { color: #ddd; font-size: 0.9rem; }
+        .detail-prop-value { color: #4facfe; font-weight: 600; font-size: 0.9rem; }
+
+        .detail-contribs { margin-top: 15px; }
+
+        .detail-contrib-item {
+            padding: 6px 12px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: #aaa;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        @media (max-width: 768px) {
+            .container { margin-left: 0; }
+            body { flex-direction: column; }
+            .events-grid { grid-template-columns: 1fr; }
+            .page-header { flex-direction: column; gap: 15px; }
+            .header-stats { flex-wrap: wrap; }
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{header-component :: header}"></div>
+<div th:replace="~{sidebar-component :: sidebar}"></div>
+
+<div class="container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1>⚡ Eventos</h1>
+        </div>
+        <div class="header-stats">
+            <div class="stat-box">
+                <div class="stat-label">Saldo</div>
+                <div class="stat-value balance" th:text="${userBalance + ' ₳'}">0 ₳</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Ativos</div>
+                <div class="stat-value active" th:text="${activeCount}">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Pendentes</div>
+                <div class="stat-value pending" th:text="${pendingCount}">0</div>
+            </div>
+            <a href="/events/create" class="btn-create">✨ Criar Evento</a>
+        </div>
+    </div>
+
+    <!-- Search / Filter -->
+    <div class="search-bar">
+        <form class="search-form" method="get" action="/events">
+            <input type="text" name="search" class="search-input"
+                   placeholder="Buscar eventos..." th:value="${search}">
+            <select name="status" class="search-input" style="flex: 0.4;">
+                <option value="">Todos os Status</option>
+                <option th:each="s : ${statuses}" th:value="${s.name()}" th:text="${s.name()}"
+                        th:selected="${status == s.name()}">STATUS</option>
+            </select>
+            <button type="submit" class="search-btn">🔍 Buscar</button>
+        </form>
+    </div>
+
+    <!-- Events Grid -->
+    <div class="events-grid">
+        <div th:each="event : ${events}" class="event-card"
+             th:classappend="'status-' + ${event.status.name()}">
+
+            <div class="card-header">
+                <div class="card-title" th:text="${event.title}">Evento</div>
+                <span class="status-badge" th:classappend="${event.status.name()}"
+                      th:text="${event.status.name()}">STATUS</span>
+            </div>
+
+            <div class="card-body">
+                <p class="card-description"
+                   th:text="${event.description != null && !event.description.isEmpty() ? event.description : 'Evento comunitário para alterar as configurações do servidor.'}">
+                    Descrição do evento
+                </p>
+
+                <div class="card-meta">
+                    <span>👤 <span th:text="${event.createdBy.username}">Creator</span></span>
+                    <span>📅 <span th:text="${#temporals.format(event.createdAt, 'dd/MM/yyyy')}">01/01/2026</span></span>
+                </div>
+
+                <!-- Property Badges -->
+                <div class="card-properties">
+                    <span th:each="prop : ${event.properties}"
+                          class="prop-badge"
+                          th:classappend="${prop.propertyTarget == 'SANDBOX' ? 'sandbox' : 'region'}"
+                          th:text="${prop.displayName}">Prop</span>
+                </div>
+
+                <!-- Funding Progress -->
+                <div class="funding-section">
+                    <div class="funding-header">
+                        <span class="funding-label">Financiamento</span>
+                        <span class="funding-amount">
+                            <span th:text="${event.amountCollected}">0</span> /
+                            <span th:text="${event.totalCost}">100</span> ₳
+                        </span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill"
+                             th:classappend="${event.fundingPercentage >= 100 ? 'full' : (event.fundingPercentage >= 60 ? 'high' : (event.fundingPercentage >= 30 ? 'mid' : 'low'))}"
+                             th:style="'width: ' + ${event.fundingPercentage} + '%'">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-footer">
+                <div class="card-timer">
+                    <span th:if="${event.status.name() == 'ACTIVE' && event.expirationDate != null}">
+                        ⏳ Expira: <span class="time-value" th:text="${#temporals.format(event.expirationDate, 'dd/MM HH:mm')}">01/01 12:00</span>
+                    </span>
+                    <span th:if="${event.status.name() == 'PENDING'}">
+                        ⏰ Faltam: <span class="time-value" th:text="${event.remainingAmount}">0</span> ₳
+                    </span>
+                    <span th:if="${event.status.name() == 'EXPIRED'}">
+                        ✅ Expirado
+                    </span>
+                    <span th:if="${event.status.name() == 'CANCELLED'}">
+                        ❌ Cancelado
+                    </span>
+                </div>
+                <div class="card-actions">
+                    <button th:if="${event.status.name() == 'PENDING'}"
+                            class="btn-contribute"
+                            th:data-event-id="${event.id}"
+                            th:data-event-title="${event.title}"
+                            th:data-event-remaining="${event.remainingAmount}"
+                            th:data-event-total="${event.totalCost}"
+                            th:data-event-collected="${event.amountCollected}"
+                            onclick="openContributeModal(this)">
+                        💰 Contribuir
+                    </button>
+                    <button th:if="${event.status.name() == 'PENDING' && event.createdBy.id == currentUserId}"
+                            class="btn-detail"
+                            style="background: rgba(244, 67, 54, 0.2); border-color: rgba(244, 67, 54, 0.4); color: #f44336;"
+                            th:data-event-id="${event.id}"
+                            th:data-event-title="${event.title}"
+                            onclick="openCancelModal(this)">
+                        ❌ Cancelar
+                    </button>
+                    <button class="btn-detail"
+                            th:data-event-id="${event.id}"
+                            onclick="openDetailModal(this)">
+                        ℹ️ Detalhes
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(events)}" class="no-events">
+            <h2>🔍 Nenhum evento encontrado</h2>
+            <p>Crie o primeiro evento para começar!</p>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div th:if="${totalPages > 1}" class="pagination">
+        <a th:href="@{/events(page=${currentPage > 0 ? currentPage - 1 : 0}, size=12, search=${search}, status=${status})}"
+           th:classappend="${currentPage == 0 ? 'disabled' : ''}"
+           class="pagination-btn">← Anterior</a>
+        <span class="pagination-info">
+            Página <span th:text="${currentPage + 1}">1</span> de <span th:text="${totalPages}">1</span>
+        </span>
+        <a th:href="@{/events(page=${currentPage < totalPages - 1 ? currentPage + 1 : currentPage}, size=12, search=${search}, status=${status})}"
+           th:classappend="${currentPage >= totalPages - 1 ? 'disabled' : ''}"
+           class="pagination-btn">Próximo →</a>
+    </div>
+</div>
+
+<!-- ==================== CONTRIBUTE MODAL ==================== -->
+<div id="contributeModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>💰 Contribuir</h2>
+            <button class="modal-close" onclick="closeContributeModal()">×</button>
+        </div>
+        <div id="contributeAlert" class="modal-alert"></div>
+        <div class="contribute-info">
+            <div class="contribute-info-row">
+                <span class="contribute-info-label">Evento:</span>
+                <span class="contribute-info-value" id="contributeEventTitle"></span>
+            </div>
+            <div class="contribute-info-row">
+                <span class="contribute-info-label">Faltam:</span>
+                <span class="contribute-info-value" style="color: #ff9800;" id="contributeRemaining"></span>
+            </div>
+            <div class="contribute-info-row">
+                <span class="contribute-info-label">Seu Saldo:</span>
+                <span class="contribute-info-value" style="color: #ffc107;" th:text="${userBalance + ' ₳'}">0 ₳</span>
+            </div>
+        </div>
+        <label style="display: block; margin-bottom: 8px; color: #aaa; font-size: 0.9rem;">Valor da contribuição (₳):</label>
+        <input type="number" id="contributeAmount" class="contribute-input" min="1" placeholder="0">
+        <div style="display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap;">
+            <button onclick="setContributePreset(10)" style="flex:1; padding:8px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:white; border-radius:6px; cursor:pointer;">10 ₳</button>
+            <button onclick="setContributePreset(50)" style="flex:1; padding:8px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:white; border-radius:6px; cursor:pointer;">50 ₳</button>
+            <button onclick="setContributePreset(100)" style="flex:1; padding:8px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:white; border-radius:6px; cursor:pointer;">100 ₳</button>
+            <button onclick="setContributeMax()" style="flex:1; padding:8px; background:rgba(255,193,7,0.2); border:1px solid #ffc107; color:#ffc107; border-radius:6px; cursor:pointer; font-weight:600;">MAX</button>
+        </div>
+        <div class="modal-buttons">
+            <button class="modal-btn cancel" onclick="closeContributeModal()">Cancelar</button>
+            <button class="modal-btn confirm" onclick="submitContribution()">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== DETAIL MODAL ==================== -->
+<div id="detailModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="detailTitle">📋 Detalhes do Evento</h2>
+            <button class="modal-close" onclick="closeDetailModal()">×</button>
+        </div>
+        <div id="detailBody">
+            <p style="color: #aaa; text-align: center;">Carregando...</p>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== CANCEL MODAL ==================== -->
+<div id="cancelModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>❌ Cancelar Evento</h2>
+            <button class="modal-close" onclick="closeCancelModal()">×</button>
+        </div>
+        <div id="cancelAlert" class="modal-alert"></div>
+        <div class="contribute-info">
+            <div class="contribute-info-row">
+                <span class="contribute-info-label">Evento:</span>
+                <span class="contribute-info-value" id="cancelEventTitle"></span>
+            </div>
+        </div>
+        <p style="color: #ff9800; font-size: 0.9rem; margin-bottom: 15px;">
+            ⚠️ Ao cancelar, todas as contribuições recebidas serão <strong>reembolsadas automaticamente</strong> aos contribuidores. Esta ação não pode ser desfeita.
+        </p>
+        <div class="modal-buttons">
+            <button class="modal-btn cancel" onclick="closeCancelModal()">Voltar</button>
+            <button class="modal-btn confirm" style="background: linear-gradient(45deg, #f44336, #e91e63); color: white;" onclick="submitCancel()">❌ Confirmar Cancelamento</button>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    let currentContributeEventId = null;
+    let currentContributeRemaining = 0;
+    let userBalance = /*[[${userBalance}]]*/ 0;
+    let currentCancelEventId = null;
+
+    // ==================== CANCEL FUNCTIONS ====================
+
+    function openCancelModal(btn) {
+        currentCancelEventId = btn.getAttribute('data-event-id');
+        document.getElementById('cancelEventTitle').textContent = btn.getAttribute('data-event-title');
+        hideAlert('cancelAlert');
+        document.getElementById('cancelModal').classList.add('active');
+    }
+
+    function closeCancelModal() {
+        document.getElementById('cancelModal').classList.remove('active');
+    }
+
+    async function submitCancel() {
+        try {
+            const response = await fetch('/events/' + currentCancelEventId + '/cancel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            });
+            const result = await response.json();
+            if (result.success) {
+                showAlert('cancelAlert', '✅ ' + result.message, 'success');
+                setTimeout(() => window.location.reload(), 2000);
+            } else {
+                showAlert('cancelAlert', '❌ ' + result.message, 'error');
+            }
+        } catch (err) {
+            showAlert('cancelAlert', '❌ Erro: ' + err.message, 'error');
+        }
+    }
+
+    // ==================== CONTRIBUTE FUNCTIONS ====================
+
+    function openContributeModal(btn) {
+        currentContributeEventId = btn.getAttribute('data-event-id');
+        currentContributeRemaining = parseInt(btn.getAttribute('data-event-remaining'));
+        document.getElementById('contributeEventTitle').textContent = btn.getAttribute('data-event-title');
+        document.getElementById('contributeRemaining').textContent = currentContributeRemaining + ' ₳';
+        document.getElementById('contributeAmount').value = '';
+        document.getElementById('contributeAmount').max = Math.min(currentContributeRemaining, userBalance);
+        hideAlert('contributeAlert');
+        document.getElementById('contributeModal').classList.add('active');
+    }
+
+    function closeContributeModal() {
+        document.getElementById('contributeModal').classList.remove('active');
+    }
+
+    function setContributePreset(amount) {
+        document.getElementById('contributeAmount').value = Math.min(amount, currentContributeRemaining, userBalance);
+    }
+
+    function setContributeMax() {
+        document.getElementById('contributeAmount').value = Math.min(currentContributeRemaining, userBalance);
+    }
+
+    async function submitContribution() {
+        const amount = parseInt(document.getElementById('contributeAmount').value);
+        if (!amount || amount <= 0) {
+            showAlert('contributeAlert', 'Informe um valor válido', 'error');
+            return;
+        }
+        if (amount > userBalance) {
+            showAlert('contributeAlert', 'Saldo insuficiente', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch('/events/' + currentContributeEventId + '/contribute', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'amount=' + amount
+            });
+            const result = await response.json();
+            if (result.success) {
+                showAlert('contributeAlert', '✅ ' + result.message, 'success');
+                setTimeout(() => window.location.reload(), 2000);
+            } else {
+                showAlert('contributeAlert', '❌ ' + result.message, 'error');
+            }
+        } catch (err) {
+            showAlert('contributeAlert', '❌ Erro: ' + err.message, 'error');
+        }
+    }
+
+    function openDetailModal(btn) {
+        const eventId = btn.getAttribute('data-event-id');
+        document.getElementById('detailBody').innerHTML = '<p style="color: #aaa; text-align: center;">Carregando...</p>';
+        document.getElementById('detailModal').classList.add('active');
+
+        fetch('/events/' + eventId + '/detail')
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) {
+                    document.getElementById('detailBody').innerHTML = '<p style="color: #f44336;">Erro ao carregar detalhes</p>';
+                    return;
+                }
+
+                let html = '<div class="contribute-info">';
+                html += '<div class="contribute-info-row"><span class="contribute-info-label">Status:</span><span class="status-badge ' + data.status + '">' + data.status + '</span></div>';
+                html += '<div class="contribute-info-row"><span class="contribute-info-label">Criado por:</span><span class="contribute-info-value">' + data.createdBy + '</span></div>';
+                html += '<div class="contribute-info-row"><span class="contribute-info-label">Financiamento:</span><span class="contribute-info-value" style="color: #ffc107;">' + data.amountCollected + ' / ' + data.totalCost + ' ₳</span></div>';
+
+                // Always show expiration/duration info
+                if (data.expirationDate) {
+                    html += '<div class="contribute-info-row"><span class="contribute-info-label">Expira em:</span><span class="contribute-info-value" style="color: #4facfe;">' + new Date(data.expirationDate).toLocaleString('pt-BR') + '</span></div>';
+                } else if (data.durationDays) {
+                    html += '<div class="contribute-info-row"><span class="contribute-info-label">Duração:</span><span class="contribute-info-value" style="color: #4facfe;">' + data.durationDays + ' dias (após ativação)</span></div>';
+                }
+                html += '</div>';
+
+                if (data.description) {
+                    html += '<p style="color: #bbb; margin-bottom: 15px;">' + data.description + '</p>';
+                }
+
+                // Region Zone section
+                if (data.regionZone) {
+                    html += '<h3 style="color: #ffb74d; font-size: 1rem; margin-bottom: 10px;">🗺️ Zona da Região</h3>';
+                    html += '<div style="background: rgba(255, 152, 0, 0.1); border: 1px solid rgba(255, 152, 0, 0.3); border-radius: 10px; padding: 15px; margin-bottom: 15px;">';
+                    html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">';
+                    html += '<div style="text-align: center;"><span style="color: #888; font-size: 0.8rem; display: block;">X1</span><span style="color: #ffb74d; font-weight: 600; font-size: 1.1rem;">' + data.regionZone.x1 + '</span></div>';
+                    html += '<div style="text-align: center;"><span style="color: #888; font-size: 0.8rem; display: block;">Y1</span><span style="color: #ffb74d; font-weight: 600; font-size: 1.1rem;">' + data.regionZone.y1 + '</span></div>';
+                    html += '<div style="text-align: center;"><span style="color: #888; font-size: 0.8rem; display: block;">X2</span><span style="color: #ffb74d; font-weight: 600; font-size: 1.1rem;">' + data.regionZone.x2 + '</span></div>';
+                    html += '<div style="text-align: center;"><span style="color: #888; font-size: 0.8rem; display: block;">Y2</span><span style="color: #ffb74d; font-weight: 600; font-size: 1.1rem;">' + data.regionZone.y2 + '</span></div>';
+                    html += '</div>';
+                    html += '</div>';
+                }
+
+                html += '<h3 style="color: #ce93d8; font-size: 1rem; margin-bottom: 10px;">Propriedades</h3>';
+                html += '<div class="detail-props">';
+                data.properties.forEach(p => {
+                    let valueDisplay = p.valueType === 'BOOLEAN' ? 'Ativado' : (p.valueType === 'TEXT' ? '📝 ' + p.selectedValue : (p.valueType === 'PERCENTAGE' ? p.selectedValue + '%' : p.selectedValue));
+                    let targetIcon = p.propertyTarget === 'SANDBOX' ? '🌐' : '🗺️';
+                    html += '<div class="detail-prop-item"><span class="detail-prop-name">' + targetIcon + ' ' + p.displayName + '</span><span class="detail-prop-value">' + valueDisplay + ' (' + p.cost + ' ₳)</span></div>';
+                });
+                html += '</div>';
+
+                if (data.contributions && data.contributions.length > 0) {
+                    html += '<h3 style="color: #ffc107; font-size: 1rem; margin: 15px 0 10px;">Contribuições</h3>';
+                    html += '<div class="detail-contribs">';
+                    data.contributions.forEach(c => {
+                        html += '<div class="detail-contrib-item"><span>' + c.username + '</span><span style="color: #ffc107;">' + c.amount + ' ₳</span></div>';
+                    });
+                    html += '</div>';
+                }
+
+                document.getElementById('detailTitle').textContent = '📋 ' + data.title;
+                document.getElementById('detailBody').innerHTML = html;
+            })
+            .catch(err => {
+                document.getElementById('detailBody').innerHTML = '<p style="color: #f44336;">Erro: ' + err.message + '</p>';
+            });
+    }
+
+    function closeDetailModal() {
+        document.getElementById('detailModal').classList.remove('active');
+    }
+
+    function showAlert(id, message, type) {
+        const el = document.getElementById(id);
+        el.textContent = message;
+        el.className = 'modal-alert ' + type;
+        el.style.display = 'block';
+    }
+
+    function hideAlert(id) {
+        document.getElementById(id).style.display = 'none';
+    }
+
+    // Close modals on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('active');
+            }
+        });
+    });
+    /*]]>*/
+</script>
+</body>
+</html>
