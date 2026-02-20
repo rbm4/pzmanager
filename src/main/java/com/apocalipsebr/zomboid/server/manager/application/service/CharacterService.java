@@ -20,9 +20,11 @@ public class CharacterService {
     private static final Logger logger = Logger.getLogger(CharacterService.class.getName());
     
     private final CharacterRepository characterRepository;
+    private final ServerCommandService serverCommandService;
     
-    public CharacterService(CharacterRepository characterRepository) {
+    public CharacterService(CharacterRepository characterRepository, ServerCommandService serverCommandService) {
         this.characterRepository = characterRepository;
+        this.serverCommandService = serverCommandService;
     }
     
     @Transactional
@@ -109,5 +111,31 @@ public class CharacterService {
             .orElseThrow(() -> new IllegalArgumentException("Character not found"));
         character.setIsDead(isDead);
         return characterRepository.save(character);
+    }
+
+    /**
+     * Resets the user's PZ server password by removing them from the whitelist.
+     * Validates that the given character belongs to the requesting user.
+     * The user will be prompted for a new password on next login.
+     *
+     * @param user        the authenticated user requesting the reset
+     * @param characterId the character ID used to validate ownership
+     * @return true if the command was sent successfully
+     * @throws IllegalArgumentException if the character is not found or doesn't belong to the user
+     */
+    public boolean resetUserPassword(User user, Long characterId) {
+        Character character = characterRepository.findById(characterId)
+            .orElseThrow(() -> new IllegalArgumentException("Character not found"));
+
+        if (!character.getUser().getId().equals(user.getId())) {
+            throw new IllegalArgumentException("Character does not belong to the requesting user");
+        }
+
+        String username = user.getUsername();
+        logger.info("Resetting password for user '" + username + "' (requested via character '" + character.getPlayerName() + "')");
+
+        serverCommandService.sendCommand("removeuserfromwhitelist \"" + username + "\"");
+        logger.info("Successfully sent removeuserfromwhitelist command for user '" + username + "'");
+        return true;
     }
 }

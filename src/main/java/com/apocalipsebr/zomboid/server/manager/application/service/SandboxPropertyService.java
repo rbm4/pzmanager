@@ -1,5 +1,6 @@
 package com.apocalipsebr.zomboid.server.manager.application.service;
 
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.GameEventProperty;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.SandboxSetting;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.SandboxSetting.ConfigType;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.SandboxSettingRepository;
@@ -747,13 +748,11 @@ public class SandboxPropertyService {
                 String oldValue = kvMatcher.group(4);
                 String trailing = kvMatcher.group(5);
 
-                String fullKey = currentSection != null ? currentSection + "." + rawKey : rawKey;
-
-                if (overwriteMap.containsKey(fullKey)) {
-                    String newValue = overwriteMap.get(fullKey);
+                if (overwriteMap.containsKey(rawKey)) {
+                    String newValue = overwriteMap.get(rawKey);
                     String formattedValue = formatLuaValue(newValue, oldValue);
                     outputLines.add(indent + rawKey + separator + formattedValue + trailing);
-                    logger.info("Overwrote SandboxVars property: " + fullKey + " = " + newValue);
+                    logger.info("Overwrote SandboxVars property: " + rawKey + " = " + newValue);
                     continue;
                 }
             }

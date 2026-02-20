@@ -119,6 +119,22 @@ public class WebController {
         return "my-characters";
     }
 
+    @PostMapping("/my-characters/reset-password")
+    public String resetPassword(@RequestParam("characterId") Long characterId, HttpSession session) {
+        var user = (User) session.getAttribute("user");
+        if (user == null) {
+            return "redirect:/login";
+        }
+
+        try {
+            characterService.resetUserPassword(user, characterId);
+        } catch (IllegalArgumentException e) {
+            return "redirect:/my-characters?error=" + e.getMessage();
+        }
+
+        return "redirect:/my-characters?passwordReset=true";
+    }
+
     @GetMapping("/logout")
     public String logout(HttpSession session) {
         session.invalidate();

@@ -274,6 +274,122 @@
             text-align: center;
         }
 
+        .reset-password-btn {
+            background: rgba(255, 152, 0, 0.2);
+            border: 1px solid #ff9800;
+            color: #ff9800;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .reset-password-btn:hover {
+            background: rgba(255, 152, 0, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 152, 0, 0.3);
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-box {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 1px solid rgba(255, 152, 0, 0.3);
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .modal-box h3 {
+            color: #ff9800;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .modal-box p {
+            color: #ccc;
+            margin-bottom: 20px;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .modal-actions button {
+            padding: 10px 25px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+        }
+
+        .modal-confirm {
+            background: rgba(255, 152, 0, 0.3);
+            border: 1px solid #ff9800 !important;
+            color: #ff9800;
+        }
+
+        .modal-confirm:hover {
+            background: rgba(255, 152, 0, 0.5);
+        }
+
+        .modal-cancel {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            color: #aaa;
+        }
+
+        .modal-cancel:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .alert-banner {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .alert-success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4caf50;
+            color: #4caf50;
+        }
+
+        .alert-error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #f44336;
+            color: #f44336;
+        }
+
         .no-characters {
             grid-column: 1 / -1;
             text-align: center;
@@ -318,6 +434,14 @@
 <main class="main-content">
     <div class="header">
         <h1>👥 Meus Personagens</h1>
+    </div>
+
+    <!-- Success/Error banners -->
+    <div class="alert-banner alert-success" th:if="${param.passwordReset}">
+        ✅ Senha resetada com sucesso! Você será solicitado a criar uma nova senha no próximo login no servidor.
+    </div>
+    <div class="alert-banner alert-error" th:if="${param.error}">
+        ❌ Erro: <span th:text="${param.error}">Erro desconhecido</span>
     </div>
 
     <div class="characters-grid">
@@ -412,6 +536,12 @@
                     <span th:text="${character.lastUpdate != null ? #temporals.format(character.lastUpdate, 'dd/MM/yyyy HH:mm') : 'Nunca'}">Never</span>
                 </div>
             </div>
+
+            <!-- Reset Password Button -->
+            <button class="reset-password-btn" 
+                    th:attr="onclick='openResetModal(' + ${character.id} + ', \'' + ${character.playerName} + '\')'">
+                🔑 Resetar Senha do Servidor
+            </button>
         </div>
 
         <!-- No Characters Message -->
@@ -421,5 +551,39 @@
         </div>
     </div>
 </main>
+
+<!-- Reset Password Confirmation Modal -->
+<div class="modal-overlay" id="resetModal">
+    <div class="modal-box">
+        <h3>🔑 Resetar Senha do Servidor</h3>
+        <p>
+            Tem certeza que deseja resetar sua senha do servidor?<br>
+            Você será removido da whitelist e precisará criar uma nova senha no próximo login.
+        </p>
+        <form id="resetForm" method="post" th:action="@{/my-characters/reset-password}">
+            <input type="hidden" name="characterId" id="resetCharacterId" />
+            <div class="modal-actions">
+                <button type="button" class="modal-cancel" onclick="closeResetModal()">Cancelar</button>
+                <button type="submit" class="modal-confirm">Confirmar Reset</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openResetModal(characterId, playerName) {
+        document.getElementById('resetCharacterId').value = characterId;
+        document.getElementById('resetModal').classList.add('active');
+    }
+
+    function closeResetModal() {
+        document.getElementById('resetModal').classList.remove('active');
+    }
+
+    // Close modal on overlay click
+    document.getElementById('resetModal').addEventListener('click', function(e) {
+        if (e.target === this) closeResetModal();
+    });
+</script>
 </body>
 </html>
