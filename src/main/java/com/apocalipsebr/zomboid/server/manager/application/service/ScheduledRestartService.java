@@ -82,7 +82,7 @@ public class ScheduledRestartService {
     public long calculateDelayUntilNextRestart() {
         ZoneId zoneId = ZoneId.of(timezone);
         LocalDateTime now = LocalDateTime.now(zoneId);
-        LocalDateTime nextHour = now.plusHours(3)
+        LocalDateTime nextHour = now.plusHours(restartHour)
                 .withMinute(0)
                 .withSecond(0)
                 .withNano(0);
