@@ -395,7 +395,11 @@ public enum EventPropertySuggestion {
         }
         double delta = calculateDelta(percentageTier);
         if (delta == Math.floor(delta)) {
-            return String.valueOf((int) delta);
+            if (delta >= Integer.MIN_VALUE && delta <= Integer.MAX_VALUE) {
+                return String.valueOf((int) delta);
+            } else {
+                return String.valueOf(delta);
+            }
         }
         return String.valueOf(delta);
     }
