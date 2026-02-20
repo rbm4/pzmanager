@@ -21,12 +21,12 @@ public enum EventPropertySuggestion {
 
     // ==================== SANDBOX PROPERTIES (Global Server Changes) ====================
 
-    XP_BOOST(
-        "Aumento de XP", "MultiplierConfig.Global", PropertyTarget.SANDBOX,
-        SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
-        "Aumenta a taxa de experiência de todos os jogadores",
-        1.0, 0.05, 3.0, 100
-    ),
+    // XP_BOOST(
+    //     "Aumento de XP", "MultiplierConfig.Global", PropertyTarget.SANDBOX,
+    //     SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+    //     "Aumenta a taxa de experiência de todos os jogadores",
+    //     1.0, 0.05, 3.0, 100
+    // ),
 
     // ---- LOOT SETTINGS (individual categories) ----
 
@@ -34,98 +34,98 @@ public enum EventPropertySuggestion {
         "Loot de Comida", "FoodLootNew", PropertyTarget.SANDBOX,
         SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
         "Comida perecível e alimentos que podem estragar",
-        0.6, 0.0, 4.0, 70
+        0.6, 0.0, 4.0, 170
     ),
 
     LITERATURE_LOOT_NEW(
         "Loot de Literatura", "LiteratureLootNew", PropertyTarget.SANDBOX,
         SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
         "Itens de leitura, incluindo panfletos e livros",
-        0.6, 0.0, 4.0, 70
+        0.6, 0.0, 4.0, 270
     ),
 
     MEDICAL_LOOT_NEW(
         "Loot Médico", "MedicalLootNew", PropertyTarget.SANDBOX,
         SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
         "Remédios, bandagens e itens de primeiros socorros",
-        0.6, 0.0, 4.0, 70
+        0.6, 0.0, 4.0, 170
     ),
 
     SURVIVAL_GEARS_LOOT_NEW(
         "Loot de Sobrevivência", "SurvivalGearsLootNew", PropertyTarget.SANDBOX,
         SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
         "Varas de pesca, barracas e equipamento de camping",
-        0.6, 0.0, 4.0, 70
+        0.6, 0.0, 4.0, 170
     ),
 
     CANNED_FOOD_LOOT_NEW(
         "Loot de Enlatados", "CannedFoodLootNew", PropertyTarget.SANDBOX,
         SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
         "Comida enlatada, seca e bebidas",
-        0.6, 0.0, 4.0, 70
+        0.6, 0.0, 4.0, 270
     ),
 
     WEAPON_LOOT_NEW(
         "Loot de Armas", "WeaponLootNew", PropertyTarget.SANDBOX,
         SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
         "Armas que não são ferramentas de outras categorias",
-        0.6, 0.0, 4.0, 90
+        0.6, 0.0, 4.0, 390
     ),
 
     RANGED_WEAPON_LOOT_NEW(
         "Loot de Armas de Fogo", "RangedWeaponLootNew", PropertyTarget.SANDBOX,
         SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
         "Inclui acessórios e anexos para armas de fogo",
-        0.6, 0.0, 4.0, 90
+        0.6, 0.0, 4.0, 450
     ),
 
     AMMO_LOOT_NEW(
         "Loot de Munição", "AmmoLootNew", PropertyTarget.SANDBOX,
         SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
         "Munição solta, caixas e carregadores",
-        0.6, 0.0, 4.0, 90
+        0.6, 0.0, 4.0, 650
     ),
 
     MECHANICS_LOOT_NEW(
         "Loot de Mecânica", "MechanicsLootNew", PropertyTarget.SANDBOX,
         SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
         "Peças de veículos e ferramentas para instalação",
-        0.6, 0.0, 4.0, 80
+        0.6, 0.0, 4.0, 180
     ),
 
     OTHER_LOOT_NEW(
         "Loot Diversos", "OtherLootNew", PropertyTarget.SANDBOX,
         SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
         "Todo o resto. Afeta também forrageamento em zonas urbanas",
-        0.6, 0.0, 4.0, 70
+        0.6, 0.0, 4.0, 170
     ),
 
     CLOTHING_LOOT_NEW(
         "Loot de Roupas", "ClothingLootNew", PropertyTarget.SANDBOX,
         SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
         "Itens vestíveis que não são contêineres",
-        0.6, 0.0, 4.0, 70
+        0.6, 0.0, 4.0, 170
     ),
 
     CONTAINER_LOOT_NEW(
         "Loot de Mochilas", "ContainerLootNew", PropertyTarget.SANDBOX,
         SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
         "Mochilas e contêineres vestíveis/equipáveis",
-        0.6, 0.0, 4.0, 70
+        0.6, 0.0, 4.0, 200
     ),
 
     KEY_LOOT_NEW(
         "Loot de Chaves", "KeyLootNew", PropertyTarget.SANDBOX,
         SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
         "Chaves de prédios/carros, chaveiros e cadeados",
-        0.6, 0.0, 4.0, 70
+        0.6, 0.0, 4.0, 170
     ),
 
     MEDIA_LOOT_NEW(
         "Loot de Mídia", "MediaLootNew", PropertyTarget.SANDBOX,
         SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
         "Fitas VHS e CDs",
-        0.6, 0.0, 4.0, 50
+        0.6, 0.0, 4.0, 250
     ),
 
     MEMENTO_LOOT_NEW(
@@ -139,42 +139,35 @@ public enum EventPropertySuggestion {
         "Loot de Utensílios", "CookwareLootNew", PropertyTarget.SANDBOX,
         SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
         "Itens usados na culinária, incluindo facas. Não inclui comida",
-        0.6, 0.0, 4.0, 65
+        0.6, 0.0, 4.0, 165
     ),
 
     MATERIAL_LOOT_NEW(
         "Loot de Materiais", "MaterialLootNew", PropertyTarget.SANDBOX,
         SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
         "Ingredientes para fabricação ou construção. Não inclui ferramentas",
-        0.6, 0.0, 4.0, 65
+        0.6, 0.0, 4.0, 165
     ),
 
     FARMING_LOOT_NEW(
         "Loot de Fazenda", "FarmingLootNew", PropertyTarget.SANDBOX,
         SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
         "Itens de agricultura como sementes, pás e espátulas",
-        0.6, 0.0, 4.0, 65
+        0.6, 0.0, 4.0, 165
     ),
 
     TOOL_LOOT_NEW(
         "Loot de Ferramentas", "ToolLootNew", PropertyTarget.SANDBOX,
         SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
         "Ferramentas diversas não incluídas em outras categorias",
-        0.6, 0.0, 4.0, 80
+        0.6, 0.0, 4.0, 180
     ),
 
     FARMING_SPEED(
         "Velocidade de Cultivo", "Farming", PropertyTarget.SANDBOX,
         SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
         "Acelera o crescimento de plantações e cultivos",
-        1.0, 0.05, 3.0, 80
-    ),
-
-    CONSTRUCTION_SPEED(
-        "Velocidade de Construção", "ConstructionSpeed", PropertyTarget.SANDBOX,
-        SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
-        "Reduz o tempo necessário para construir estruturas",
-        1.0, 0.05, 3.0, 80
+        1.0, 0.05, 3.0, 180
     ),
 
     MELEE_XP_BOOST(
