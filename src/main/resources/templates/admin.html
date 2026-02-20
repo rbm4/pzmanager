@@ -269,73 +269,27 @@
                 <button onclick="restartServer()" class="btn btn-danger">Restart Server</button>
             </div>
 
-            <!-- Add Vehicle Card -->
+            <!-- Server Wipe Card -->
             <div class="card">
-                <h2>🚗 Add Vehicle</h2>
-                <div id="vehicle-alert" class="alert"></div>
-                <form onsubmit="addVehicle(event)">
+                <h2>💀 Server Wipe</h2>
+                <div id="wipe-alert" class="alert"></div>
+                <div style="padding: 14px; border-radius: 8px; margin-bottom: 15px; background: rgba(255, 107, 107, 0.15); border: 1px solid rgba(255, 107, 107, 0.4); color: #ff6b6b; font-size: 0.85rem; line-height: 1.5;">
+                    ⚠️ <strong>CRITICAL OPERATION</strong><br>
+                    This will rename the <code>Multiplayer</code> save folder to a timestamped backup.<br>
+                    <strong>The server MUST be completely shut down before performing this operation.</strong><br>
+                    If files are locked by the running server, the operation will fail.
+                </div>
+                <form onsubmit="wipeServer(event)">
                     <div class="form-group">
-                        <label for="vehicle-player">Player Name</label>
-                        <input type="text" id="vehicle-player" required>
+                        <label for="wipe-password">Wipe Password</label>
+                        <input type="password" id="wipe-password" placeholder="Enter the wipe password" required>
                     </div>
-                    <div class="form-group">
-                        <label for="vehicle-id">Vehicle Type</label>
-                        <select id="vehicle-id" required>
-                            <option value="">Select Vehicle</option>
-                            <option value="Base.PickUpTruck">Pickup Truck</option>
-                            <option value="Base.PickUpVan">Pickup Van</option>
-                            <option value="Base.StepVan">Step Van</option>
-                            <option value="Base.Van">Van</option>
-                            <option value="Base.SUV">SUV</option>
-                            <option value="Base.CarNormal">Normal Car</option>
-                            <option value="Base.CarLuxury">Luxury Car</option>
-                            <option value="Base.CarTaxi">Taxi</option>
-                            <option value="Base.PickUpTruckLights">Police Pickup</option>
-                            <option value="Base.CarLightsPolice">Police Car</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Spawn Vehicle</button>
+                    <button type="submit" class="btn btn-danger">Wipe Server Save</button>
                 </form>
-            </div>
-
-            <!-- Add Item Card -->
-            <div class="card">
-                <h2>📦 Add Item</h2>
-                <div id="item-alert" class="alert"></div>
-                <form onsubmit="addItem(event)">
-                    <div class="form-group">
-                        <label for="item-player">Player Name</label>
-                        <input type="text" id="item-player" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="item-id">Item Type</label>
-                        <select id="item-id" required>
-                            <option value="">Select Item</option>
-                            <option value="Base.Axe">Axe</option>
-                            <option value="Base.BaseballBat">Baseball Bat</option>
-                            <option value="Base.Hammer">Hammer</option>
-                            <option value="Base.Screwdriver">Screwdriver</option>
-                            <option value="Base.Saw">Saw</option>
-                            <option value="Base.Crowbar">Crowbar</option>
-                            <option value="Base.WaterBottleFull">Water Bottle (Full)</option>
-                            <option value="Base.CannedBeans">Canned Beans</option>
-                            <option value="Base.TinnedSoup">Tinned Soup</option>
-                            <option value="Base.FirstAidKit">First Aid Kit</option>
-                            <option value="Base.Pills">Pills</option>
-                            <option value="Base.Bandage">Bandage</option>
-                            <option value="Camping.CampingTent">Camping Tent</option>
-                            <option value="Base.Torch">Flashlight</option>
-                            <option value="Radio.WalkieTalkie5">Walkie Talkie</option>
-                            <option value="Base.ShotgunShellsBox">Box of Shotgun Shells</option>
-                            <option value="Base.Mov_MilitaryCrate">Military Crate</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="item-amount">Amount</label>
-                        <input type="number" id="item-amount" min="1" value="1" required>
-                    </div>
-                    <button type="submit" class="btn btn-success">Give Item</button>
-                </form>
+                <div id="wipe-result" style="display: none; margin-top: 15px; padding: 15px; background: rgba(56, 239, 125, 0.1); border-radius: 8px; border: 1px solid rgba(56, 239, 125, 0.3);">
+                    <h3 style="color: #38ef7d; margin-bottom: 10px; font-size: 0.9rem;">✅ Wipe Result:</h3>
+                    <pre id="wipe-result-text" style="color: #38ef7d; font-family: 'Courier New', monospace; font-size: 0.85rem; white-space: pre-wrap; word-wrap: break-word; margin: 0;"></pre>
+                </div>
             </div>
 
             <!-- Add Currency Card -->
@@ -432,37 +386,6 @@
                 responseDiv.style.display = 'none';
             }
         }
-        async function sendCustomCommand(event) {
-            event.preventDefault();
-            
-            const command = document.getElementById('custom-command').value;
-            const responseDiv = document.getElementById('command-response');
-            const responseText = document.getElementById('command-response-text');
-
-            try {
-                const response = await fetch(`${API_BASE}/command`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ command: command })
-                });
-
-                const result = await response.json();
-                
-                if (response.ok && result.success) {
-                    showAlert('command-alert', result.message, 'success');
-                    responseDiv.style.display = 'block';
-                    responseText.textContent = result.response;
-                } else {
-                    showAlert('command-alert', result.error || 'Command failed', 'error');
-                    responseDiv.style.display = 'none';
-                }
-            } catch (error) {
-                showAlert('command-alert', 'Error: ' + error.message, 'error');
-                responseDiv.style.display = 'none';
-            }
-        }
 
         async function restartServer() {
             if (!confirm('Are you sure you want to restart the server? Players will receive warnings.')) {
@@ -487,66 +410,6 @@
                 }
             } catch (error) {
                 showAlert('restart-alert', 'Error: ' + error.message, 'error');
-            }
-        }
-
-        async function addVehicle(event) {
-            event.preventDefault();
-            
-            const playerName = document.getElementById('vehicle-player').value;
-            const vehicleId = document.getElementById('vehicle-id').value;
-            const command = `addvehicle "${vehicleId}" "${playerName}"`;
-
-            try {
-                const response = await fetch(`${API_BASE}/command`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ command: command })
-                });
-
-                const text = await response.text();
-                
-                if (response.ok) {
-                    showAlert('vehicle-alert', 'Vehicle spawned successfully!', 'success');
-                    event.target.reset();
-                } else {
-                    showAlert('vehicle-alert', text, 'error');
-                }
-            } catch (error) {
-                showAlert('vehicle-alert', 'Error: ' + error.message, 'error');
-            }
-        }
-
-        async function addItem(event) {
-            event.preventDefault();
-            
-            const playerName = document.getElementById('item-player').value;
-            const itemId = document.getElementById('item-id').value;
-            const amount = document.getElementById('item-amount').value;
-
-            const command = `additem "${playerName}" "${itemId}" ${amount}`;
-
-            try {
-                const response = await fetch(`${API_BASE}/command`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ command: command })
-                });
-
-                const text = await response.text();
-                
-                if (response.ok) {
-                    showAlert('item-alert', 'Item given successfully!', 'success');
-                    event.target.reset();
-                } else {
-                    showAlert('item-alert', text, 'error');
-                }
-            } catch (error) {
-                showAlert('item-alert', 'Error: ' + error.message, 'error');
             }
         }
 
@@ -645,6 +508,50 @@
             } catch (error) {
                 showAlert('import-alert', 'Error: ' + error.message, 'error');
                 statsDisplay.classList.remove('show');
+            }
+        }
+
+        async function wipeServer(event) {
+            event.preventDefault();
+
+            const password = document.getElementById('wipe-password').value;
+            const resultDiv = document.getElementById('wipe-result');
+            const resultText = document.getElementById('wipe-result-text');
+
+            if (!confirm('⚠️ ARE YOU ABSOLUTELY SURE?\n\nThis will rename the Multiplayer save folder, effectively wiping the server save.\n\nMake sure the server is COMPLETELY SHUT DOWN before proceeding.\n\nThis action cannot be easily undone!')) {
+                return;
+            }
+
+            if (!confirm('🔴 FINAL CONFIRMATION\n\nYou are about to wipe the server save. Type OK in the next prompt or click OK to proceed.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/wipe`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ password: password })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    showAlert('wipe-alert', result.message, 'success');
+                    resultDiv.style.display = 'block';
+                    resultText.textContent = 
+                        `Backup name: ${result.backupName}\n` +
+                        `Original path: ${result.originalPath}\n` +
+                        `Backup path: ${result.backupPath}`;
+                    event.target.reset();
+                } else {
+                    showAlert('wipe-alert', result.message || 'Wipe failed', 'error');
+                    resultDiv.style.display = 'none';
+                }
+            } catch (error) {
+                showAlert('wipe-alert', 'Error: ' + error.message, 'error');
+                resultDiv.style.display = 'none';
             }
         }
     </script>

@@ -25,16 +25,20 @@ public interface SandboxSettingRepository extends JpaRepository<SandboxSetting, 
            "LOWER(s.settingKey) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
            "LOWER(s.description) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
            "(:category IS NULL OR :category = '' OR s.category = :category) AND " +
-           "(:configType IS NULL OR s.configType = :configType)")
+           "(:configType IS NULL OR s.configType = :configType) AND " +
+           "(:overwrite IS NULL OR s.overwriteAtStartup = :overwrite)")
     Page<SandboxSetting> search(@Param("search") String search, @Param("category") String category,
-                                @Param("configType") ConfigType configType, Pageable pageable);
+                                @Param("configType") ConfigType configType, @Param("overwrite") Boolean overwrite,
+                                Pageable pageable);
 
     @Query("SELECT s FROM SandboxSetting s WHERE " +
            "(:search IS NULL OR :search = '' OR " +
            "LOWER(s.settingKey) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
            "LOWER(s.description) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
-           "(:category IS NULL OR :category = '' OR s.category = :category)")
-    Page<SandboxSetting> search(@Param("search") String search, @Param("category") String category, Pageable pageable);
+           "(:category IS NULL OR :category = '' OR s.category = :category) AND " +
+           "(:overwrite IS NULL OR s.overwriteAtStartup = :overwrite)")
+    Page<SandboxSetting> search(@Param("search") String search, @Param("category") String category,
+                                @Param("overwrite") Boolean overwrite, Pageable pageable);
 
     @Query("SELECT DISTINCT s.category FROM SandboxSetting s WHERE s.category IS NOT NULL ORDER BY s.category")
     List<String> findDistinctCategories();

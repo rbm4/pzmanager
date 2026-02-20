@@ -7,6 +7,7 @@ import com.apocalipsebr.zomboid.server.manager.domain.entity.app.PlayerStats;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.UserRepository;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -49,6 +50,7 @@ public class WebController {
     }
 
     @GetMapping("/admin")
+    @PreAuthorize("hasRole('ADMIN')")
     public String adminPanel(HttpSession session, Model model) {
         var user = (User) session.getAttribute("user");
         if (user == null || !"ADMIN".equals(user.getRole())) {

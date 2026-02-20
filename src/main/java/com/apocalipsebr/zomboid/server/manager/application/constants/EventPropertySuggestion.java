@@ -174,42 +174,42 @@ public enum EventPropertySuggestion {
         "XP de Combate Corpo-a-Corpo", "XPMultiplier.Maintenance", PropertyTarget.SANDBOX,
         SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
         "Aumenta a experiência ganha em combate corpo-a-corpo",
-        1.0, 0.05, 3.0, 90
+        1.0, 0.05, 3.0, 490
     ),
 
     CRAFTING_XP_BOOST(
         "XP de Fabricação", "XPMultiplier.Crafting", PropertyTarget.SANDBOX,
         SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
         "Aumenta a experiência ao fabricar itens",
-        1.0, 0.05, 3.0, 70
+        1.0, 0.05, 3.0, 570
     ),
 
     COOKING_XP_BOOST(
         "XP de Culinária", "XPMultiplier.Cooking", PropertyTarget.SANDBOX,
         SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
         "Aumenta a experiência ao cozinhar",
-        1.0, 0.05, 3.0, 60
+        1.0, 0.05, 3.0, 360
     ),
 
     NATURE_ABUNDANCE(
         "Abundância Natural", "NatureAbundance", PropertyTarget.SANDBOX,
         SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
         "Aumenta recursos naturais como frutas, bagas e cogumelos",
-        1.0, 0.05, 3.0, 90
+        1.0, 0.05, 3.0, 190
     ),
 
     FITNESS_XP_BOOST(
         "XP de Condicionamento", "XPMultiplier.Fitness", PropertyTarget.SANDBOX,
         SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
         "Aumenta a experiência de condicionamento físico",
-        1.0, 0.05, 3.0, 60
+        1.0, 0.05, 3.0, 260
     ),
 
     SURVIVAL_XP_BOOST(
         "XP de Sobrevivência", "XPMultiplier.Survival", PropertyTarget.SANDBOX,
         SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
         "Aumenta a experiência de habilidades de sobrevivência",
-        1.0, 0.05, 3.0, 70
+        1.0, 0.05, 3.0, 130
     ),
 
     // ==================== REGION PROPERTIES (Zone-specific Changes) ====================
@@ -218,61 +218,61 @@ public enum EventPropertySuggestion {
         "Zona de Sprinters", "sprinterChance", PropertyTarget.REGION,
         null, ValueType.PERCENTAGE,
         "Cria uma zona perigosa com zumbis corredores",
-        0.0, 5.0, 100.0, 200
+        0.0, 5.0, 100.0, 500
     ),
 
     PVP_ZONE(
         "Zona de Combate PVP", "pvpEnabled", PropertyTarget.REGION,
         null, ValueType.BOOLEAN,
         "Habilita combate entre jogadores na zona definida",
-        null, null, null, 300
+        null, null, null, 500
     ),
 
     TOUGH_ZOMBIE_ZONE(
         "Zona de Zumbis Resistentes", "toughnessChance", PropertyTarget.REGION,
         null, ValueType.PERCENTAGE,
         "Cria uma zona com zumbis mais difíceis de matar",
-        0.0, 5.0, 100.0, 150
+        0.0, 5.0, 100.0, 350
     ),
 
     ARMORED_ZOMBIE_ZONE(
         "Zona de Zumbis Blindados", "zombieArmorFactor", PropertyTarget.REGION,
         null, ValueType.PERCENTAGE,
         "Cria uma zona onde zumbis possuem blindagem extra",
-        0.0, 5.0, 100.0, 130
+        0.0, 5.0, 100.0, 530
     ),
 
     HAWK_VISION_ZONE(
         "Zona de Visão Aguçada", "hawkVisionChance", PropertyTarget.REGION,
         null, ValueType.PERCENTAGE,
         "Cria uma zona onde zumbis detectam jogadores com facilidade",
-        0.0, 5.0, 100.0, 120
+        0.0, 5.0, 100.0, 320
     ),
 
     GOOD_HEARING_ZONE(
         "Zona de Audição Apurada", "goodHearingChance", PropertyTarget.REGION,
         null, ValueType.PERCENTAGE,
         "Cria uma zona onde zumbis possuem audição ampliada",
-        0.0, 5.0, 100.0, 110
+        0.0, 5.0, 100.0, 310
     ),
 
     SUPERHUMAN_ZOMBIE_ZONE(
         "Zona de Zumbis Super-Humanos", "superhumanChance", PropertyTarget.REGION,
         null, ValueType.PERCENTAGE,
         "Cria uma zona com zumbis extremamente poderosos",
-        0.0, 5.0, 100.0, 250
+        0.0, 5.0, 100.0, 350
     ),
 
     REGION_MESSAGE(
         "Mensagem da Região", "regionMessage", PropertyTarget.REGION,
         null, ValueType.TEXT,
         "Exibe uma mensagem personalizada quando jogadores entram na zona",
-        null, null, null, 50
+        null, null, null, 550
     ),
 
     KILL_POINTS_MULTIPLIER(
         "Multiplicador de Pontos por Kill", "killPointsMultiplier", PropertyTarget.REGION,
-        null, ValueType.PERCENTAGE,
+        null, ValueType.ABSOLUTE,
         "Aumenta os pontos ganhos por abater zumbis dentro da zona",
         1.0, 5.0, 100.0, 150
     );
