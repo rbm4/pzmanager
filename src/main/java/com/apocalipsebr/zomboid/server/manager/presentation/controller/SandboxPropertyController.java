@@ -43,6 +43,7 @@ public class SandboxPropertyController {
             @RequestParam(value = "search", required = false) String search,
             @RequestParam(value = "category", required = false) String category,
             @RequestParam(value = "configType", required = false) String configTypeStr,
+            @RequestParam(value = "overwrite", required = false) String overwriteStr,
             Model model) {
         try {
             ConfigType configType = null;
@@ -52,10 +53,15 @@ public class SandboxPropertyController {
                 } catch (IllegalArgumentException ignored) {}
             }
 
+            Boolean overwrite = null;
+            if (overwriteStr != null && !overwriteStr.isEmpty()) {
+                overwrite = Boolean.valueOf(overwriteStr);
+            }
+
             Pageable pageable = PageRequest.of(page, size, Sort.by("category").ascending().and(Sort.by("settingKey").ascending()));
             Page<SandboxSetting> settingsPage = configType != null
-                    ? sandboxPropertyService.getSettings(search, category, configType, pageable)
-                    : sandboxPropertyService.getSettings(search, category, pageable);
+                    ? sandboxPropertyService.getSettings(search, category, configType, overwrite, pageable)
+                    : sandboxPropertyService.getSettings(search, category, overwrite, pageable);
 
             model.addAttribute("settingsPage", settingsPage);
             model.addAttribute("settings", settingsPage.getContent());
@@ -65,6 +71,7 @@ public class SandboxPropertyController {
             model.addAttribute("search", search != null ? search : "");
             model.addAttribute("selectedCategory", category != null ? category : "");
             model.addAttribute("selectedConfigType", configTypeStr != null ? configTypeStr : "");
+            model.addAttribute("selectedOverwrite", overwriteStr != null ? overwriteStr : "");
 
             // Stats
             model.addAttribute("totalCount", sandboxPropertyService.getTotalCount());

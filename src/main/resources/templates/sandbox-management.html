@@ -583,6 +583,11 @@
                         th:value="${cat}" th:text="${cat}"
                         th:selected="${cat == selectedCategory}">Categoria</option>
             </select>
+            <select name="overwrite" class="filter-select">
+                <option value="">Overwrite: Todos</option>
+                <option value="true" th:selected="${selectedOverwrite == 'true'}">Overwrite: ON</option>
+                <option value="false" th:selected="${selectedOverwrite == 'false'}">Overwrite: OFF</option>
+            </select>
             <button type="submit" class="search-btn">🔍 Buscar</button>
         </form>
     </div>
@@ -657,7 +662,7 @@
 
     <!-- Pagination -->
     <div th:if="${totalPages > 1}" class="pagination">
-        <a th:href="@{/admin/sandbox(page=${currentPage > 0 ? currentPage - 1 : 0}, size=25, search=${search}, category=${selectedCategory})}"
+        <a th:href="@{/admin/sandbox(page=${currentPage > 0 ? currentPage - 1 : 0}, size=25, search=${search}, category=${selectedCategory}, overwrite=${selectedOverwrite})}"
            th:classappend="${currentPage == 0 ? 'disabled' : ''}"
            class="pagination-btn">
             ← Anterior
@@ -668,7 +673,7 @@
             (<span th:text="${totalSettings}">0</span> resultados)
         </span>
 
-        <a th:href="@{/admin/sandbox(page=${currentPage < totalPages - 1 ? currentPage + 1 : currentPage}, size=25, search=${search}, category=${selectedCategory})}"
+        <a th:href="@{/admin/sandbox(page=${currentPage < totalPages - 1 ? currentPage + 1 : currentPage}, size=25, search=${search}, category=${selectedCategory}, overwrite=${selectedOverwrite})}"
            th:classappend="${currentPage >= totalPages - 1 ? 'disabled' : ''}"
            class="pagination-btn">
             Próxima →

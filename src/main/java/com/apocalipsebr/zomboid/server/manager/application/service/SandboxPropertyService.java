@@ -189,11 +189,19 @@ public class SandboxPropertyService {
     // ==================== QUERY METHODS ====================
 
     public Page<SandboxSetting> getSettings(String search, String category, Pageable pageable) {
-        return sandboxSettingRepository.search(search, category, pageable);
+        return sandboxSettingRepository.search(search, category, (Boolean) null, pageable);
+    }
+
+    public Page<SandboxSetting> getSettings(String search, String category, Boolean overwrite, Pageable pageable) {
+        return sandboxSettingRepository.search(search, category, overwrite, pageable);
     }
 
     public Page<SandboxSetting> getSettings(String search, String category, ConfigType configType, Pageable pageable) {
-        return sandboxSettingRepository.search(search, category, configType, pageable);
+        return sandboxSettingRepository.search(search, category, configType, (Boolean) null, pageable);
+    }
+
+    public Page<SandboxSetting> getSettings(String search, String category, ConfigType configType, Boolean overwrite, Pageable pageable) {
+        return sandboxSettingRepository.search(search, category, configType, overwrite, pageable);
     }
 
     public Optional<SandboxSetting> getByKey(String key) {

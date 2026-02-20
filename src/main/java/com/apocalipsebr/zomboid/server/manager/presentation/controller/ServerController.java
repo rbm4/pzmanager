@@ -3,6 +3,7 @@ package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 import com.apocalipsebr.zomboid.server.manager.application.service.ServerCommandService;
 import com.apocalipsebr.zomboid.server.manager.application.service.ServerRestartService;
 import com.apocalipsebr.zomboid.server.manager.application.service.ScheduledRestartService;
+import com.apocalipsebr.zomboid.server.manager.application.service.ServerWipeService;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Character;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.CharacterRepository;
@@ -24,17 +25,20 @@ public class ServerController {
     private final ServerCommandService serverCommandService;
     private final ServerRestartService serverRestartService;
     private final ScheduledRestartService scheduledRestartService;
+    private final ServerWipeService serverWipeService;
     private final CharacterRepository characterRepository;
     private final UserRepository userRepository;
 
     public ServerController(ServerCommandService serverCommandService, 
                           ServerRestartService serverRestartService,
                           ScheduledRestartService scheduledRestartService,
+                          ServerWipeService serverWipeService,
                           CharacterRepository characterRepository,
                           UserRepository userRepository) {
         this.serverCommandService = serverCommandService;
         this.serverRestartService = serverRestartService;
         this.scheduledRestartService = scheduledRestartService;
+        this.serverWipeService = serverWipeService;
         this.characterRepository = characterRepository;
         this.userRepository = userRepository;
     }
@@ -226,6 +230,54 @@ public class ServerController {
 
         public void setAmount(int amount) {
             this.amount = amount;
+        }
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/wipe")
+    public ResponseEntity<Map<String, Object>> wipeServer(@RequestBody WipeRequest request) {
+        if (request.getPassword() == null || request.getPassword().isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("success", false, "message", "Password is required."));
+        }
+
+        if (!serverWipeService.validatePassword(request.getPassword())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("success", false, "message", "Invalid wipe password."));
+        }
+
+        ServerWipeService.WipeResult result = serverWipeService.wipeServer();
+
+        if (result.isSuccess()) {
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", result.getMessage(),
+                "backupName", result.getBackupName(),
+                "originalPath", result.getOriginalPath(),
+                "backupPath", result.getBackupPath()
+            ));
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", result.getMessage()));
+        }
+    }
+
+    public static class WipeRequest {
+        private String password;
+
+        public WipeRequest() {
+        }
+
+        public WipeRequest(String password) {
+            this.password = password;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public void setPassword(String password) {
+            this.password = password;
         }
     }
 }
