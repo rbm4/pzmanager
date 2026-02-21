@@ -62,6 +62,9 @@ public class ZomboidItemWebController {
         model.addAttribute("totalItems", zomboidItemService.getTotalItemCount());
         model.addAttribute("sellableCount", zomboidItemService.getSellableItemCount());
         model.addAttribute("categories", zomboidItemService.getAllCategories());
+        model.addAttribute("search", search);
+        model.addAttribute("category", category);
+        model.addAttribute("sellable", sellable);
 
         return "items-list";
     }

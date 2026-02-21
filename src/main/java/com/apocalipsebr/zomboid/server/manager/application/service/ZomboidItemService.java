@@ -119,7 +119,7 @@ public class ZomboidItemService {
     }
 
     public Page<ZomboidItem> searchItemsPaginated(String query, Pageable pageable) {
-        return zomboidItemRepository.findByNameContainingIgnoreCaseOrItemIdContainingIgnoreCaseAndSellableTrue(query, query, pageable);
+        return zomboidItemRepository.findSellableBySearch(query, pageable);
     }
 
     public Page<ZomboidItem> getItemsByCategoryPaginated(String category, Pageable pageable) {

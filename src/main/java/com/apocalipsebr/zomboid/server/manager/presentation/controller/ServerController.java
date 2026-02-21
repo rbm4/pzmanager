@@ -1,5 +1,6 @@
 package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
+import com.apocalipsebr.zomboid.server.manager.application.service.InflationService;
 import com.apocalipsebr.zomboid.server.manager.application.service.ServerCommandService;
 import com.apocalipsebr.zomboid.server.manager.application.service.ServerRestartService;
 import com.apocalipsebr.zomboid.server.manager.application.service.ScheduledRestartService;
@@ -26,6 +27,7 @@ public class ServerController {
     private final ServerRestartService serverRestartService;
     private final ScheduledRestartService scheduledRestartService;
     private final ServerWipeService serverWipeService;
+    private final InflationService inflationService;
     private final CharacterRepository characterRepository;
     private final UserRepository userRepository;
 
@@ -33,12 +35,14 @@ public class ServerController {
                           ServerRestartService serverRestartService,
                           ScheduledRestartService scheduledRestartService,
                           ServerWipeService serverWipeService,
+                          InflationService inflationService,
                           CharacterRepository characterRepository,
                           UserRepository userRepository) {
         this.serverCommandService = serverCommandService;
         this.serverRestartService = serverRestartService;
         this.scheduledRestartService = scheduledRestartService;
         this.serverWipeService = serverWipeService;
+        this.inflationService = inflationService;
         this.characterRepository = characterRepository;
         this.userRepository = userRepository;
     }
@@ -278,6 +282,56 @@ public class ServerController {
 
         public void setPassword(String password) {
             this.password = password;
+        }
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/inflate")
+    public ResponseEntity<Map<String, Object>> inflateEconomy(@RequestBody InflateRequest request) {
+        try {
+            if (request.getPercentage() <= 0) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of(
+                        "success", false,
+                        "message", "Percentage must be greater than 0"
+                    ));
+            }
+
+            InflationService.InflationResult result = inflationService.applyInflation(request.getPercentage());
+
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Inflation of " + result.getPercentage() + "% applied successfully!",
+                "percentage", result.getPercentage(),
+                "carsInflated", result.getCarsInflated(),
+                "itemsInflated", result.getItemsInflated(),
+                "totalInflated", result.getTotalInflated()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of(
+                    "success", false,
+                    "message", "Failed to apply inflation: " + e.getMessage()
+                ));
+        }
+    }
+
+    public static class InflateRequest {
+        private double percentage;
+
+        public InflateRequest() {
+        }
+
+        public InflateRequest(double percentage) {
+            this.percentage = percentage;
+        }
+
+        public double getPercentage() {
+            return percentage;
+        }
+
+        public void setPercentage(double percentage) {
+            this.percentage = percentage;
         }
     }
 }
