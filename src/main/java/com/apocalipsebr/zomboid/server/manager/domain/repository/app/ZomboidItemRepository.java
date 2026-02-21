@@ -33,7 +33,10 @@ public interface ZomboidItemRepository extends JpaRepository<ZomboidItem, Long> 
     // Paginated queries
     Page<ZomboidItem> findBySellable(Boolean sellable, Pageable pageable);
     
-    Page<ZomboidItem> findByNameContainingIgnoreCaseOrItemIdContainingIgnoreCaseAndSellableTrue(String name, String itemId, Pageable pageable);
+    @Query("SELECT z FROM ZomboidItem z WHERE z.sellable = true AND " +
+           "(LOWER(z.name) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+           "LOWER(z.itemId) LIKE LOWER(CONCAT('%', :query, '%')))")
+    Page<ZomboidItem> findSellableBySearch(@Param("query") String query, Pageable pageable);
     
     Page<ZomboidItem> findByCategory(String category, Pageable pageable);
 
