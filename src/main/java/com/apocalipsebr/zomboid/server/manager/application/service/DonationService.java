@@ -216,17 +216,17 @@ public class DonationService {
         }
 
         // Poll PagBank for status
-        if (donation.getPagbankOrderId() != null) {
-            try {
-                PagBankOrderDTO order = pagBankService.getOrder(donation.getPagbankOrderId());
-                if (order.isPaid()) {
-                    return creditDonation(donation);
-                }
-            } catch (IOException e) {
-                logger.warn("Failed to check PagBank order status for donation {}", donationId, e);
-                // Don't fail the status check, just return current state
-            }
-        }
+        // if (donation.getPagbankOrderId() != null) {
+        //     try {
+        //         PagBankOrderDTO order = pagBankService.getOrder(donation.getPagbankOrderId());
+        //         if (order.isPaid()) {
+        //             return creditDonation(donation);
+        //         }
+        //     } catch (IOException e) {
+        //         logger.warn("Failed to check PagBank order status for donation {}", donationId, e);
+        //         // Don't fail the status check, just return current state
+        //     }
+        // }
 
         return buildStatusDTO(donation);
     }

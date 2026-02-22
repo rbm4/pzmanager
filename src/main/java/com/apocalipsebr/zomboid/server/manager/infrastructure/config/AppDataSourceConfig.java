@@ -67,7 +67,7 @@ public class AppDataSourceConfig {
         Map<String, Object> properties = new HashMap<>();
         properties.put("hibernate.hbm2ddl.auto", ddlAuto); // Create/update tables automatically
         properties.put("hibernate.dialect", "org.hibernate.community.dialect.SQLiteDialect");
-        properties.put("hibernate.show_sql", true);
+        properties.put("hibernate.show_sql", false);
         
         return builder
                 .dataSource(dataSource)
