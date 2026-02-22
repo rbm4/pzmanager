@@ -189,7 +189,8 @@ public class PagBankService {
         Request request = new Request.Builder()
                 .url(url)
                 .addHeader("Content-Type", "application/xml")
-                .addHeader("Accept", "application/xml")
+                .addHeader("Accept",  "*/*")
+                .addHeader("Authorization", token)
                 .get()
                 .build();
 
