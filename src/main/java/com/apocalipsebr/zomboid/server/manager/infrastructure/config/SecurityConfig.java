@@ -26,6 +26,7 @@ public class SecurityConfig {
                 .requestMatchers("/", "/index", "/login/**", "/auth/**", "/error", "/login.png").permitAll()
                 .requestMatchers("/api/system/**").permitAll() // For deployment endpoint
                 .requestMatchers("/api/zombie-kills/**").permitAll() // For game server updates
+                .requestMatchers("/donations/webhook").permitAll() // PagBank webhook callback
                 .requestMatchers("/items/manage", "/items/*/edit", "/items/*/toggle-sellable").hasRole("ADMIN") // Admin item management
                 .requestMatchers("/admin/**").hasRole("ADMIN") // Admin panel access
                 .anyRequest().authenticated() // All other routes require authentication

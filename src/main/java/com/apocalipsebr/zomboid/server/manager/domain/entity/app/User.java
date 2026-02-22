@@ -41,6 +41,12 @@ public class User {
     @Column(name = "role")
     private String role = "PLAYER";
 
+    @Column(name = "pagbank_email")
+    private String pagbankEmail;
+
+    @Column(name = "pagbank_cpf")
+    private String pagbankCpf;
+
     public User() {
         this.createdAt = LocalDateTime.now();
     }
@@ -149,5 +155,21 @@ public class User {
         return characters.stream()
             .filter(c -> !c.getIsDead())
             .count();
+    }
+
+    public String getPagbankEmail() {
+        return pagbankEmail;
+    }
+
+    public void setPagbankEmail(String pagbankEmail) {
+        this.pagbankEmail = pagbankEmail;
+    }
+
+    public String getPagbankCpf() {
+        return pagbankCpf;
+    }
+
+    public void setPagbankCpf(String pagbankCpf) {
+        this.pagbankCpf = pagbankCpf;
     }
 }
