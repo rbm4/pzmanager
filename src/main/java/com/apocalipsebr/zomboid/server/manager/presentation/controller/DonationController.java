@@ -19,7 +19,8 @@ import java.util.logging.Logger;
 
 /**
  * Controller for PIX donations via PagBank.
- * Handles the donation page, QR code generation, status polling, and webhook notifications.
+ * Handles the donation page, QR code generation, status polling, and webhook
+ * notifications.
  */
 @Controller
 @RequestMapping("/donations")
@@ -134,8 +135,9 @@ public class DonationController {
      */
     @PostMapping("/webhook")
     @ResponseBody
-    public ResponseEntity<Void> webhook(@RequestBody String body) {
-        donationService.processWebhook(body);
+    public ResponseEntity<Void> webhook(@RequestParam("notificationCode") String notificationCode,
+            @RequestParam("notificationType") String notificationType, @RequestBody String body) {
+        donationService.processWebhook(notificationCode,notificationType);
         return ResponseEntity.noContent().build();
     }
 }

@@ -10,6 +10,7 @@ import com.apocalipsebr.zomboid.server.manager.domain.repository.app.UserReposit
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.ZomboidItemRepository;
 import com.apocalipsebr.zomboid.server.manager.presentation.dto.pagbank.DonationStatusDTO;
 import com.apocalipsebr.zomboid.server.manager.presentation.dto.pagbank.PagBankOrderDTO;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +25,8 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Service to handle donation lifecycle: creation, status checks, and coin crediting.
+ * Service to handle donation lifecycle: creation, status checks, and coin
+ * crediting.
  */
 @Service
 public class DonationService {
@@ -51,11 +53,11 @@ public class DonationService {
     private final TransactionLogService transactionLogService;
 
     public DonationService(PagBankService pagBankService,
-                           DonationRepository donationRepository,
-                           CharacterRepository characterRepository,
-                           ZomboidItemRepository zomboidItemRepository,
-                           UserRepository userRepository,
-                           TransactionLogService transactionLogService) {
+            DonationRepository donationRepository,
+            CharacterRepository characterRepository,
+            ZomboidItemRepository zomboidItemRepository,
+            UserRepository userRepository,
+            TransactionLogService transactionLogService) {
         this.pagBankService = pagBankService;
         this.donationRepository = donationRepository;
         this.characterRepository = characterRepository;
@@ -66,7 +68,8 @@ public class DonationService {
 
     /**
      * Dynamically calculates the coin rate per centavo based on the reference item.
-     * The reference item (Base.SkillRecoveryBoundJournalFull) is assumed to cost R$10.00.
+     * The reference item (Base.SkillRecoveryBoundJournalFull) is assumed to cost
+     * R$10.00.
      * Rate = item.value (coins) / 1000 (centavos in R$10).
      * Falls back to DEFAULT_COIN_RATE if item not found or not sellable.
      */
@@ -89,17 +92,18 @@ public class DonationService {
      * Creates a new PIX donation for the user.
      * Uses the latest (most recently updated) character for coin crediting.
      *
-     * @param user            the logged-in user
-     * @param amountCentavos  donation amount in BRL centavos
-     * @param email           customer email for PagBank
-     * @param cpf             customer CPF for PagBank
-     * @param rememberInfo    whether to save email/cpf to user profile
+     * @param user           the logged-in user
+     * @param amountCentavos donation amount in BRL centavos
+     * @param email          customer email for PagBank
+     * @param cpf            customer CPF for PagBank
+     * @param rememberInfo   whether to save email/cpf to user profile
      * @return DonationStatusDTO with QR code info
-     * @throws IOException if PagBank API fails
+     * @throws IOException           if PagBank API fails
      * @throws IllegalStateException if user has no characters
      */
     @Transactional
-    public DonationStatusDTO createDonation(User user, int amountCentavos, String email, String cpf, boolean rememberInfo) throws IOException {
+    public DonationStatusDTO createDonation(User user, int amountCentavos, String email, String cpf,
+            boolean rememberInfo) throws IOException {
         // Find the latest character (by lastUpdate)
         List<Character> characters = characterRepository.findByUser(user);
         if (characters.isEmpty()) {
@@ -143,8 +147,7 @@ public class DonationService {
                     amountCentavos,
                     user,
                     email,
-                    cpf
-            );
+                    cpf);
 
             if (order.getError_messages() != null && !order.getError_messages().isEmpty()) {
                 donation.setStatus("FAILED");
@@ -230,32 +233,44 @@ public class DonationService {
 
     /**
      * Webhook handler: processes PagBank notification callback.
+     * 
+     * @param notificationType
      */
     @Transactional
-    public void processWebhook(String body) {
-        logger.info("PagBank webhook received: {}", body);
-        // PagBank sends order updates via webhook
-        // We'll extract order_id and check if it's one of ours
+    public void processWebhook(String notificationCode, String notificationType) {
+        logger.info("Notificação PagBank recebida - code: {}, type: {}", notificationCode, notificationType);
+
+        if (!"transaction".equals(notificationType)) {
+            logger.info("Ignoring non-transaction notification type: {}", notificationType);
+            return;
+        }
+
         try {
-            var gson = new com.google.gson.Gson();
-            var jsonObj = gson.fromJson(body, com.google.gson.JsonObject.class);
-            
-            // PagBank webhook may contain charges array with order info
-            if (jsonObj.has("id")) {
-                String orderId = jsonObj.get("id").getAsString();
-                Optional<Donation> donationOpt = donationRepository.findByPagbankOrderId(orderId);
-                if (donationOpt.isPresent()) {
-                    Donation donation = donationOpt.get();
-                    if ("PENDING".equals(donation.getStatus())) {
-                        PagBankOrderDTO order = pagBankService.getOrder(orderId);
-                        if (order.isPaid()) {
-                            creditDonation(donation);
-                        }
-                    }
+            var notification = pagBankService.getNotification(notificationCode,0);
+            String reference = notification.reference();
+            String status = notification.status();
+
+            logger.info("PagBank notification - reference: {}, status: {}", reference, status);
+
+            if (reference == null || !reference.startsWith("DONATION-")) {
+                logger.warn("Unknown reference in PagBank notification: {}", reference);
+                return;
+            }
+
+            Long donationId = Long.parseLong(reference.replace("DONATION-", ""));
+            Optional<Donation> donationOpt = donationRepository.findById(donationId);
+
+            if (donationOpt.isPresent()) {
+                Donation donation = donationOpt.get();
+                // PagBank status "3" = Paga, "4" = Disponível
+                if ("PENDING".equals(donation.getStatus()) && ("3".equals(status) || "4".equals(status))) {
+                    donation.setPagbankOrderId(notification.code());
+                    creditDonation(donation);
+                    logger.info("Donation {} credited via webhook notification", donationId);
                 }
             }
         } catch (Exception e) {
-            logger.warn("Error processing PagBank webhook", e);
+            logger.warn("Error processing PagBank webhook notification", e);
         }
     }
 
@@ -282,8 +297,7 @@ public class DonationService {
                 "Doação PIX - R$" + String.format("%.2f", donation.getAmountCentavos() / 100.0),
                 "PAGBANK-" + donation.getPagbankOrderId(),
                 donation.getCoinsAwarded(),
-                newBalance
-        );
+                newBalance);
 
         logger.info("Donation {} PAID - {} coins credited to character {}",
                 donation.getId(), donation.getCoinsAwarded(), character.getPlayerName());
