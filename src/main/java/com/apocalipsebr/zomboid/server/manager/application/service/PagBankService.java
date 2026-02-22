@@ -16,7 +16,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Service to interact with PagBank API for PIX QR Code generation and order status checks.
@@ -24,7 +25,7 @@ import java.util.logging.Logger;
 @Service
 public class PagBankService {
 
-    private static final Logger logger = Logger.getLogger(PagBankService.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(PagBankService.class);
     private static final MediaType JSON_MEDIA_TYPE = MediaType.parse("application/json");
 
     @Value("${pagbank.url}")
@@ -88,11 +89,11 @@ public class PagBankService {
         params.setNotification_urls(webhookUrls);
 
         String json = gson.toJson(params);
-        logger.info("Creating PagBank PIX order: " + json);
+        logger.info("Creating PagBank PIX order: {}", json);
 
         Response response = postRequest(json, "orders");
         String responseBody = response.body() != null ? response.body().string() : "";
-        logger.info("PagBank order response: " + responseBody);
+        logger.info("PagBank order response: {}", responseBody);
 
         if (!response.isSuccessful()) {
             throw new IOException("PagBank API error (" + response.code() + "): " + responseBody);

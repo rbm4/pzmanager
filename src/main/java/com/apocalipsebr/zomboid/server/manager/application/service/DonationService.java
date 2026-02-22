@@ -14,13 +14,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Service to handle donation lifecycle: creation, status checks, and coin crediting.
@@ -28,7 +29,7 @@ import java.util.logging.Logger;
 @Service
 public class DonationService {
 
-    private static final Logger logger = Logger.getLogger(DonationService.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(DonationService.class);
 
     /**
      * The item ID used as reference for dynamic coin rate calculation.
@@ -79,7 +80,7 @@ public class DonationService {
                 }
             }
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Failed to calculate dynamic coin rate, using default", e);
+            logger.warn("Failed to calculate dynamic coin rate, using default", e);
         }
         return DEFAULT_COIN_RATE;
     }
@@ -219,7 +220,7 @@ public class DonationService {
                     return creditDonation(donation);
                 }
             } catch (IOException e) {
-                logger.log(Level.WARNING, "Failed to check PagBank order status for donation " + donationId, e);
+                logger.warn("Failed to check PagBank order status for donation {}", donationId, e);
                 // Don't fail the status check, just return current state
             }
         }
@@ -232,7 +233,7 @@ public class DonationService {
      */
     @Transactional
     public void processWebhook(String body) {
-        logger.info("PagBank webhook received: " + body);
+        logger.info("PagBank webhook received: {}", body);
         // PagBank sends order updates via webhook
         // We'll extract order_id and check if it's one of ours
         try {
@@ -254,7 +255,7 @@ public class DonationService {
                 }
             }
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Error processing PagBank webhook", e);
+            logger.warn("Error processing PagBank webhook", e);
         }
     }
 
@@ -284,8 +285,8 @@ public class DonationService {
                 newBalance
         );
 
-        logger.info("Donation " + donation.getId() + " PAID - " + donation.getCoinsAwarded() +
-                " coins credited to character " + character.getPlayerName());
+        logger.info("Donation {} PAID - {} coins credited to character {}",
+                donation.getId(), donation.getCoinsAwarded(), character.getPlayerName());
 
         return buildStatusDTO(donation);
     }
