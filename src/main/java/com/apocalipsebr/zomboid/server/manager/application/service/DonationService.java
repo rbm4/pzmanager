@@ -258,7 +258,7 @@ public class DonationService {
             }
 
             Long donationId = Long.parseLong(reference.replace("DONATION-", ""));
-            Optional<Donation> donationOpt = donationRepository.findById(donationId);
+            Optional<Donation> donationOpt = donationRepository.findByIdEager(donationId);
 
             if (donationOpt.isPresent()) {
                 Donation donation = donationOpt.get();
