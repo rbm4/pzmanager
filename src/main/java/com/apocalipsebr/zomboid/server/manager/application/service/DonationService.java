@@ -247,8 +247,8 @@ public class DonationService {
 
         try {
             var notification = pagBankService.getNotification(notificationCode,0);
-            String reference = notification.reference();
-            String status = notification.status();
+            String reference = notification.getReference();
+            String status = notification.getStatus();
 
             logger.info("PagBank notification - reference: {}, status: {}", reference, status);
 
@@ -264,7 +264,7 @@ public class DonationService {
                 Donation donation = donationOpt.get();
                 // PagBank status "3" = Paga, "4" = Disponível
                 if ("PENDING".equals(donation.getStatus()) && ("3".equals(status) || "4".equals(status))) {
-                    donation.setPagbankOrderId(notification.code());
+                    donation.setPagbankOrderId(notification.getCode());
                     creditDonation(donation);
                     logger.info("Donation {} credited via webhook notification", donationId);
                 }
