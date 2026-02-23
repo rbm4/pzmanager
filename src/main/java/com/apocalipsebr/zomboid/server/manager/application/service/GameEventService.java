@@ -335,8 +335,8 @@ public class GameEventService {
             return new ContributeResult(false, "Valor inválido", false);
         }
 
-        // Get user's characters and total balance
-        List<Character> userCharacters = characterService.getUserCharacters(user);
+        // Get user's characters and total balance (all seasons for currency)
+        List<Character> userCharacters = characterService.getAllUserCharacters(user);
         int totalCurrency = userCharacters.stream()
             .mapToInt(c -> c.getCurrencyPoints() != null ? c.getCurrencyPoints() : 0)
             .sum();
@@ -708,9 +708,7 @@ public class GameEventService {
      * Calculates the total currency balance for a user across all characters.
      */
     public int getUserBalance(User user) {
-        return characterService.getUserCharacters(user).stream()
-            .mapToInt(c -> c.getCurrencyPoints() != null ? c.getCurrencyPoints() : 0)
-            .sum();
+        return characterService.getTotalCurrency(user);
     }
 
     // ==================== SANDBOX VALUE FILTERING ====================

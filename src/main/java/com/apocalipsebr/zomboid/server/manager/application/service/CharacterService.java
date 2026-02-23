@@ -1,6 +1,7 @@
 package com.apocalipsebr.zomboid.server.manager.application.service;
 
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Character;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Season;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.CharacterRepository;
 import com.apocalipsebr.zomboid.server.manager.presentation.dto.ZombieKillsUpdateDTO;
@@ -21,25 +22,29 @@ public class CharacterService {
     
     private final CharacterRepository characterRepository;
     private final ServerCommandService serverCommandService;
+    private final SeasonService seasonService;
     
-    public CharacterService(CharacterRepository characterRepository, ServerCommandService serverCommandService) {
+    public CharacterService(CharacterRepository characterRepository, ServerCommandService serverCommandService,
+                            SeasonService seasonService) {
         this.characterRepository = characterRepository;
         this.serverCommandService = serverCommandService;
+        this.seasonService = seasonService;
     }
     
     @Transactional
     public Character updateCharacterStats(User user, ZombieKillsUpdateDTO dto) {
         logger.info("Updating stats for character: " + dto.playerName() + " (User: " + user.getUsername() + ")");
         
-        Optional<Character> existingCharacter = characterRepository.findByUserAndPlayerName(user, dto.playerName());
+        Season currentSeason = seasonService.getCurrentSeason();
+        Optional<Character> existingCharacter = characterRepository.findByUserAndPlayerNameAndSeason(user, dto.playerName(), currentSeason);
         
         Character character;
         if (existingCharacter.isPresent()) {
             character = existingCharacter.get();
-            logger.info("Updating existing character: " + dto.playerName());
+            logger.info("Updating existing character: " + dto.playerName() + " (Season: " + currentSeason.getName() + ")");
         } else {
-            character = new Character(user, dto.playerName(), dto.serverName());
-            logger.info("Creating new character: " + dto.playerName());
+            character = new Character(user, dto.playerName(), dto.serverName(), currentSeason);
+            logger.info("Creating new character: " + dto.playerName() + " (Season: " + currentSeason.getName() + ")");
         }
         
         // Update character stats
@@ -80,17 +85,39 @@ public class CharacterService {
         
         return characterRepository.saveAndFlush(character);
     }
-    
+
+    /**
+     * Returns characters for the current season only (for display/selection).
+     */
     public List<Character> getUserCharacters(User user) {
+        Season currentSeason = seasonService.getCurrentSeason();
+        return characterRepository.findByUserAndSeasonOrderByZombieKillsDesc(user, currentSeason);
+    }
+
+    /**
+     * Returns ALL characters across all seasons (for total balance calculation and currency deduction).
+     */
+    public List<Character> getAllUserCharacters(User user) {
         return characterRepository.findByUserOrderByZombieKillsDesc(user);
+    }
+
+    /**
+     * Calculates total currency across ALL characters from all seasons.
+     */
+    public int getTotalCurrency(User user) {
+        return characterRepository.findByUserOrderByZombieKillsDesc(user).stream()
+                .mapToInt(c -> c.getCurrencyPoints() != null ? c.getCurrencyPoints() : 0)
+                .sum();
     }
     
     public List<Character> getTopCharactersByKills() {
-        return characterRepository.findTopActiveCharactersByKills();
+        Season currentSeason = seasonService.getCurrentSeason();
+        return characterRepository.findTopActiveCharactersByKillsAndSeason(currentSeason);
     }
     
     public List<Character> getTopCharactersByHoursSurvived() {
-        return characterRepository.findTopActiveCharactersByHoursSurvived();
+        Season currentSeason = seasonService.getCurrentSeason();
+        return characterRepository.findTopActiveCharactersByHoursSurvivedAndSeason(currentSeason);
     }
     
     public List<Character> getActiveCharacters() {

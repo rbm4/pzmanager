@@ -336,6 +336,25 @@
                     <button type="submit" class="btn btn-primary">Add Currency</button>
                 </form>
             </div>
+
+            <!-- New Season Card -->
+            <div class="card">
+                <h2>🔄 Nova Temporada</h2>
+                <div id="season-alert" class="alert"></div>
+                <p style="color: #aaa; margin-bottom: 20px;">
+                    Encerra a temporada atual e cria uma nova. Todos os personagens criados a partir deste momento pertencerão à nova temporada. Rankings e seletores serão filtrados automaticamente.
+                </p>
+                <div style="padding: 14px; border-radius: 8px; margin-bottom: 15px; background: rgba(255, 107, 107, 0.15); border: 1px solid rgba(255, 107, 107, 0.4); color: #ff6b6b; font-size: 0.85rem; line-height: 1.5;">
+                    ⚠️ <strong>OPERAÇÃO IRREVERSÍVEL</strong><br>
+                    Rankings, personagens e seletores de loja/garagem passarão a exibir apenas dados da nova temporada.<br>
+                    O saldo de moeda permanece válido entre temporadas.
+                </div>
+                <button onclick="createNewSeason()" class="btn btn-danger">Criar Nova Temporada</button>
+                <div id="season-result" style="display: none; margin-top: 15px; padding: 15px; background: rgba(56, 239, 125, 0.1); border-radius: 8px; border: 1px solid rgba(56, 239, 125, 0.3);">
+                    <p style="color: #38ef7d; margin: 5px 0;">🏷️ Nome: <strong><span id="season-name"></span></strong></p>
+                    <p style="color: #38ef7d; margin: 5px 0;">📅 Início: <span id="season-start"></span></p>
+                </div>
+            </div>
         </div>
 
         <!-- Import Items Card (Full Width) -->
@@ -619,6 +638,40 @@
             } catch (error) {
                 showAlert('inflate-alert', 'Error: ' + error.message, 'error');
                 statsDisplay.classList.remove('show');
+            }
+        }
+
+        async function createNewSeason() {
+            if (!confirm('⚠️ TEM CERTEZA?\n\nIsso encerrará a temporada atual e criará uma nova.\nRankings e seletores mostrarão apenas dados da nova temporada.\n\nO saldo de moeda permanece válido entre temporadas.')) {
+                return;
+            }
+
+            if (!confirm('🔴 CONFIRMAÇÃO FINAL\n\nVocê está prestes a iniciar uma nova temporada. Esta ação é irreversível.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/new-season`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    showAlert('season-alert', result.message, 'success');
+                    document.getElementById('season-name').textContent = result.seasonName;
+                    document.getElementById('season-start').textContent = result.startDate;
+                    document.getElementById('season-result').style.display = 'block';
+                } else {
+                    showAlert('season-alert', result.message || 'Falha ao criar temporada', 'error');
+                    document.getElementById('season-result').style.display = 'none';
+                }
+            } catch (error) {
+                showAlert('season-alert', 'Erro: ' + error.message, 'error');
+                document.getElementById('season-result').style.display = 'none';
             }
         }
     </script>

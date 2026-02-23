@@ -48,6 +48,7 @@ public class DonationService {
     private final PagBankService pagBankService;
     private final DonationRepository donationRepository;
     private final CharacterRepository characterRepository;
+    private final CharacterService characterService;
     private final ZomboidItemRepository zomboidItemRepository;
     private final UserRepository userRepository;
     private final TransactionLogService transactionLogService;
@@ -55,12 +56,14 @@ public class DonationService {
     public DonationService(PagBankService pagBankService,
             DonationRepository donationRepository,
             CharacterRepository characterRepository,
+            CharacterService characterService,
             ZomboidItemRepository zomboidItemRepository,
             UserRepository userRepository,
             TransactionLogService transactionLogService) {
         this.pagBankService = pagBankService;
         this.donationRepository = donationRepository;
         this.characterRepository = characterRepository;
+        this.characterService = characterService;
         this.zomboidItemRepository = zomboidItemRepository;
         this.userRepository = userRepository;
         this.transactionLogService = transactionLogService;
@@ -104,8 +107,11 @@ public class DonationService {
     @Transactional
     public DonationStatusDTO createDonation(User user, int amountCentavos, String email, String cpf,
             boolean rememberInfo) throws IOException {
-        // Find the latest character (by lastUpdate)
-        List<Character> characters = characterRepository.findByUser(user);
+        // Find the latest character (prefer current season, fallback to any)
+        List<Character> characters = characterService.getUserCharacters(user);
+        if (characters.isEmpty()) {
+            characters = characterRepository.findByUser(user);
+        }
         if (characters.isEmpty()) {
             throw new IllegalStateException("Você precisa ter pelo menos um personagem para fazer uma doação.");
         }

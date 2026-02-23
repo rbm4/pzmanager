@@ -5,7 +5,6 @@ import com.apocalipsebr.zomboid.server.manager.application.service.CharacterServ
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Car;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Character;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
-import com.apocalipsebr.zomboid.server.manager.domain.repository.app.CharacterRepository;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -29,11 +28,9 @@ import java.util.Map;
 public class CarWebController {
 
     private final CarService carService;
-    private final CharacterRepository characterRepository;
     private final CharacterService characterService;
 
-    public CarWebController(CarService carService, CharacterRepository repo, CharacterService characterService) {
-        this.characterRepository = repo;
+    public CarWebController(CarService carService, CharacterService characterService) {
         this.carService = carService;
         this.characterService = characterService;
     }
@@ -59,9 +56,7 @@ public class CarWebController {
         User user = (User) session.getAttribute("user");
         if (user != null) {
             List<Character> userCharacters = characterService.getUserCharacters(user);
-            int totalCurrency = userCharacters.stream()
-                    .mapToInt(c -> c.getCurrencyPoints() != null ? c.getCurrencyPoints() : 0)
-                    .sum();
+            int totalCurrency = characterService.getTotalCurrency(user);
 
             model.addAttribute("userCharacters", userCharacters);
             model.addAttribute("totalCurrency", totalCurrency);
@@ -191,7 +186,7 @@ public class CarWebController {
         Map<String, Object> response = new HashMap<>();
         User user = (User) session.getAttribute("user");
         try {
-            var characters = characterRepository.findByUserOrderByZombieKillsDesc(user);
+            var characters = characterService.getUserCharacters(user);
             response.put("success", true);
             response.put("characters", characters);
             return ResponseEntity.ok(response);
@@ -242,9 +237,7 @@ public class CarWebController {
                                     c.getLastUpdate().isAfter(java.time.LocalDateTime.now().minusSeconds(61)))))
                     .toList();
 
-            int totalCurrency = userCharacters.stream()
-                    .mapToInt(c -> c.getCurrencyPoints() != null ? c.getCurrencyPoints() : 0)
-                    .sum();
+            int totalCurrency = characterService.getTotalCurrency(user);
 
             response.put("success", true);
             response.put("characters", characterStatuses);

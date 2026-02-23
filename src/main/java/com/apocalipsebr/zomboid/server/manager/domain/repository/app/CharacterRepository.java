@@ -1,9 +1,11 @@
 package com.apocalipsebr.zomboid.server.manager.domain.repository.app;
 
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Character;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Season;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -25,4 +27,16 @@ public interface CharacterRepository extends JpaRepository<Character, Long> {
     
     @Query("SELECT c FROM Character c JOIN FETCH c.user WHERE c.isDead = false AND c.hoursSurvived IS NOT NULL AND c.id IN (SELECT c2.id FROM Character c2 WHERE c2.isDead = false AND c2.hoursSurvived IS NOT NULL GROUP BY c2.playerName HAVING c2.zombieKills = MAX(c2.zombieKills)) ORDER BY c.hoursSurvived DESC LIMIT 10")
     List<Character> findTopActiveCharactersByHoursSurvived();
+
+    // ===== Season-filtered queries =====
+
+    List<Character> findByUserAndSeasonOrderByZombieKillsDesc(User user, Season season);
+
+    Optional<Character> findByUserAndPlayerNameAndSeason(User user, String playerName, Season season);
+
+    @Query("SELECT c FROM Character c JOIN FETCH c.user WHERE c.isDead = false AND c.season = :season ORDER BY c.zombieKills DESC LIMIT 10")
+    List<Character> findTopActiveCharactersByKillsAndSeason(@Param("season") Season season);
+
+    @Query("SELECT c FROM Character c JOIN FETCH c.user WHERE c.isDead = false AND c.season = :season AND c.hoursSurvived IS NOT NULL AND c.id IN (SELECT c2.id FROM Character c2 WHERE c2.isDead = false AND c2.season = :season AND c2.hoursSurvived IS NOT NULL GROUP BY c2.playerName HAVING c2.zombieKills = MAX(c2.zombieKills)) ORDER BY c.hoursSurvived DESC LIMIT 10")
+    List<Character> findTopActiveCharactersByHoursSurvivedAndSeason(@Param("season") Season season);
 }

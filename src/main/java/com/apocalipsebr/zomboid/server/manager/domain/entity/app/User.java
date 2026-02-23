@@ -25,10 +25,10 @@ public class User {
     @Column(name = "profile_url")
     private String profileUrl;
     
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false, columnDefinition = "TIMESTAMP")
     private LocalDateTime createdAt;
     
-    @Column(name = "last_login")
+    @Column(name = "last_login", columnDefinition = "TIMESTAMP")
     private LocalDateTime lastLogin;
     
     @OneToOne

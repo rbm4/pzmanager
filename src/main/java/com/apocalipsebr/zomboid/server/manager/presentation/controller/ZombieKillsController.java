@@ -180,9 +180,10 @@ public class ZombieKillsController {
             // Update character stats
             Character character = characterService.updateCharacterStats(user, updateDTO);
 
-            // Get updated totals from database (avoids lazy loading issue)
-            List<Character> userCharacters = characterService.getUserCharacters(user);
-            int totalKills = userCharacters.stream()
+            // Get updated totals from database (all seasons for total balance)
+            List<Character> userCharacters = characterService.getAllUserCharacters(user);
+            var seasonCharacters = characterService.getUserCharacters(user);
+            int totalKills = seasonCharacters.stream()
                     .mapToInt(Character::getZombieKills)
                     .sum();
             int totalPoints = userCharacters.stream()

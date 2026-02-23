@@ -179,22 +179,33 @@ public class CarService {
                 return result;
             }
             
-            // Check if character has enough currency points
-            Integer characterPoints = targetCharacter.getCurrencyPoints() != null ? 
-                targetCharacter.getCurrencyPoints() : 0;
+            // Calculate total currency across ALL characters (all seasons)
+            List<Character> allCharacters = characterRepository.findByUserOrderByZombieKillsDesc(user);
+            int totalCurrency = allCharacters.stream()
+                .mapToInt(c -> c.getCurrencyPoints() != null ? c.getCurrencyPoints() : 0)
+                .sum();
             
-            if (characterPoints < car.getValue()) {
+            if (totalCurrency < car.getValue()) {
                 result.put("success", false);
-                result.put("message", "Moeda insuficiente. Você tem " + characterPoints + 
+                result.put("message", "Moeda insuficiente. Você tem " + totalCurrency + 
                           " ₳ mas precisa de " + car.getValue() + " ₳");
                 return result;
             }
             
-            // Deduct points from character
-            int newPoints = characterPoints - car.getValue();
-            targetCharacter.setCurrencyPoints(newPoints);
-            characterRepository.save(targetCharacter);
-            logger.info("Deducted " + car.getValue() + " ₳ from character: " + targetCharacter.getPlayerName());
+            // Deduct currency spread across all characters (starting from first, then next, etc.)
+            int remainingCost = car.getValue();
+            for (Character character : allCharacters) {
+                if (remainingCost <= 0) break;
+                int currentPoints = character.getCurrencyPoints() != null ? character.getCurrencyPoints() : 0;
+                if (currentPoints > 0) {
+                    int deduction = Math.min(currentPoints, remainingCost);
+                    character.setCurrencyPoints(currentPoints - deduction);
+                    remainingCost -= deduction;
+                    logger.info("Deducted " + deduction + " ₳ from character: " + character.getPlayerName());
+                }
+            }
+            characterRepository.saveAll(allCharacters);
+            int newPoints = totalCurrency - car.getValue();
             
             // Execute server command to spawn vehicle
             String vehicleCommand = String.format("addVehicle \"%s\" \"%s\"", 

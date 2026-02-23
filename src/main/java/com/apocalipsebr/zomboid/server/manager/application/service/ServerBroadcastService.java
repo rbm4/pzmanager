@@ -3,10 +3,12 @@ package com.apocalipsebr.zomboid.server.manager.application.service;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
@@ -15,11 +17,17 @@ public class ServerBroadcastService {
     private static final Logger logger = Logger.getLogger(ServerBroadcastService.class.getName());
 
     private final ServerCommandService commandService;
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private final AtomicInteger messageIndex = new AtomicInteger(0);
-    private boolean applicationReady = false;
 
     @Value("${server.boot.sequence.enabled:false}")
     private boolean enabled;
+
+    @Value("${server.scheduled.restart.hour:6}")
+    private int restartCycleHours;
+
+    private static final int MESSAGES_PER_CYCLE = 2;
+    private static final int RESERVED_MINUTES = 11;
 
     private static final List<String> BROADCAST_MESSAGES = List.of(
             "Bem-vindo ao Apocalipse BR! Divirta-se e respeite as regras.",
@@ -38,22 +46,34 @@ public class ServerBroadcastService {
         this.commandService = commandService;
     }
 
+    /**
+     * Calculates the interval in milliseconds between each broadcast message.
+     * The total cycle time is (restartCycleHours * 60 - RESERVED_MINUTES) minutes,
+     * divided by (number of messages * MESSAGES_PER_CYCLE) to get the interval.
+     */
+    private long calculateIntervalMs() {
+        int totalMinutes = restartCycleHours * 60 - RESERVED_MINUTES;
+        int totalMessages = BROADCAST_MESSAGES.size() * MESSAGES_PER_CYCLE;
+        long intervalMs = (long) totalMinutes * 60 * 1000 / totalMessages;
+        return intervalMs;
+    }
+
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady() {
         if (!enabled) {
             logger.info("ServerBroadcastService disabled by configuration.");
             return;
         }
-        applicationReady = true;
-        logger.info("ServerBroadcastService initialized - scheduled broadcasts enabled.");
+
+        long intervalMs = calculateIntervalMs();
+        logger.info(String.format(
+                "ServerBroadcastService initialized - restart cycle: %dh, interval: %.2f min, %d messages x%d cycles.",
+                restartCycleHours, intervalMs / 60000.0, BROADCAST_MESSAGES.size(), MESSAGES_PER_CYCLE));
+
+        scheduler.schedule(this::broadcastMessage, intervalMs, TimeUnit.MILLISECONDS);
     }
 
-    @Scheduled(fixedRate = 3600000)
     public void broadcastMessage() {
-        if (!applicationReady) {
-            return;
-        }
-
         int index = messageIndex.getAndUpdate(i -> (i + 1) % BROADCAST_MESSAGES.size());
         String message = BROADCAST_MESSAGES.get(index);
 
@@ -64,5 +84,9 @@ public class ServerBroadcastService {
         } catch (Exception e) {
             logger.warning("Failed to broadcast message: " + e.getMessage());
         }
+
+        // Schedule the next broadcast
+        long intervalMs = calculateIntervalMs();
+        scheduler.schedule(this::broadcastMessage, intervalMs, TimeUnit.MILLISECONDS);
     }
 }

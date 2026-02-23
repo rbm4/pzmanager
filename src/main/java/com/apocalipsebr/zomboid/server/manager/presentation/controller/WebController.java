@@ -76,16 +76,14 @@ public class WebController {
         
         PlayerStats stats = new PlayerStats(user.getUsername());
         
-        // Get user's characters
+        // Get user's characters (current season only for display)
         List<Character> userCharacters = characterService.getUserCharacters(user);
         
-        // Calculate totals from the fetched characters to avoid LazyInitializationException
+        // Calculate totals: kills from current season, balance from ALL seasons
         int totalKills = userCharacters.stream()
             .mapToInt(Character::getZombieKills)
             .sum();
-        int totalPoints = userCharacters.stream()
-            .mapToInt(Character::getCurrencyPoints)
-            .sum();
+        int totalPoints = characterService.getTotalCurrency(user);
         
         // Get top characters rankings
         List<Character> topCharactersByKills = characterService.getTopCharactersByKills();
@@ -111,7 +109,7 @@ public class WebController {
             return "redirect:/login";
         }
         
-        // Get user's characters
+        // Get user's characters (current season only)
         List<Character> userCharacters = characterService.getUserCharacters(user);
         
         model.addAttribute("username", user.getUsername());

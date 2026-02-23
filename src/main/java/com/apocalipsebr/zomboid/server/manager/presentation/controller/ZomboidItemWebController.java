@@ -158,9 +158,7 @@ public class ZomboidItemWebController {
         User user = (User) session.getAttribute("user");
         if (user != null) {
             List<Character> userCharacters = characterService.getUserCharacters(user);
-            int totalCurrency = userCharacters.stream()
-                    .mapToInt(c -> c.getCurrencyPoints() != null ? c.getCurrencyPoints() : 0)
-                    .sum();
+            int totalCurrency = characterService.getTotalCurrency(user);
 
             model.addAttribute("userCharacters", userCharacters);
             model.addAttribute("totalCurrency", totalCurrency);
@@ -183,7 +181,7 @@ public class ZomboidItemWebController {
             return Map.of("success", false, "message", "You must be logged in to make purchases");
         }
 
-        List<Character> userCharacters = characterService.getUserCharacters(user);
+        List<Character> userCharacters = characterService.getAllUserCharacters(user);
         if (userCharacters.isEmpty()) {
             return Map.of("success", false, "message", "No characters found for your account");
         }
@@ -256,9 +254,7 @@ public class ZomboidItemWebController {
                                 c.getLastUpdate().isAfter(java.time.LocalDateTime.now().minusSeconds(61)))))
                 .toList();
 
-        int totalCurrency = userCharacters.stream()
-                .mapToInt(c -> c.getCurrencyPoints() != null ? c.getCurrencyPoints() : 0)
-                .sum();
+        int totalCurrency = characterService.getTotalCurrency(user);
 
         return Map.of(
                 "success", true,

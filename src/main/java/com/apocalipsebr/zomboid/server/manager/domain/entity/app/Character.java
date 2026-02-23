@@ -14,6 +14,10 @@ public class Character {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "season_id")
+    private Season season;
     
     @Column(name = "player_name", nullable = false)
     private String playerName;
@@ -54,10 +58,10 @@ public class Character {
     @Column(name = "last_in_vehicle")
     private Boolean lastInVehicle = false;
     
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false, columnDefinition = "TIMESTAMP")
     private LocalDateTime createdAt;
     
-    @Column(name = "last_update")
+    @Column(name = "last_update", columnDefinition = "TIMESTAMP")
     private LocalDateTime lastUpdate;
 
     public Character() {
@@ -70,6 +74,11 @@ public class Character {
         this.user = user;
         this.playerName = playerName;
         this.serverName = serverName;
+    }
+
+    public Character(User user, String playerName, String serverName, Season season) {
+        this(user, playerName, serverName);
+        this.season = season;
     }
 
     // Getters and Setters
@@ -87,6 +96,14 @@ public class Character {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public Season getSeason() {
+        return season;
+    }
+
+    public void setSeason(Season season) {
+        this.season = season;
     }
 
     public String getPlayerName() {
