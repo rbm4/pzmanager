@@ -1,0 +1,1489 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Map Cleaner - PZ Manager</title>
+    <style>
+        :root {
+            --bg: #0b0f14;
+            --panel: #0f1620;
+            --panel2: #0d131c;
+            --text: #e6eef9;
+            --muted: #9fb1c6;
+            --border: #203044;
+            --accent: #57a6ff;
+            --warn: #ffcc66;
+        }
+
+        * { box-sizing: border-box }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font: 14px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Noto Sans", "Helvetica Neue", Arial;
+        }
+
+        a { color: var(--accent); text-decoration: none }
+        a:hover { text-decoration: underline }
+
+        .app {
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            height: 100vh;
+        }
+
+        .side {
+            background: linear-gradient(180deg, var(--panel), var(--panel2));
+            border-right: 1px solid var(--border);
+            overflow: auto;
+        }
+
+        .main {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .brand {
+            padding: 16px 16px 10px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .brand h1 { font-size: 18px; margin: 0 0 6px 0; }
+
+        .pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .sec {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sec h2 {
+            font-size: 14px;
+            margin: 0 0 8px 0;
+            color: #d8e6ff;
+            letter-spacing: .2px;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin: 8px 0;
+        }
+
+        label { color: var(--muted) }
+
+        input[type="number"],
+        input[type="text"],
+        textarea,
+        select {
+            background: #0a111a;
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 8px 10px;
+            outline: none;
+        }
+
+        textarea { width: 100%; min-height: 82px; resize: vertical }
+
+        button {
+            background: #0a111a;
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 9px 12px;
+            cursor: pointer;
+        }
+
+        button:hover { border-color: #2f4a68 }
+        button.primary { background: rgba(87, 166, 255, 0.12); border-color: rgba(87, 166, 255, 0.45); }
+        button.danger { background: rgba(255, 80, 80, 0.10); border-color: rgba(255, 80, 80, 0.45); }
+        button.success { background: rgba(0, 200, 80, 0.10); border-color: rgba(0, 200, 80, 0.45); }
+
+        .hint { color: var(--muted); font-size: 12px; white-space: pre-line; }
+        .warn { color: var(--warn); font-size: 12px; white-space: pre-line; }
+        .ok { color: #7dffbe; font-size: 12px; }
+        .err { color: #ff6060; font-size: 12px; }
+
+        .log {
+            background: #070b10;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px;
+            color: #cfe3ff;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow: auto;
+        }
+
+        .canvasWrap { position: absolute; inset: 0; }
+        canvas { display: block; width: 100%; height: 100%; }
+
+        .topBar {
+            position: absolute;
+            left: 12px; top: 12px; right: 12px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        .topBar>* { pointer-events: auto; }
+
+        .hud {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            background: rgba(10, 17, 26, 0.85);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 8px 12px;
+        }
+
+        .hud .kv { color: var(--muted); font-size: 12px }
+        .hud .kv b { color: var(--text); font-weight: 600 }
+
+        .legend {
+            position: absolute;
+            right: 12px; bottom: 12px;
+            width: 280px;
+            background: rgba(10, 17, 26, 0.90);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 10px 10px;
+        }
+
+        .legend h3 { margin: 0 0 8px 0; font-size: 13px; color: #d8e6ff; }
+
+        .legRow {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            margin: 6px 0;
+            line-height: 1.25;
+        }
+
+        .legBox {
+            width: 16px; height: 16px;
+            border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            flex: 0 0 auto;
+            margin-top: 2px;
+        }
+
+        .legTxt { color: var(--muted); font-size: 12px; }
+        .legBtnRow { display: none; margin-top: 8px; }
+        .tiny { font-size: 11px; color: var(--muted) }
+
+        #tooltipBox {
+            position: fixed;
+            z-index: 9999;
+            display: none;
+            max-width: 340px;
+            background: rgba(10, 17, 26, 0.95);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px 12px;
+            color: var(--text);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+            pointer-events: auto;
+            font-size: 12px;
+            line-height: 1.35;
+        }
+
+        .tip {
+            cursor: help;
+            text-decoration: underline dotted rgba(159, 177, 198, 0.45);
+            text-underline-offset: 3px;
+        }
+
+        .legend .legRow.tip {
+            width: auto; height: auto;
+            padding: 4px 6px;
+            border: none;
+            background: transparent;
+            border-radius: 10px;
+            justify-content: flex-start;
+        }
+
+        .legend .legRow.tip:hover { background: rgba(255, 255, 255, 0.06); }
+
+        @media (max-width: 980px) {
+            .app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+            .side { height: auto; max-height: 48vh; }
+            .legend { display: none; }
+            .legBtnRow { display: flex; }
+        }
+
+        .modalBackdrop {
+            position: fixed; inset: 0;
+            display: none;
+            align-items: center; justify-content: center;
+            background: rgba(0, 0, 0, 0.55);
+            z-index: 9998;
+        }
+
+        .modal {
+            width: min(520px, 92vw);
+            background: rgba(10, 17, 26, 0.97);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 16px;
+        }
+
+        .modal h3 { margin: 0 0 8px 0; }
+        .modal .row { justify-content: flex-end; }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 8px 0;
+            display: none;
+        }
+
+        .progress-bar .fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+        <div class="side">
+            <div class="brand">
+                <h1>🗺️ Map Cleaner <span class="badge">PZ B42+</span></h1>
+                <div class="tiny">Select and delete map .bin regions directly on the server.</div>
+                <div class="pills">
+                    <a class="pill" href="/admin">⚙️ Admin Panel</a>
+                    <a class="pill" href="/map-cleaner">🔄 Reload</a>
+                </div>
+            </div>
+
+            <div class="sec">
+                <h2>1) Load Map Data</h2>
+                <div class="row">
+                    <button class="primary" id="btnLoadIndex" title="Scan server map folder">📡 Scan Server Map</button>
+                    <button id="btnLoadFile" title="Load save_index.json from file">📂 Load JSON file</button>
+                    <button id="btnToggleLegend" class="tip"
+                        data-tip="On small screens, the legend auto-hides. Use this button to show/hide it.">Legend</button>
+                </div>
+                <div class="hint tip" data-tip="Scan reads the map folder directly from the server disk.
+No Python script needed — the backend does it all.">
+                    Server scans the map folder defined in application.properties.
+                </div>
+                <div id="fastStats" class="warn"></div>
+            </div>
+
+            <div class="sec">
+                <h2>2) View</h2>
+                <div class="row">
+                    <label class="tip" data-tip="Grid size for overlays &amp; selection.
+
+'Cell (300)' matches the common PZ cell grid (300 tiles).">Grid</label>
+                    <select id="gridSize">
+                        <option value="300" selected="">Cell (300 tiles)</option>
+                        <option value="150">150 tiles</option>
+                        <option value="100">100 tiles</option>
+                        <option value="50">50 tiles</option>
+                    </select>
+                    <label class="tip" data-tip="Blue overlay shows where .bin files exist (populated).">Show
+                        populated</label>
+                    <input type="checkbox" id="chkShowPop" checked="">
+                    <label class="tip"
+                        data-tip="Show the map basemap image (map.jpg placed in static/).">Show map</label>
+                    <input type="checkbox" id="chkShowMap" checked="">
+                </div>
+
+                <div class="row">
+                    <label class="tip"
+                        data-tip="Default lock is ON. This aligns map.jpg to world tile coordinates using the fixed TR/BL anchors.">Apply
+                        lock TR/BL</label>
+                    <input type="checkbox" id="chkLock" checked="">
+                    <label class="tip" data-tip="Top-right world tile anchor (x,y).">TR</label>
+                    <input type="text" id="lockTR" value="19796,4" style="width:120px">
+                    <label class="tip" data-tip="Bottom-left world tile anchor (x,y).">BL</label>
+                    <input type="text" id="lockBL" value="0,15899" style="width:120px">
+                </div>
+
+                <div class="legBtnRow row">
+                    <button id="btnLegendMobile">Show legend</button>
+                </div>
+            </div>
+
+            <div class="sec">
+                <h2>3) Delete zone selection</h2>
+                <div class="hint">
+                    Shift + Drag = add DELETE zone (orange overlay)
+                    Ctrl + Shift + Drag = subtract from DELETE zone
+                    Right-click inside a zone = remove that zone
+                    Backspace/Delete = undo last zone
+                </div>
+                <div class="row">
+                    <button id="btnClearKeep" class="danger">Clear selection</button>
+                    <button id="btnUndoKeep">Undo</button>
+                    <button id="btnSaveKeep">Save selection .json</button>
+                    <button id="btnLoadKeep">Load selection .json</button>
+                </div>
+                <div class="row">
+                    <label class="tip" data-tip="Optional: paste specific delete cells (one per line) like:
+12,34
+12 35
+12-15,34-40">Delete cells (manual)</label>
+                </div>
+                <textarea id="keepText" placeholder="e.g. 12,34
+12-15,34-40"></textarea>
+                <div class="row">
+                    <button id="btnApplyKeepText">Apply delete list</button>
+                </div>
+                <div id="keepStats" class="ok"></div>
+            </div>
+
+            <div class="sec">
+                <h2>4) Safehouses</h2>
+                <div class="row">
+                    <label class="tip"
+                        data-tip="If safehouses were detected, draw their rectangles. Hover to see owner/town.">Show
+                        safehouses</label>
+                    <input type="checkbox" id="chkShowSH" checked="">
+                    <label class="tip" data-tip="Auto-exclude safehouse areas from deletion (recommended).">Auto-protect</label>
+                    <input type="checkbox" id="chkAutoProtectSH" checked="">
+                </div>
+                <div class="row">
+                    <label class="tip" data-tip="Optional buffer around each safehouse, in tiles.
+
+Example: 100 means a 100-tile border around safehouse rectangles is also protected.
+
+Default is 0 (neutral).">Safehouse padding (tiles)</label>
+                    <input id="shPad" type="number" value="0" min="0" step="1" style="width:120px">
+                </div>
+                <div class="hint">
+                    Safehouse core = green dashed outline
+                    Safehouse padding = lighter green dashed outline (only if padding &gt; 0)
+                </div>
+                <div id="shStats" class="ok"></div>
+            </div>
+
+            <div class="sec">
+                <h2>5) Delete &amp; Export</h2>
+                <div class="row">
+                    <label class="tip"
+                        data-tip="Shows which .bin files will be deleted within your selected zones (red overlay).">Dry-run</label>
+                    <input type="checkbox" id="chkDryRun" checked="">
+                    <button id="btnInverse" class="primary tip"
+                        data-tip="Computes which populated .bin files fall within your delete zones (minus protected safehouses).">Compute deletable bins</button>
+                </div>
+                <div class="row">
+                    <button id="btnDeleteServer" class="danger tip"
+                        data-tip="⚠️ DESTRUCTIVE: Deletes the selected .bin files directly on the server disk. Cannot be undone.">🗑️ Delete on Server</button>
+                    <button id="btnExport" class="primary">📥 Export script</button>
+                    <button id="btnClearDelete" class="danger">Clear DELETE</button>
+                </div>
+                <div class="progress-bar" id="deleteProgress"><div class="fill" id="deleteProgressFill"></div></div>
+                <div id="deleteResult" class="ok"></div>
+                <div id="exportWarn" class="warn"></div>
+                <div class="hint tip" data-tip="Safety:
+• Delete on Server requires confirmation.
+• Export generates a .bat/.sh script as backup option.
+• Protected safehouse bins block deletion.">
+                    Delete directly on the server or export a script to run manually.
+                </div>
+                <div class="log" id="logBox"></div>
+            </div>
+
+            <div class="sec">
+                <h2>6) Presets</h2>
+                <div class="hint">Optional quick DELETE zone presets (coarse bounding boxes).</div>
+                <div class="row">
+                    <button id="btnPresetLouisville">Delete Louisville area</button>
+                    <button id="btnPresetMuldraugh">Delete Muldraugh area</button>
+                </div>
+                <div class="tiny">Presets are best-effort. Review the selection before deleting.</div>
+            </div>
+
+            <div class="sec">
+                <h2>Status</h2>
+                <div class="row">
+                    <div class="kv">Populated bins: <b id="statBins">0</b></div>
+                </div>
+                <div class="row">
+                    <div class="kv">Selected cells: <b id="statKeep">0</b></div>
+                    <div class="kv">DELETE bins: <b id="statDel">0</b></div>
+                </div>
+                <div class="row">
+                    <div class="kv">Safehouses: <b id="statSh">0</b></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main">
+            <div class="canvasWrap">
+                <canvas id="c" width="1560" height="917"></canvas>
+            </div>
+
+            <div class="topBar">
+                <div class="hud" id="hud">
+                    <div class="kv">Zoom: <b id="hudZoom">0.080</b></div>
+                    <div class="kv">Center: <b id="hudCenter">9000,8000</b></div>
+                    <div class="kv">Grid: <b id="hudGrid">300</b></div>
+                    <div class="kv">Hint: <b>Drag</b> pan, <b>Wheel</b> zoom, <b>Shift</b> select</div>
+                </div>
+                <div class="hud">
+                    <button id="btnResetView">Reset view</button>
+                </div>
+            </div>
+
+            <div class="legend" id="legend">
+                <h3>Legend</h3>
+                <div class="legRow tip" data-tip="Blue overlay shows where map .bin files exist (populated area).">
+                    <div class="legBox" style="background:rgba(87,166,255,0.22)"></div>
+                    <div class="legTxt">Populated (.bin exists)</div>
+                </div>
+                <div class="legRow tip" data-tip="Orange overlay indicates cells in your DELETE zone selection.">
+                    <div class="legBox" style="background:rgba(255,140,50,0.22)"></div>
+                    <div class="legTxt">DELETE zone selection</div>
+                </div>
+                <div class="legRow tip"
+                    data-tip="Red overlay indicates specific .bin files that will be deleted within selected zones.">
+                    <div class="legBox" style="background:rgba(255,80,80,0.22)"></div>
+                    <div class="legTxt">Deletable bins (dry-run)</div>
+                </div>
+                <div class="legRow tip" data-tip="Safehouse core rectangle (as stored by server).">
+                    <div class="legBox" style="background:transparent; border:2px dashed rgba(0,255,140,0.65)"></div>
+                    <div class="legTxt">Safehouse core outline</div>
+                </div>
+                <div class="legRow tip" data-tip="Safehouse padding outline (only if padding &gt; 0).">
+                    <div class="legBox" style="background:transparent; border:2px dashed rgba(0,255,140,0.35)"></div>
+                    <div class="legTxt">Safehouse padding outline</div>
+                </div>
+                <div class="tiny">Tip: Hover safehouse to see owner &amp; town.</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="tooltipBox" style="display: none;"></div>
+
+    <!-- Confirm delete modal -->
+    <div class="modalBackdrop" id="confirmDeleteModal">
+        <div class="modal">
+            <h3>⚠️ Confirm Server Deletion</h3>
+            <div class="warn" style="margin-bottom:10px">
+                This will <b>permanently delete</b> <span id="confirmDeleteCount">0</span> .bin files from the server.
+                <br>This action <b>cannot be undone</b>.
+            </div>
+            <div class="hint" id="confirmDeletePath"></div>
+            <div class="row" style="margin-top:10px">
+                <button class="danger" id="btnConfirmDeleteYes">🗑️ Yes, Delete</button>
+                <button id="btnConfirmDeleteNo">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export OS modal -->
+    <div class="modalBackdrop" id="osModal">
+        <div class="modal">
+            <h3>Export delete script</h3>
+            <div class="hint">Choose your server OS. The script will be downloaded and must be run from your <b>save
+                    root</b> (the folder that contains <code>map\</code>).</div>
+            <div class="row" style="margin-top:10px">
+                <button class="primary" id="btnExportWin">Windows (.bat)</button>
+                <button class="primary" id="btnExportLinux">Linux (.sh)</button>
+                <button id="btnExportCancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/map-cleaner/api';
+        const $ = (id) => document.getElementById(id);
+
+        function log(msg) {
+            const box = $("logBox");
+            const ts = new Date().toLocaleTimeString();
+            box.textContent += `[${ts}] ${msg}\n`;
+            box.scrollTop = box.scrollHeight;
+        }
+        function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+        function parseXY(s) {
+            const m = (s || "").split(",").map(t => Number(t.trim()));
+            if (m.length !== 2 || !Number.isFinite(m[0]) || !Number.isFinite(m[1])) return null;
+            return { x: m[0], y: m[1] };
+        }
+
+        /* ---------- Canvas / Camera ---------- */
+        const canvas = $("c");
+        const ctx = canvas.getContext("2d");
+        let W = 0, H = 0, dpr = 1;
+        let camX = 9000, camY = 8000;
+        let zoom = 0.08;
+        let isPanning = false, panStart = null;
+        let selectionStart = null;
+        let lastMouseWorld = null;
+
+        function resize() {
+            dpr = window.devicePixelRatio || 1;
+            W = canvas.clientWidth; H = canvas.clientHeight;
+            canvas.width = Math.floor(W * dpr); canvas.height = Math.floor(H * dpr);
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            draw();
+        }
+        window.addEventListener("resize", resize);
+
+        function worldToScreen(x, y) { return { x: (x - camX) * zoom + W / 2, y: (y - camY) * zoom + H / 2 }; }
+        function screenToWorld(x, y) { return { x: (x - W / 2) / zoom + camX, y: (y - H / 2) / zoom + camY }; }
+
+        function setZoom(newZoom, anchorScreen) {
+            const a = anchorScreen || { x: W / 2, y: H / 2 };
+            const before = screenToWorld(a.x, a.y);
+            zoom = clamp(newZoom, 0.01, 2.5);
+            const after = screenToWorld(a.x, a.y);
+            camX += (before.x - after.x);
+            camY += (before.y - after.y);
+        }
+
+        /* ---------- Basemap (map.jpg) + lock ---------- */
+        let mapImg = null, mapImgReady = false, mapErr = null;
+        const LOCK_DEFAULT_TR = { x: 19796, y: 4 };
+        const LOCK_DEFAULT_BL = { x: 0, y: 15899 };
+
+        function loadMapImage() {
+            mapImgReady = false; mapErr = null;
+            mapImg = new Image();
+            mapImg.onload = () => { mapImgReady = true; draw(); };
+            mapImg.onerror = () => { mapErr = "map.jpg not found (place it in static/ folder or same directory)"; draw(); };
+            mapImg.src = "/map.jpg?cachebust=" + Date.now();
+        }
+        loadMapImage();
+
+        function getLockAnchors() {
+            const tr = parseXY($("lockTR").value) || LOCK_DEFAULT_TR;
+            const bl = parseXY($("lockBL").value) || LOCK_DEFAULT_BL;
+            return { tr, bl };
+        }
+
+        /* ---------- Data ---------- */
+        let indexData = null;
+        let binsByX = new Map();
+        let binsCount = 0;
+        let binTileSize = 8;
+        let populatedCellCounts = new Map();
+        let populatedCellMax = 1;
+
+        let gridSize = 300;
+        let zoneRects = [];
+        let zoneCells = new Set();
+        let manualZoneCells = new Set();
+
+        let deleteBins = new Set();
+        let deleteCellCounts = new Map();
+
+        let safehouses = [];
+        let safehousePad = 0;
+        let protectedBins = new Set();
+        let hoveredSafehouse = null;
+
+        function cellKey(cx, cy) { return cx + "," + cy; }
+        function binKey(bx, by) { return bx + "/" + by; }
+
+        function recomputeZoneCells() {
+            zoneCells.clear();
+            for (const r of zoneRects) {
+                for (let cx = r.cx1; cx <= r.cx2; cx++) {
+                    for (let cy = r.cy1; cy <= r.cy2; cy++) {
+                        zoneCells.add(cellKey(cx, cy));
+                    }
+                }
+            }
+            for (const k of manualZoneCells) zoneCells.add(k);
+            $("statKeep").textContent = zoneCells.size;
+            $("keepStats").textContent = zoneCells.size ? `Selected delete cells: ${zoneCells.size}` : "";
+        }
+
+        function parseZoneText() {
+            manualZoneCells.clear();
+            const txt = $("keepText").value || "";
+            const lines = txt.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            const addCell = (cx, cy) => { if (Number.isFinite(cx) && Number.isFinite(cy)) manualZoneCells.add(cellKey(cx, cy)); };
+            for (const line of lines) {
+                const m = line.match(/^(\d+)\s*-\s*(\d+)\s*[, ]\s*(\d+)\s*-\s*(\d+)$/);
+                if (m) {
+                    let x1 = +m[1], x2 = +m[2], y1 = +m[3], y2 = +m[4];
+                    if (x2 < x1) [x1, x2] = [x2, x1];
+                    if (y2 < y1) [y1, y2] = [y2, y1];
+                    for (let cx = x1; cx <= x2; cx++) for (let cy = y1; cy <= y2; cy++) addCell(cx, cy);
+                    continue;
+                }
+                const m2 = line.match(/^(\d+)\s*[, ]\s*(\d+)$/);
+                if (m2) { addCell(+m2[1], +m2[2]); continue; }
+            }
+            recomputeZoneCells();
+            draw();
+        }
+
+        /* ---------- populated overlay ---------- */
+        function recomputePopulatedCells() {
+            populatedCellCounts.clear();
+            populatedCellMax = 1;
+            if (!binsByX.size) return;
+
+            for (const [bx, ranges] of binsByX.entries()) {
+                const cx = Math.floor((bx * binTileSize) / gridSize);
+                for (const [y0, y1] of ranges) {
+                    let cy0 = Math.floor((y0 * binTileSize) / gridSize);
+                    let cy1 = Math.floor((y1 * binTileSize) / gridSize);
+                    for (let cy = cy0; cy <= cy1; cy++) {
+                        const startBin = Math.floor((cy * gridSize + (binTileSize - 1)) / binTileSize);
+                        const nextBin = Math.floor(((cy + 1) * gridSize + (binTileSize - 1)) / binTileSize);
+                        const a = Math.max(y0, startBin);
+                        const b = Math.min(y1, nextBin - 1);
+                        if (b >= a) {
+                            const count = (b - a + 1);
+                            const k = cellKey(cx, cy);
+                            const prev = populatedCellCounts.get(k) || 0;
+                            const next = prev + count;
+                            populatedCellCounts.set(k, next);
+                            if (next > populatedCellMax) populatedCellMax = next;
+                        }
+                    }
+                }
+            }
+        }
+
+        /* ---------- safehouses ---------- */
+        function buildProtectedBins() {
+            protectedBins.clear();
+            safehousePad = Math.max(0, Number($("shPad").value || 0) | 0);
+
+            for (const sh of safehouses) {
+                const x1 = Math.floor((sh.x - safehousePad) / binTileSize);
+                const y1 = Math.floor((sh.y - safehousePad) / binTileSize);
+                const x2 = Math.floor((sh.x + sh.w + safehousePad) / binTileSize);
+                const y2 = Math.floor((sh.y + sh.h + safehousePad) / binTileSize);
+
+                for (let bx = x1; bx <= x2; bx++) {
+                    for (let by = y1; by <= y2; by++) {
+                        protectedBins.add(binKey(bx, by));
+                    }
+                }
+            }
+            $("shStats").textContent = safehouses.length ? `Safehouses: ${safehouses.length} (protected bins ≈ ${protectedBins.size})` : "";
+            $("statSh").textContent = safehouses.length;
+            recomputeZoneCells();
+        }
+
+        /* ---------- inverse selection + delete ---------- */
+        let deleteComputed = false;
+
+        function clearDelete() {
+            deleteBins.clear();
+            deleteCellCounts.clear();
+            deleteComputed = false;
+            $("statDel").textContent = "0";
+        }
+
+        function computeDeleteBins() {
+            if (!binsByX.size) { $("exportWarn").textContent = "Load map data first."; return; }
+            if (zoneCells.size === 0) { $("exportWarn").textContent = "Select a delete zone first (Shift + Drag)."; return; }
+            clearDelete();
+
+            const autoProtect = $("chkAutoProtectSH").checked;
+            const xs = Array.from(binsByX.keys()).sort((a, b) => a - b);
+            let xi = 0;
+            const batchMs = 18;
+            let protectedSkips = 0;
+
+            function addDeleteCell(bx, by, count) {
+                const tx = bx * binTileSize, ty = by * binTileSize;
+                const cx = Math.floor(tx / gridSize), cy = Math.floor(ty / gridSize);
+                const k = cellKey(cx, cy);
+                deleteCellCounts.set(k, (deleteCellCounts.get(k) || 0) + count);
+            }
+
+            function step() {
+                const t0 = performance.now();
+                while (xi < xs.length && performance.now() - t0 < batchMs) {
+                    const bx = xs[xi];
+                    const ranges = binsByX.get(bx);
+                    for (const [y0, y1] of ranges) {
+                        let by = y0;
+                        while (by <= y1) {
+                            const ty = by * binTileSize;
+                            const cy = Math.floor(ty / gridSize);
+                            const nextTy = (cy + 1) * gridSize;
+                            const nextBy = Math.floor((nextTy + (binTileSize - 1)) / binTileSize);
+                            const segEnd = Math.min(y1, nextBy - 1);
+
+                            const tx = bx * binTileSize;
+                            const cx = Math.floor(tx / gridSize);
+                            const inZone = zoneCells.has(cellKey(cx, cy));
+
+                            if (inZone) {
+                                let added = 0;
+                                for (let j = by; j <= segEnd; j++) {
+                                    const k = binKey(bx, j);
+                                    if (autoProtect && protectedBins.has(k)) {
+                                        protectedSkips++;
+                                        continue;
+                                    }
+                                    deleteBins.add(k);
+                                    added++;
+                                }
+                                if (added > 0) addDeleteCell(bx, by, added);
+                            }
+                            by = segEnd + 1;
+                        }
+                    }
+                    xi++;
+                }
+
+                $("statDel").textContent = String(deleteBins.size);
+
+                if (xi < xs.length) {
+                    $("exportWarn").textContent = `Computing deletable bins\u2026 ${xi}/${xs.length} folders`;
+                    requestAnimationFrame(step);
+                } else {
+                    deleteComputed = true;
+                    const msg = `Deletable bins: ${deleteBins.size}.` +
+                        (protectedSkips > 0 ? ` (${protectedSkips} safehouse-protected bins excluded)` : "");
+                    $("exportWarn").textContent = msg;
+                    log(`Compute complete. ${msg}`);
+                    draw();
+                }
+            }
+            requestAnimationFrame(step);
+        }
+
+        /* ---------- Server delete ---------- */
+        async function deleteOnServer() {
+            if (!deleteComputed || deleteBins.size === 0) {
+                $("exportWarn").textContent = "Nothing to delete. Click 'Compute deletable bins' first.";
+                return;
+            }
+
+            // Show confirmation modal
+            $("confirmDeleteCount").textContent = deleteBins.size.toLocaleString();
+            $("confirmDeletePath").textContent = `Map folder: ${indexData?.map_folder || 'configured in server'}`;
+            $("confirmDeleteModal").style.display = "flex";
+        }
+
+        async function executeServerDelete() {
+            $("confirmDeleteModal").style.display = "none";
+
+            const bins = Array.from(deleteBins);
+            const totalBins = bins.length;
+            const BATCH_SIZE = 5000;
+            let totalDeleted = 0;
+            let totalErrors = 0;
+
+            $("deleteProgress").style.display = "block";
+            $("deleteResult").textContent = "";
+            $("deleteResult").className = "ok";
+            log(`Starting server deletion of ${totalBins} bins...`);
+
+            for (let i = 0; i < bins.length; i += BATCH_SIZE) {
+                const batch = bins.slice(i, i + BATCH_SIZE);
+                const progress = Math.min(100, Math.round(((i + batch.length) / totalBins) * 100));
+                $("deleteProgressFill").style.width = progress + "%";
+                $("exportWarn").textContent = `Deleting... ${i + batch.length}/${totalBins} (${progress}%)`;
+
+                try {
+                    const response = await fetch(`${API_BASE}/delete`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ bins: batch })
+                    });
+
+                    if (!response.ok) {
+                        const errText = await response.text();
+                        log(`ERROR: batch ${i}-${i + batch.length}: HTTP ${response.status} — ${errText}`);
+                        totalErrors += batch.length;
+                        continue;
+                    }
+
+                    const result = await response.json();
+                    totalDeleted += result.deletedCount || 0;
+
+                    if (!result.success) {
+                        log(`WARN: batch had issues: ${result.message}`);
+                    }
+                } catch (err) {
+                    log(`ERROR: batch ${i}-${i + batch.length}: ${err.message}`);
+                    totalErrors += batch.length;
+                }
+            }
+
+            $("deleteProgressFill").style.width = "100%";
+            setTimeout(() => { $("deleteProgress").style.display = "none"; }, 2000);
+
+            const msg = `✅ Done! Deleted ${totalDeleted.toLocaleString()} files on the server.` +
+                (totalErrors > 0 ? ` (${totalErrors} errors)` : "");
+            $("deleteResult").textContent = msg;
+            $("deleteResult").className = totalErrors > 0 ? "warn" : "ok";
+            $("exportWarn").textContent = "";
+            log(msg);
+
+            // Refresh the index
+            log("Refreshing map index...");
+            await loadFromServer();
+        }
+
+        /* ---------- export script (kept as fallback) ---------- */
+        function buildDeletePlanByFolder() {
+            const plan = new Map();
+            for (const k of deleteBins) {
+                const [bxS, byS] = k.split("/");
+                const bx = +bxS, by = +byS;
+                if (!Number.isFinite(bx) || !Number.isFinite(by)) continue;
+                if (!plan.has(bx)) plan.set(bx, []);
+                plan.get(bx).push(by);
+            }
+            const planRanges = new Map();
+            for (const [bx, ys] of plan.entries()) {
+                ys.sort((a, b) => a - b);
+                const ranges = [];
+                let a = ys[0], b = ys[0];
+                for (let i = 1; i < ys.length; i++) {
+                    const y = ys[i];
+                    if (y === b + 1) b = y;
+                    else { ranges.push([a, b]); a = b = y; }
+                }
+                ranges.push([a, b]);
+                planRanges.set(bx, ranges);
+            }
+            return planRanges;
+        }
+
+        function downloadText(filename, content) {
+            const blob = new Blob([content], { type: "text/plain" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url; a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1500);
+        }
+
+        function exportScript(osKind) {
+            if (!deleteComputed || deleteBins.size === 0) {
+                $("exportWarn").textContent = "Nothing to export. Click 'Compute deletable bins' first.";
+                return;
+            }
+
+            const plan = buildDeletePlanByFolder();
+            const dt = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+            const mapFolder = "map";
+
+            if (osKind === "win") {
+                const out = [];
+                out.push("@echo off");
+                out.push("setlocal EnableExtensions EnableDelayedExpansion");
+                out.push("echo PZ Map Cleaner - DELETE SCRIPT");
+                out.push("echo ------------------------------------------------");
+                out.push("echo This will delete map\\ coordinate .bin files.");
+                out.push("echo Run this from your SAVE ROOT (contains map\\)");
+                out.push("echo.");
+                out.push("if not exist \"%CD%\\map\\\" (");
+                out.push("  echo ERROR: map\\ not found in current directory.");
+                out.push("  pause");
+                out.push("  exit /b 1");
+                out.push(")");
+                out.push("set COUNT=0");
+                for (const [bx, ranges] of Array.from(plan.entries()).sort((a, b) => a[0] - b[0])) {
+                    out.push(`if exist "${mapFolder}\\${bx}\\" (`);
+                    for (const [a, b] of ranges) {
+                        if (a === b) {
+                            out.push(`  if exist "${mapFolder}\\${bx}\\${a}.bin" (del /q "${mapFolder}\\${bx}\\${a}.bin" & set /a COUNT+=1)`);
+                        } else {
+                            out.push(`  for /L %%Y in (${a},1,${b}) do (`);
+                            out.push(`    if exist "${mapFolder}\\${bx}\\%%Y.bin" (del /q "${mapFolder}\\${bx}\\%%Y.bin" & set /a COUNT+=1)`);
+                            out.push("  )");
+                        }
+                    }
+                    out.push(")");
+                }
+                out.push("echo.");
+                out.push("echo DONE. Deleted !COUNT! files.");
+                out.push("pause");
+                downloadText(`pz_delete_map_bins_${dt}.bat`, out.join("\r\n"));
+                log("Downloaded Windows delete script.");
+            } else {
+                const out = [];
+                out.push("#!/usr/bin/env bash");
+                out.push("set -euo pipefail");
+                out.push("echo \"PZ Map Cleaner - DELETE SCRIPT\"");
+                out.push("echo \"------------------------------------------------\"");
+                out.push("if [ ! -d \"./map\" ]; then");
+                out.push("  echo \"ERROR: ./map not found in current directory.\"");
+                out.push("  exit 1");
+                out.push("fi");
+                out.push("COUNT=0");
+                for (const [bx, ranges] of Array.from(plan.entries()).sort((a, b) => a[0] - b[0])) {
+                    out.push(`if [ -d "${mapFolder}/${bx}" ]; then`);
+                    for (const [a, b] of ranges) {
+                        if (a === b) {
+                            out.push(`  if [ -f "${mapFolder}/${bx}/${a}.bin" ]; then rm -f "${mapFolder}/${bx}/${a}.bin"; COUNT=$((COUNT+1)); fi`);
+                        } else {
+                            out.push(`  for Y in $(seq ${a} ${b}); do`);
+                            out.push(`    if [ -f "${mapFolder}/${bx}/${Y}.bin" ]; then rm -f "${mapFolder}/${bx}/${Y}.bin"; COUNT=$((COUNT+1)); fi`);
+                            out.push("  done");
+                        }
+                    }
+                    out.push("fi");
+                }
+                out.push("echo \"\"");
+                out.push("echo \"DONE. Deleted ${COUNT} files.\"");
+                downloadText(`pz_delete_map_bins_${dt}.sh`, out.join("\n"));
+                log("Downloaded Linux delete script.");
+            }
+        }
+
+        /* ---------- Delete zone box manipulation ---------- */
+        function addZoneRectFromWorldRect(wr, subtract = false) {
+            const cx1 = Math.floor(Math.min(wr.x1, wr.x2) / gridSize);
+            const cy1 = Math.floor(Math.min(wr.y1, wr.y2) / gridSize);
+            const cx2 = Math.floor(Math.max(wr.x1, wr.x2) / gridSize);
+            const cy2 = Math.floor(Math.max(wr.y1, wr.y2) / gridSize);
+
+            if (subtract) {
+                for (let cx = cx1; cx <= cx2; cx++) {
+                    for (let cy = cy1; cy <= cy2; cy++) {
+                        const k = cellKey(cx, cy);
+                        zoneCells.delete(k);
+                        manualZoneCells.delete(k);
+                    }
+                }
+            } else {
+                zoneRects.push({ cx1, cy1, cx2, cy2 });
+            }
+            recomputeZoneCells();
+            draw();
+        }
+
+        function removeZoneRectAtWorldPoint(wx, wy) {
+            const cx = Math.floor(wx / gridSize), cy = Math.floor(wy / gridSize);
+            for (let i = zoneRects.length - 1; i >= 0; i--) {
+                const r = zoneRects[i];
+                if (cx >= r.cx1 && cx <= r.cx2 && cy >= r.cy1 && cy <= r.cy2) {
+                    zoneRects.splice(i, 1);
+                    recomputeZoneCells();
+                    draw();
+                    log("Removed a delete zone.");
+                    return true;
+                }
+            }
+            return false;
+        }
+        function undoZone() { zoneRects.pop(); recomputeZoneCells(); draw(); }
+
+        function addPresetRect(name, x1, y1, x2, y2) {
+            const cx1 = Math.floor(x1 / gridSize), cy1 = Math.floor(y1 / gridSize);
+            const cx2 = Math.floor(x2 / gridSize), cy2 = Math.floor(y2 / gridSize);
+            zoneRects.push({ cx1, cy1, cx2, cy2 });
+            recomputeZoneCells();
+            draw();
+            log(`Preset applied: ${name}`);
+        }
+
+        /* ---------- Drawing ---------- */
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+
+            // basemap
+            const showMap = $("chkShowMap").checked;
+            const lock = $("chkLock").checked;
+            if (showMap) {
+                if (mapImgReady && lock) {
+                    const { tr, bl } = getLockAnchors();
+                    const pTL = worldToScreen(bl.x, tr.y);
+                    const pBR = worldToScreen(tr.x, bl.y);
+                    ctx.globalAlpha = 0.9;
+                    ctx.drawImage(mapImg, pTL.x, pTL.y, (pBR.x - pTL.x), (pBR.y - pTL.y));
+                    ctx.globalAlpha = 1.0;
+                } else if (mapErr) {
+                    ctx.fillStyle = "rgba(255,80,80,0.16)";
+                    ctx.fillRect(12, 64, 520, 48);
+                    ctx.fillStyle = "#ffd0d0";
+                    ctx.fillText(mapErr, 24, 94);
+                }
+            }
+
+            // populated overlay (blue)
+            if ($("chkShowPop").checked && populatedCellCounts.size) {
+                for (const [k, count] of populatedCellCounts.entries()) {
+                    const [cx, cy] = k.split(",").map(Number);
+                    const x = cx * gridSize, y = cy * gridSize;
+                    const p1 = worldToScreen(x, y);
+                    const p2 = worldToScreen(x + gridSize, y + gridSize);
+                    const alpha = clamp(0.05 + 0.30 * (count / populatedCellMax), 0.06, 0.35);
+                    ctx.fillStyle = `rgba(87,166,255,${alpha})`;
+                    ctx.fillRect(p1.x, p1.y, p2.x - p1.x, p2.y - p1.y);
+                }
+            }
+
+            // DELETE zone overlay (orange)
+            if (zoneCells.size) {
+                ctx.fillStyle = "rgba(255,140,50,0.20)";
+                for (const k of zoneCells) {
+                    const [cx, cy] = k.split(",").map(Number);
+                    const x = cx * gridSize, y = cy * gridSize;
+                    const p1 = worldToScreen(x, y);
+                    const p2 = worldToScreen(x + gridSize, y + gridSize);
+                    ctx.fillRect(p1.x, p1.y, p2.x - p1.x, p2.y - p1.y);
+                }
+            }
+
+            // Dry-run delete overlay (red)
+            if ($("chkDryRun").checked && deleteCellCounts.size) {
+                let max = 1;
+                for (const v of deleteCellCounts.values()) if (v > max) max = v;
+                for (const [k, v] of deleteCellCounts.entries()) {
+                    const [cx, cy] = k.split(",").map(Number);
+                    const x = cx * gridSize, y = cy * gridSize;
+                    const p1 = worldToScreen(x, y);
+                    const p2 = worldToScreen(x + gridSize, y + gridSize);
+                    const alpha = clamp(0.05 + 0.22 * (v / max), 0.06, 0.28);
+                    ctx.fillStyle = `rgba(255,80,80,${alpha})`;
+                    ctx.fillRect(p1.x, p1.y, p2.x - p1.x, p2.y - p1.y);
+                }
+            }
+
+            // grid lines
+            ctx.strokeStyle = "rgba(255,255,255,0.06)";
+            ctx.lineWidth = 1;
+            const topLeft = screenToWorld(0, 0);
+            const botRight = screenToWorld(W, H);
+            const gx0 = Math.floor(topLeft.x / gridSize) * gridSize;
+            const gy0 = Math.floor(topLeft.y / gridSize) * gridSize;
+            const gx1 = Math.ceil(botRight.x / gridSize) * gridSize;
+            const gy1 = Math.ceil(botRight.y / gridSize) * gridSize;
+
+            for (let x = gx0; x <= gx1; x += gridSize) {
+                const p1 = worldToScreen(x, topLeft.y);
+                const p2 = worldToScreen(x, botRight.y);
+                ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+            }
+            for (let y = gy0; y <= gy1; y += gridSize) {
+                const p1 = worldToScreen(topLeft.x, y);
+                const p2 = worldToScreen(botRight.x, y);
+                ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+            }
+
+            // safehouses
+            hoveredSafehouse = null;
+            if ($("chkShowSH").checked && safehouses.length) {
+                const pad = safehousePad | 0;
+                if (lastMouseWorld) {
+                    for (const sh of safehouses) {
+                        const inside = (lastMouseWorld.x >= sh.x - pad && lastMouseWorld.x <= sh.x + sh.w + pad &&
+                            lastMouseWorld.y >= sh.y - pad && lastMouseWorld.y <= sh.y + sh.h + pad);
+                        if (inside) { hoveredSafehouse = sh; break; }
+                    }
+                }
+
+                for (const sh of safehouses) {
+                    const coreTL = worldToScreen(sh.x, sh.y);
+                    const coreBR = worldToScreen(sh.x + sh.w, sh.y + sh.h);
+
+                    ctx.strokeStyle = "rgba(0,255,140,0.65)";
+                    ctx.setLineDash([6, 4]);
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(coreTL.x, coreTL.y, coreBR.x - coreTL.x, coreBR.y - coreTL.y);
+
+                    if (pad > 0) {
+                        ctx.strokeStyle = "rgba(0,255,140,0.35)";
+                        ctx.setLineDash([8, 6]);
+                        ctx.lineWidth = 2;
+                        const px = sh.x - pad, py = sh.y - pad, pw = sh.w + pad * 2, ph = sh.h + pad * 2;
+                        const pTL = worldToScreen(px, py);
+                        const pBR = worldToScreen(px + pw, py + ph);
+                        ctx.strokeRect(pTL.x, pTL.y, pBR.x - pTL.x, pBR.y - pTL.y);
+                    }
+
+                    if (hoveredSafehouse === sh) {
+                        ctx.setLineDash([]);
+                        ctx.fillStyle = "rgba(0,255,140,0.08)";
+                        ctx.fillRect(coreTL.x, coreTL.y, coreBR.x - coreTL.x, coreBR.y - coreTL.y);
+                    }
+                }
+                ctx.setLineDash([]);
+            }
+
+            $("hudZoom").textContent = zoom.toFixed(3);
+            $("hudCenter").textContent = `${Math.round(camX)},${Math.round(camY)}`;
+            $("hudGrid").textContent = String(gridSize);
+        }
+
+        /* ---------- pointer events ---------- */
+        canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+
+        canvas.addEventListener("mousedown", (e) => {
+            const r = canvas.getBoundingClientRect();
+            const sx = e.clientX - r.left, sy = e.clientY - r.top;
+            const w = screenToWorld(sx, sy);
+            lastMouseWorld = w;
+
+            if (e.button === 2) {
+                removeZoneRectAtWorldPoint(w.x, w.y);
+                return;
+            }
+            if (e.shiftKey) {
+                selectionStart = { x: sx, y: sy, wx: w.x, wy: w.y, subtract: (e.ctrlKey || e.metaKey) };
+                return;
+            }
+            isPanning = true;
+            panStart = { sx, sy, camX, camY };
+        });
+
+        canvas.addEventListener("mousemove", (e) => {
+            const r = canvas.getBoundingClientRect();
+            const sx = e.clientX - r.left, sy = e.clientY - r.top;
+            const w = screenToWorld(sx, sy);
+            lastMouseWorld = w;
+
+            if (isPanning && panStart) {
+                camX = panStart.camX - (sx - panStart.sx) / zoom;
+                camY = panStart.camY - (sy - panStart.sy) / zoom;
+                draw();
+            } else if (selectionStart) {
+                draw();
+                const x1 = selectionStart.x, y1 = selectionStart.y, x2 = sx, y2 = sy;
+                ctx.strokeStyle = selectionStart.subtract ? "rgba(100,160,255,0.85)" : "rgba(255,140,50,0.85)";
+                ctx.setLineDash([6, 4]);
+                ctx.lineWidth = 2;
+                ctx.strokeRect(Math.min(x1, x2), Math.min(y1, y2), Math.abs(x2 - x1), Math.abs(y2 - y1));
+                ctx.setLineDash([]);
+            } else {
+                draw();
+                if (hoveredSafehouse) {
+                    const sh = hoveredSafehouse;
+                    const tip = `<b>Safehouse</b><br>
+Owner: <b>${escapeHtml(sh.owner || "")}</b><br>
+Town: ${escapeHtml(sh.town || "")}<br>
+${sh.name ? ("Name: " + escapeHtml(sh.name) + "<br>") : ""}
+${(sh.members && sh.members.length) ? ("Members: " + escapeHtml(sh.members.join(", "))) : ""}`;
+                    showTooltipAt(sx + 16, sy + 16, tip);
+                } else {
+                    hideTooltipIfNotPinned();
+                }
+            }
+        });
+
+        canvas.addEventListener("mouseup", (e) => {
+            if (selectionStart) {
+                const r = canvas.getBoundingClientRect();
+                const sx = e.clientX - r.left, sy = e.clientY - r.top;
+                const w2 = screenToWorld(sx, sy);
+                addZoneRectFromWorldRect({ x1: selectionStart.wx, y1: selectionStart.wy, x2: w2.x, y2: w2.y }, selectionStart.subtract);
+                selectionStart = null;
+                draw();
+                return;
+            }
+            isPanning = false;
+            panStart = null;
+        });
+
+        canvas.addEventListener("wheel", (e) => {
+            e.preventDefault();
+            const r = canvas.getBoundingClientRect();
+            const sx = e.clientX - r.left, sy = e.clientY - r.top;
+            const factor = Math.exp(-e.deltaY * 0.0012);
+            setZoom(zoom * factor, { x: sx, y: sy });
+            draw();
+        }, { passive: false });
+
+        window.addEventListener("keydown", (e) => {
+            if (e.key === "Backspace" || e.key === "Delete") {
+                undoZone();
+            }
+        });
+
+        /* ---------- tooltips ---------- */
+        let tooltipPinned = false;
+        function escapeHtml(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+        function showTooltipAt(px, py, html) {
+            const box = $("tooltipBox");
+            box.innerHTML = html.replace(/\n/g, "<br>");
+            box.style.display = "block";
+            const pad = 10;
+            box.style.left = "0px"; box.style.top = "0px";
+            const r = box.getBoundingClientRect();
+            let x = px, y = py;
+            if (x + r.width > window.innerWidth - pad) x = window.innerWidth - pad - r.width;
+            if (y + r.height > window.innerHeight - pad) y = window.innerHeight - pad - r.height;
+            x = Math.max(pad, x); y = Math.max(pad, y);
+            box.style.left = x + "px"; box.style.top = y + "px";
+        }
+        function hideTooltipIfNotPinned() {
+            if (tooltipPinned) return;
+            $("tooltipBox").style.display = "none";
+        }
+        document.addEventListener("click", () => { tooltipPinned = false; $("tooltipBox").style.display = "none"; });
+
+        function initTipElements() {
+            document.querySelectorAll(".tip").forEach(el => {
+                el.addEventListener("mouseenter", () => {
+                    if (tooltipPinned) return;
+                    const raw = el.getAttribute("data-tip") || "";
+                    if (!raw) return;
+                    const r = el.getBoundingClientRect();
+                    showTooltipAt(r.left, r.bottom + 10, escapeHtml(raw).replace(/\\n/g, "<br>"));
+                });
+                el.addEventListener("mouseleave", () => { hideTooltipIfNotPinned(); });
+                el.addEventListener("click", (e) => {
+                    const raw = el.getAttribute("data-tip") || "";
+                    if (!raw) return;
+                    e.preventDefault(); e.stopPropagation();
+                    tooltipPinned = !tooltipPinned;
+                    if (tooltipPinned) {
+                        const r = el.getBoundingClientRect();
+                        showTooltipAt(r.left, r.bottom + 10, escapeHtml(raw).replace(/\\n/g, "<br>"));
+                    } else $("tooltipBox").style.display = "none";
+                }, { passive: false });
+                el.addEventListener("touchstart", (e) => {
+                    const raw = el.getAttribute("data-tip") || "";
+                    if (!raw) return;
+                    e.preventDefault(); e.stopPropagation();
+                    tooltipPinned = !tooltipPinned;
+                    if (tooltipPinned) {
+                        const r = el.getBoundingClientRect();
+                        showTooltipAt(r.left, r.bottom + 10, escapeHtml(raw).replace(/\\n/g, "<br>"));
+                    } else $("tooltipBox").style.display = "none";
+                }, { passive: false });
+            });
+        }
+
+        /* ---------- load data ---------- */
+        async function loadFromServer() {
+            $("fastStats").textContent = "Scanning server map folder...";
+            log("Scanning server map folder...");
+
+            try {
+                const response = await fetch(`${API_BASE}/index`);
+                if (!response.ok) {
+                    const errText = await response.text();
+                    $("fastStats").textContent = `Error: HTTP ${response.status} — ${errText}`;
+                    log(`ERROR: ${errText}`);
+                    return;
+                }
+                const j = await response.json();
+                if (j.warnings && j.warnings.length && j.bins === 0) {
+                    $("fastStats").textContent = `Warning: ${j.warnings.join('; ')}`;
+                    log(`Warnings: ${j.warnings.join('; ')}`);
+                }
+                ingestIndex(j);
+            } catch (err) {
+                $("fastStats").textContent = `Error: ${err.message}`;
+                log(`ERROR: ${err.message}`);
+            }
+        }
+
+        async function loadJsonFromUser() {
+            const inp = document.createElement("input");
+            inp.type = "file";
+            inp.accept = ".json,application/json";
+            return new Promise((resolve) => {
+                inp.onchange = async () => {
+                    const f = inp.files[0];
+                    if (!f) { resolve(null); return; }
+                    const txt = await f.text();
+                    try { resolve(JSON.parse(txt)); } catch (err) { resolve({ __error: String(err) }); }
+                };
+                inp.click();
+            });
+        }
+
+        function validateIndex(j) {
+            if (!j || typeof j !== "object") return "Not a JSON object.";
+            if (!j.bins_by_x) return "Missing bins_by_x.";
+            return null;
+        }
+
+        function ingestIndex(j) {
+            indexData = j;
+            binsByX.clear();
+            binsCount = 0;
+            binTileSize = Number(j.bin_tile_size || 8) || 8;
+
+            for (const k of Object.keys(j.bins_by_x)) {
+                const bx = Number(k);
+                if (!Number.isFinite(bx)) continue;
+                const ranges = j.bins_by_x[k];
+                if (!Array.isArray(ranges)) continue;
+                const norm = [];
+                for (const r of ranges) {
+                    if (!Array.isArray(r) || r.length < 2) continue;
+                    const a = Number(r[0]), b = Number(r[1]);
+                    if (Number.isFinite(a) && Number.isFinite(b) && b >= a) {
+                        norm.push([a | 0, b | 0]);
+                        binsCount += (b - a + 1);
+                    }
+                }
+                if (norm.length) binsByX.set(bx, norm);
+            }
+
+            safehouses = Array.isArray(j.safehouses) ? j.safehouses : [];
+            $("statBins").textContent = String(binsCount);
+
+            const timing = j.timing_seconds ? ` (scan: ${j.timing_seconds.total?.toFixed(2)}s)` : "";
+            $("fastStats").textContent = `Loaded: ${binsCount.toLocaleString()} bins, ${safehouses.length} safehouses${timing}`;
+            log(`Index loaded. bins=${binsCount} safehouses=${safehouses.length}${timing}`);
+
+            recomputePopulatedCells();
+            buildProtectedBins();
+            recomputeZoneCells();
+            clearDelete();
+            draw();
+        }
+
+        function saveZoneJson() {
+            const payload = {
+                version: 1,
+                grid_size: gridSize,
+                zone_rects: zoneRects,
+                manual_zone: Array.from(manualZoneCells),
+                safehouse_pad: Number($("shPad").value || 0) | 0,
+                lock_on: $("chkLock").checked,
+                lock_tr: $("lockTR").value,
+                lock_bl: $("lockBL").value
+            };
+            const dt = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+            downloadText(`pz_delete_zone_${dt}.json`, JSON.stringify(payload, null, 2));
+            log("Saved delete zone json.");
+        }
+
+        async function loadZoneJson() {
+            const j = await loadJsonFromUser();
+            if (!j || j.__error) { log("Failed to load zone json."); return; }
+            zoneRects = Array.isArray(j.zone_rects) ? j.zone_rects : [];
+            manualZoneCells = new Set(Array.isArray(j.manual_zone) ? j.manual_zone : []);
+            if (Number.isFinite(j.safehouse_pad)) $("shPad").value = String(Math.max(0, j.safehouse_pad | 0));
+            if (typeof j.lock_tr === "string") $("lockTR").value = j.lock_tr;
+            if (typeof j.lock_bl === "string") $("lockBL").value = j.lock_bl;
+            if (typeof j.lock_on === "boolean") $("chkLock").checked = j.lock_on;
+            if (Number.isFinite(j.grid_size)) {
+                $("gridSize").value = String(j.grid_size);
+                gridSize = Number($("gridSize").value) || 300;
+                recomputePopulatedCells();
+            }
+            buildProtectedBins();
+            recomputeZoneCells();
+            clearDelete();
+            draw();
+            log("Loaded zone json.");
+        }
+
+        /* ---------- UI wires ---------- */
+        $("btnLoadIndex").onclick = () => loadFromServer();
+
+        $("btnLoadFile").onclick = async () => {
+            const j = await loadJsonFromUser();
+            if (!j) return;
+            if (j.__error) { $("fastStats").textContent = "JSON parse error: " + j.__error; return; }
+            const err = validateIndex(j);
+            if (err) { $("fastStats").textContent = "Invalid index: " + err; return; }
+            ingestIndex(j);
+        };
+
+        $("gridSize").onchange = () => {
+            gridSize = Number($("gridSize").value) || 300;
+            recomputePopulatedCells();
+            recomputeZoneCells();
+            clearDelete();
+            draw();
+        };
+
+        $("chkShowPop").onchange = () => draw();
+        $("chkShowMap").onchange = () => draw();
+        $("chkLock").onchange = () => draw();
+        $("lockTR").onchange = () => draw();
+        $("lockBL").onchange = () => draw();
+
+        $("btnClearKeep").onclick = () => { zoneRects = []; manualZoneCells.clear(); recomputeZoneCells(); clearDelete(); draw(); log("Cleared selection."); };
+        $("btnUndoKeep").onclick = () => { undoZone(); clearDelete(); log("Undo zone."); };
+        $("btnSaveKeep").onclick = saveZoneJson;
+        $("btnLoadKeep").onclick = loadZoneJson;
+        $("btnApplyKeepText").onclick = () => { parseZoneText(); clearDelete(); log("Applied delete list."); };
+
+        $("chkShowSH").onchange = () => draw();
+        $("chkAutoProtectSH").onchange = () => { clearDelete(); draw(); };
+        $("shPad").addEventListener("input", () => { buildProtectedBins(); clearDelete(); draw(); });
+
+        $("btnInverse").onclick = () => computeDeleteBins();
+        $("btnClearDelete").onclick = () => { clearDelete(); $("exportWarn").textContent = ""; $("deleteResult").textContent = ""; draw(); log("Cleared DELETE."); };
+
+        $("btnDeleteServer").onclick = () => deleteOnServer();
+        $("btnConfirmDeleteYes").onclick = () => executeServerDelete();
+        $("btnConfirmDeleteNo").onclick = () => { $("confirmDeleteModal").style.display = "none"; };
+
+        $("btnExport").onclick = () => { $("osModal").style.display = "flex"; };
+        $("btnExportCancel").onclick = () => { $("osModal").style.display = "none"; };
+        $("btnExportWin").onclick = () => { $("osModal").style.display = "none"; exportScript("win"); };
+        $("btnExportLinux").onclick = () => { $("osModal").style.display = "none"; exportScript("linux"); };
+
+        $("btnPresetLouisville").onclick = () => { addPresetRect("Louisville", 10500, 2500, 15500, 6500); clearDelete(); };
+        $("btnPresetMuldraugh").onclick = () => { addPresetRect("Muldraugh", 9800, 8500, 11500, 10400); clearDelete(); };
+
+        $("btnResetView").onclick = () => { camX = 9000; camY = 8000; zoom = 0.08; draw(); };
+
+        $("btnToggleLegend").onclick = () => {
+            const el = $("legend");
+            el.style.display = (el.style.display === "none") ? "block" : "none";
+        };
+        $("btnLegendMobile").onclick = () => {
+            const el = $("legend");
+            const show = (el.style.display === "none" || !el.style.display);
+            el.style.display = show ? "block" : "none";
+        };
+
+        /* ---------- init ---------- */
+        initTipElements();
+        resize();
+        draw();
+
+        // Auto-load from server on page load
+        loadFromServer();
+    </script>
+</body>
+
+</html>
