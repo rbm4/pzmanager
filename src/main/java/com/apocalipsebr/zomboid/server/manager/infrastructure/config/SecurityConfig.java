@@ -23,7 +23,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/index", "/season-guide", "/login/**", "/auth/**", "/error", "/login.png", "/UmbrellaCorp.png").permitAll()
+                .requestMatchers("/", "/index", "/season-guide", "/map-regions/**", "/login/**", "/auth/**", "/error","/map.jpg", "/login.png", "/UmbrellaCorp.png").permitAll()
                 .requestMatchers("/api/system/**").permitAll() // For deployment endpoint
                 .requestMatchers("/api/zombie-kills/**").permitAll() // For game server updates
                 .requestMatchers("/donations/webhook").permitAll() // PagBank webhook callback
@@ -48,6 +48,9 @@ public class SecurityConfig {
             )
             .securityContext(securityContext -> securityContext
                 .requireExplicitSave(false) // Automatically save SecurityContext to session
+            )
+            .headers(headers -> headers
+                .frameOptions(frame -> frame.sameOrigin()) // Allow iframe embedding from same origin (map-regions modal)
             )
             .csrf(csrf -> csrf
                 .disable() // Disable CSRF for APIs

@@ -3,6 +3,8 @@ package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 import com.apocalipsebr.zomboid.server.manager.application.service.MapCleanerService;
 import com.apocalipsebr.zomboid.server.manager.application.service.MapCleanerService.DeleteResult;
 import com.apocalipsebr.zomboid.server.manager.application.service.MapCleanerService.MapIndex;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Region;
+import com.apocalipsebr.zomboid.server.manager.domain.repository.app.RegionRepository;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,9 +18,11 @@ import java.util.*;
 public class MapCleanerController {
 
     private final MapCleanerService mapCleanerService;
+    private final RegionRepository regionRepository;
 
-    public MapCleanerController(MapCleanerService mapCleanerService) {
+    public MapCleanerController(MapCleanerService mapCleanerService, RegionRepository regionRepository) {
         this.mapCleanerService = mapCleanerService;
+        this.regionRepository = regionRepository;
     }
 
     /**
@@ -123,6 +127,34 @@ public class MapCleanerController {
         response.put("mapFolder", path != null ? path : "");
 
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Returns all enabled regions for rendering on the map canvas.
+     */
+    @GetMapping("/api/regions")
+    @PreAuthorize("hasRole('ADMIN')")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> getRegions() {
+        List<Region> regions = regionRepository.findByEnabledTrue();
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        for (Region r : regions) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", r.getId());
+            m.put("code", r.getCode());
+            m.put("name", r.getName());
+            m.put("categories", r.getCategories());
+            m.put("x1", r.getX1());
+            m.put("y1", r.getY1());
+            m.put("x2", r.getX2());
+            m.put("y2", r.getY2());
+            m.put("z", r.getZ());
+            m.put("permanent", r.getPermanent());
+            result.add(m);
+        }
+
+        return ResponseEntity.ok(result);
     }
 
     public record DeleteRequest(List<String> bins) {

@@ -404,6 +404,17 @@ Default is 0 (neutral).">Safehouse padding (tiles)</label>
             </div>
 
             <div class="sec">
+                <h2>4b) Regions</h2>
+                <div class="row">
+                    <label class="tip"
+                        data-tip="Show region boundaries from the database on the map.">Show regions</label>
+                    <input type="checkbox" id="chkShowRegions" checked="">
+                </div>
+                <div class="hint">Region outlines loaded from the database (enabled regions only).</div>
+                <div id="regionStats" class="ok"></div>
+            </div>
+
+            <div class="sec">
                 <h2>5) Delete &amp; Export</h2>
                 <div class="row">
                     <label class="tip"
@@ -495,7 +506,11 @@ Default is 0 (neutral).">Safehouse padding (tiles)</label>
                     <div class="legBox" style="background:transparent; border:2px dashed rgba(0,255,140,0.35)"></div>
                     <div class="legTxt">Safehouse padding outline</div>
                 </div>
-                <div class="tiny">Tip: Hover safehouse to see owner &amp; town.</div>
+                <div class="legRow tip" data-tip="Region boundaries from the database. Hover to see name &amp; code.">
+                    <div class="legBox" style="background:rgba(200,130,255,0.10); border:2px solid rgba(200,130,255,0.65)"></div>
+                    <div class="legTxt">Region boundary</div>
+                </div>
+                <div class="tiny">Tip: Hover safehouse or region to see details.</div>
             </div>
         </div>
     </div>
@@ -620,6 +635,9 @@ Default is 0 (neutral).">Safehouse padding (tiles)</label>
         let safehousePad = 0;
         let protectedBins = new Set();
         let hoveredSafehouse = null;
+
+        let regions = [];
+        let hoveredRegion = null;
 
         function cellKey(cx, cy) { return cx + "," + cy; }
         function binKey(bx, by) { return bx + "/" + by; }
@@ -1148,6 +1166,46 @@ Default is 0 (neutral).">Safehouse padding (tiles)</label>
                 ctx.setLineDash([]);
             }
 
+            // regions
+            hoveredRegion = null;
+            if ($("chkShowRegions").checked && regions.length) {
+                if (lastMouseWorld) {
+                    for (const rg of regions) {
+                        const rx1 = Math.min(rg.x1, rg.x2), ry1 = Math.min(rg.y1, rg.y2);
+                        const rx2 = Math.max(rg.x1, rg.x2), ry2 = Math.max(rg.y1, rg.y2);
+                        if (lastMouseWorld.x >= rx1 && lastMouseWorld.x <= rx2 &&
+                            lastMouseWorld.y >= ry1 && lastMouseWorld.y <= ry2) {
+                            hoveredRegion = rg; break;
+                        }
+                    }
+                }
+
+                for (const rg of regions) {
+                    const rx1 = Math.min(rg.x1, rg.x2), ry1 = Math.min(rg.y1, rg.y2);
+                    const rx2 = Math.max(rg.x1, rg.x2), ry2 = Math.max(rg.y1, rg.y2);
+                    const tl = worldToScreen(rx1, ry1);
+                    const br = worldToScreen(rx2, ry2);
+
+                    ctx.strokeStyle = "rgba(200,130,255,0.65)";
+                    ctx.setLineDash([]);
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(tl.x, tl.y, br.x - tl.x, br.y - tl.y);
+
+                    if (hoveredRegion === rg) {
+                        ctx.fillStyle = "rgba(200,130,255,0.08)";
+                        ctx.fillRect(tl.x, tl.y, br.x - tl.x, br.y - tl.y);
+                    }
+
+                    // label
+                    const sw = br.x - tl.x;
+                    if (sw > 40) {
+                        ctx.font = "12px sans-serif";
+                        ctx.fillStyle = "rgba(200,130,255,0.85)";
+                        ctx.fillText(rg.name || rg.code, tl.x + 4, tl.y + 14);
+                    }
+                }
+            }
+
             $("hudZoom").textContent = zoom.toFixed(3);
             $("hudCenter").textContent = `${Math.round(camX)},${Math.round(camY)}`;
             $("hudGrid").textContent = String(gridSize);
@@ -1201,6 +1259,15 @@ Owner: <b>${escapeHtml(sh.owner || "")}</b><br>
 Town: ${escapeHtml(sh.town || "")}<br>
 ${sh.name ? ("Name: " + escapeHtml(sh.name) + "<br>") : ""}
 ${(sh.members && sh.members.length) ? ("Members: " + escapeHtml(sh.members.join(", "))) : ""}`;
+                    showTooltipAt(sx + 16, sy + 16, tip);
+                } else if (hoveredRegion) {
+                    const rg = hoveredRegion;
+                    const tip = `<b>Region</b><br>
+Name: <b>${escapeHtml(rg.name || "")}</b><br>
+Code: ${escapeHtml(rg.code || "")}<br>
+${rg.categories ? ("Categories: " + escapeHtml(rg.categories) + "<br>") : ""}
+Coords: (${rg.x1}, ${rg.y1}) → (${rg.x2}, ${rg.y2})
+${rg.permanent ? "<br><b>Permanent</b>" : ""}`;
                     showTooltipAt(sx + 16, sy + 16, tip);
                 } else {
                     hideTooltipIfNotPinned();
@@ -1298,6 +1365,9 @@ ${(sh.members && sh.members.length) ? ("Members: " + escapeHtml(sh.members.join(
             $("fastStats").textContent = "Scanning server map folder...";
             log("Scanning server map folder...");
 
+            // Load regions in parallel with map index
+            const regionsPromise = fetch(`${API_BASE}/regions`).then(r => r.ok ? r.json() : []).catch(() => []);
+
             try {
                 const response = await fetch(`${API_BASE}/index`);
                 if (!response.ok) {
@@ -1316,6 +1386,12 @@ ${(sh.members && sh.members.length) ? ("Members: " + escapeHtml(sh.members.join(
                 $("fastStats").textContent = `Error: ${err.message}`;
                 log(`ERROR: ${err.message}`);
             }
+
+            // Ingest regions
+            regions = await regionsPromise;
+            $("regionStats").textContent = regions.length ? `Regions: ${regions.length}` : "";
+            log(`Regions loaded: ${regions.length}`);
+            draw();
         }
 
         async function loadJsonFromUser() {
@@ -1446,6 +1522,7 @@ ${(sh.members && sh.members.length) ? ("Members: " + escapeHtml(sh.members.join(
         $("btnApplyKeepText").onclick = () => { parseZoneText(); clearDelete(); log("Applied delete list."); };
 
         $("chkShowSH").onchange = () => draw();
+        $("chkShowRegions").onchange = () => draw();
         $("chkAutoProtectSH").onchange = () => { clearDelete(); draw(); };
         $("shPad").addEventListener("input", () => { buildProtectedBins(); clearDelete(); draw(); });
 

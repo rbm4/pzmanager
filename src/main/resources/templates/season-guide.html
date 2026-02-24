@@ -329,11 +329,6 @@
 
         <a href="/" class="back-link">&larr; Voltar para o Início</a>
 
-        <div class="update-box">
-            &#128214; <strong>Guia &mdash; Atualização B42.14</strong><br>
-            Este guia foi atualizado antes da atualização do mod, algumas funcionalidades descritas aqui ainda não foram implementadas. Nova atualização chegando na próxima segunda-feira.
-        </div>
-
         <!-- Table of Contents -->
         <nav class="toc">
             <h3>&#128220; Índice</h3>
@@ -373,6 +368,23 @@
                 Algumas regiões possuem <span class="hl">super-zumbis</span> que rendem <strong>bônus
                 de saldo 3x</strong> ao serem abatidos, como em Westpoint, Ekron, Bradeburg e Riverside.
             </p>
+
+            <div style="margin-top: 20px; text-align: center;">
+                <button onclick="document.getElementById('mapModal').style.display='flex'" style="
+                    display: inline-flex; align-items: center; gap: 8px;
+                    padding: 12px 24px;
+                    background: rgba(231,76,60,0.12);
+                    border: 1px solid rgba(231,76,60,0.45);
+                    border-radius: 12px;
+                    color: #e8e8e8;
+                    font-size: 1rem;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                " onmouseover="this.style.borderColor='#e74c3c';this.style.background='rgba(231,76,60,0.2)'"
+                   onmouseout="this.style.borderColor='rgba(231,76,60,0.45)';this.style.background='rgba(231,76,60,0.12)'">
+                    &#128506; Ver Mapa de Regiões
+                </button>
+            </div>
         </section>
 
         <!-- ══════════════════════════════════════ -->
@@ -406,6 +418,7 @@
         <!-- ══════════════════════════════════════ -->
         <!--  UMBRELLA VACCINE MOD GUIDE            -->
         <!-- ══════════════════════════════════════ -->
+         
 
         <!-- SECTION 1: Books -->
         <section id="books" class="guide-section">
@@ -437,15 +450,9 @@
             </ul>
 
             <div class="info-box">
-                &#128161; Não quer passar pelo inferno para encontrá-los? Comece com a profissão
-                <strong>Estagiário de Laboratório</strong> &mdash; você começa com todos os
+                &#128161; Não quer passar pelo inferno para encontrá-los? Junte-se à corporação Umbrella e comece com a profissão
+                <strong>Cientista da Umbrella</strong> &mdash; você começa com todos os
                 documentos de pesquisa necessários.
-            </div>
-
-            <div class="note-box">
-                Este é o gameplay padrão, que é mais desafiador. Existem configurações de sandbox para mudar isso.
-                Você pode expandir o spawn para áreas de hospital ou clínica, ou fazer com que apareçam onde
-                qualquer outro livro apareceria.
             </div>
         </section>
 
@@ -466,7 +473,7 @@
                 &#9888;&#65039; O <strong>Cromatógrafo</strong> requer <strong>luzes verdes</strong> para ser construído.
                 São raras, mas podem ser obtidas desmontando <strong>rádios bidirecionais (walkie-talkies)</strong>
                 carregados por zumbis policiais ou encontrados em delegacias. Você também pode pintar lâmpadas...
-                Encontre a revista para aprender como.
+                Encontre a revista para aprender a receita.
             </div>
 
             <div class="warn-box">
@@ -526,10 +533,10 @@
                 <h3>&#129489;&#8205;&#9877; Bônus de Profissão</h3>
                 <div class="guide-table-wrapper">
                     <table class="guide-table">
-                        <thead><tr><th>Bônus</th><th>&#129489;&#8205;&#9877; Médico</th><th>&#129489;&#8205;&#128300; Estagiário de Lab</th></tr></thead>
+                        <thead><tr><th>Bônus</th><th>&#129489;&#8205;&#9877; Médico</th><th>&#129489;&#8205;&#128300; Cientista da Umbrella</th></tr></thead>
                         <tbody>
                             <tr><td>Amostras (Mesa Necrotério)</td><td class="center">4</td><td class="center">6</td></tr>
-                            <tr><td>Chance base de boa amostra</td><td class="center">+5% (55%)</td><td class="center">+15% (65%)</td></tr>
+                            <tr><td>Chance base de boa amostra</td><td class="center">+5% (55%)</td><td class="center">+25% (75%)</td></tr>
                             <tr><td>Chance máx. boa amostra (PS 10)</td><td class="center">65%</td><td class="center">75%</td></tr>
                             <tr><td>Bônus de XP autópsia</td><td class="center">+15%</td><td class="center">+30%</td></tr>
                             <tr><td>Bônus de velocidade autópsia</td><td class="center">15% mais rápido</td><td class="center">40% mais rápido</td></tr>
@@ -636,7 +643,6 @@
             <div class="recipe-card">
                 <h4><span class="step-badge">PASSO 5A</span> &#129504; Extrair Cérebro</h4>
                 <p>
-                    Com a nova atualização, a Mesa de Necrotério se torna ainda mais útil.
                     Para criar vacinas e a cura, você precisará extrair fluido de um <strong>cérebro infectado</strong>.
                 </p>
                 <p>Após uma autópsia, você pode:</p>
@@ -653,7 +659,7 @@
                         <tbody>
                             <tr><td>&#128736; Outras profissões</td><td class="center">10%</td><td class="center">20%</td><td class="center">30%</td></tr>
                             <tr><td>&#129489;&#8205;&#9877; Médico</td><td class="center">14%</td><td class="center">27%</td><td class="center">40%</td></tr>
-                            <tr><td>&#129489;&#8205;&#128300; Estagiário de Lab</td><td class="center">20%</td><td class="center">37%</td><td class="center">50%</td></tr>
+                            <tr><td>&#129489;&#8205;&#128300; Cientista da Umbrella</td><td class="center">20%</td><td class="center">37%</td><td class="center">50%</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -994,6 +1000,51 @@
     <footer>
         <span class="footer-copy">&copy; 2026 Apocalipse [BR]. Todos os direitos reservados.</span>
     </footer>
+
+    <!-- Map Regions Modal -->
+    <div id="mapModal" style="
+        display: none;
+        position: fixed; inset: 0;
+        z-index: 10000;
+        align-items: center; justify-content: center;
+        background: rgba(0,0,0,0.80);
+    " onclick="if(event.target===this)this.style.display='none'">
+        <div style="
+            width: min(96vw, 1600px);
+            height: min(92vh, 1000px);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            position: relative;
+        ">
+            <iframe id="mapIframe" style="width:100%;height:100%;border:none;display:block"></iframe>
+        </div>
+    </div>
+
+    <script>
+        // Load iframe only when modal opens, and listen for close message
+        const mapModal = document.getElementById('mapModal');
+        const mapIframe = document.getElementById('mapIframe');
+        const observer = new MutationObserver(() => {
+            if (mapModal.style.display === 'flex' && !mapIframe.src) {
+                mapIframe.src = '/map-regions';
+            }
+        });
+        observer.observe(mapModal, { attributes: true, attributeFilter: ['style'] });
+
+        window.addEventListener('message', (e) => {
+            if (e.data === 'closeMapRegions') {
+                mapModal.style.display = 'none';
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && mapModal.style.display === 'flex') {
+                mapModal.style.display = 'none';
+            }
+        });
+    </script>
 
 </body>
 </html>
