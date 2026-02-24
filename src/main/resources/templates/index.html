@@ -6,11 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Apocalipse [BR] - Zomboid Server</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -20,9 +16,6 @@
             display: flex;
             flex-direction: column;
         }
-
-        /* ── Header ── */
-        /* handled by header-component */
 
         .btn {
             display: inline-block;
@@ -36,10 +29,7 @@
             font-weight: 600;
         }
 
-        .btn-sm {
-            padding: 8px 24px;
-            font-size: 0.9rem;
-        }
+        .btn-sm { padding: 8px 24px; font-size: 0.9rem; }
 
         .btn-primary {
             background: linear-gradient(45deg, #ff6b6b, #ee5a6f);
@@ -47,20 +37,31 @@
             -webkit-text-fill-color: white;
             box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
         }
-
         .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
         }
 
-        /* ── Hero ── */
-        .hero {
-            flex: 0 0 auto;
-            text-align: center;
-            padding: 80px 20px 60px;
-            background: linear-gradient(180deg, #1a1a2e 0%, #0d0d1a 100%);
+        .btn-umbrella {
+            background: linear-gradient(45deg, #c0392b, #e74c3c);
+            color: white !important;
+            -webkit-text-fill-color: white;
+            box-shadow: 0 4px 15px rgba(192, 57, 43, 0.5);
+            font-size: 1.1rem;
+            padding: 14px 44px;
+            letter-spacing: 0.5px;
+        }
+        .btn-umbrella:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(192, 57, 43, 0.7);
         }
 
+        /* ── Hero ── */
+        .hero {
+            text-align: center;
+            padding: 70px 20px 40px;
+            background: linear-gradient(180deg, #1a1a2e 0%, #0d0d1a 100%);
+        }
         .hero h1 {
             font-size: 3.5rem;
             margin-bottom: 12px;
@@ -69,110 +70,106 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-
         .hero .subtitle {
             font-size: 1.25rem;
             color: #aaa;
-            margin-bottom: 32px;
+            margin-bottom: 28px;
         }
 
-        .hero .btn {
-            font-size: 1.15rem;
-            padding: 15px 48px;
-        }
-
-        /* ── Feature Sections ── */
-        .feature-section {
-            padding: 80px 20px;
-            max-width: 1100px;
+        /* ── Umbrella Section ── */
+        .umbrella-section {
+            padding: 60px 20px 40px;
+            max-width: 900px;
             margin: 0 auto;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            gap: 60px;
+            text-align: center;
         }
 
-        .feature-section:nth-child(even) {
-            flex-direction: row-reverse;
+        .umbrella-logo-wrapper {
+            background: radial-gradient(ellipse at center, rgba(220,220,220,0.12) 0%, transparent 70%);
+            padding: 40px 20px;
+            margin-bottom: 36px;
         }
 
-        .feature-section + .feature-section {
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        .umbrella-logo {
+            max-width: 340px;
+            width: 80%;
+            filter: drop-shadow(0 0 40px rgba(192, 57, 43, 0.25));
         }
 
-        .feature-img {
-            flex: 0 0 420px;
-            height: 280px;
-            border-radius: 16px;
-            overflow: hidden;
-            position: relative;
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        .umbrella-lore {
+            max-width: 760px;
+            margin: 0 auto 36px;
         }
 
-        .feature-img img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
+        .umbrella-lore h2 {
+            font-size: 1.9rem;
+            margin-bottom: 18px;
+            color: #e8e8e8;
+        }
+        .umbrella-lore h2 span {
+            color: #e74c3c;
         }
 
-        .feature-img-placeholder {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 5rem;
-        }
-
-        .feature-img-placeholder.ranking   { background: linear-gradient(135deg, #ff6b6b22, #ee5a6f33); }
-        .feature-img-placeholder.store      { background: linear-gradient(135deg, #4caf5022, #8bc34a33); }
-        .feature-img-placeholder.events     { background: linear-gradient(135deg, #ff980022, #ffb74d33); }
-        .feature-img-placeholder.community  { background: linear-gradient(135deg, #5865F222, #7289da33); }
-
-        .feature-text {
-            flex: 1;
-        }
-
-        .feature-text h2 {
-            font-size: 2rem;
+        .umbrella-lore p {
+            color: #aaa;
+            line-height: 1.85;
+            font-size: 1.05rem;
             margin-bottom: 16px;
         }
 
-        .feature-text h2 .accent {
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .feature-text h2 .accent-red    { background: linear-gradient(45deg, #ff6b6b, #ee5a6f); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .feature-text h2 .accent-green  { background: linear-gradient(45deg, #4caf50, #8bc34a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .feature-text h2 .accent-orange { background: linear-gradient(45deg, #ff9800, #ffb74d); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .feature-text h2 .accent-blue   { background: linear-gradient(45deg, #5865F2, #7289da); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-
-        .feature-text p {
-            color: #aaa;
-            line-height: 1.8;
-            font-size: 1.05rem;
-            margin-bottom: 20px;
-        }
-
-        .feature-tag {
-            display: inline-block;
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-size: 0.8rem;
+        .umbrella-lore .highlight {
+            color: #e74c3c;
             font-weight: 600;
-            margin-right: 8px;
-            border: 1px solid;
         }
 
-        .tag-red    { color: #ff6b6b; border-color: rgba(255,107,107,0.3); background: rgba(255,107,107,0.1); }
-        .tag-green  { color: #4caf50; border-color: rgba(76,175,80,0.3);  background: rgba(76,175,80,0.1); }
-        .tag-orange { color: #ff9800; border-color: rgba(255,152,0,0.3);  background: rgba(255,152,0,0.1); }
-        .tag-blue   { color: #5865F2; border-color: rgba(88,101,242,0.3); background: rgba(88,101,242,0.1); }
+        .umbrella-divider {
+            width: 80px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #e74c3c, transparent);
+            margin: 40px auto;
+        }
 
-        /* ── Discord section ── */
+        /* ── Quick Features ── */
+        .features-quick {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px 20px 60px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 24px;
+        }
+
+        .fq-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 14px;
+            padding: 28px 22px;
+            text-align: center;
+            transition: transform 0.2s, border-color 0.3s;
+        }
+        .fq-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(231, 76, 60, 0.3);
+        }
+
+        .fq-icon {
+            font-size: 2.4rem;
+            margin-bottom: 14px;
+        }
+
+        .fq-card h3 {
+            font-size: 1.05rem;
+            margin-bottom: 8px;
+            color: #e8e8e8;
+        }
+
+        .fq-card p {
+            color: #777;
+            font-size: 0.88rem;
+            line-height: 1.6;
+        }
+
+        /* ── Discord Section ── */
         .discord-section {
             padding: 60px 20px;
             max-width: 960px;
@@ -182,37 +179,29 @@
             align-items: center;
             gap: 48px;
         }
-
-        .discord-info {
-            flex: 1;
-        }
-
+        .discord-info { flex: 1; }
         .discord-info h2 {
             font-size: 2rem;
             margin-bottom: 12px;
         }
-
         .discord-info h2 span {
             background: linear-gradient(45deg, #5865F2, #7289da);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-
         .discord-info p {
             color: #aaa;
             line-height: 1.7;
             margin-bottom: 20px;
             font-size: 1.05rem;
         }
-
         .discord-widget {
             flex: 0 0 auto;
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         }
-
         .discord-widget iframe {
             display: block;
             border: none;
@@ -226,7 +215,6 @@
             padding: 32px 40px;
             text-align: center;
         }
-
         .footer-content {
             max-width: 960px;
             margin: 0 auto;
@@ -236,28 +224,15 @@
             flex-wrap: wrap;
             gap: 16px;
         }
-
-        .footer-copy {
-            color: #555;
-            font-size: 0.85rem;
-        }
-
-        .footer-links {
-            display: flex;
-            gap: 20px;
-        }
-
+        .footer-copy { color: #555; font-size: 0.85rem; }
+        .footer-links { display: flex; gap: 20px; }
         .footer-links a {
             color: #666;
             text-decoration: none;
             font-size: 0.85rem;
             transition: color 0.2s;
         }
-
-        .footer-links a:hover {
-            color: #ff6b6b;
-        }
-
+        .footer-links a:hover { color: #ff6b6b; }
         .footer-links .btn {
             color: white !important;
             -webkit-text-fill-color: white;
@@ -266,50 +241,18 @@
 
         /* ── Responsive ── */
         @media (max-width: 768px) {
-            .hero h1 {
-                font-size: 2.4rem;
-            }
-
-            .feature-section,
-            .feature-section:nth-child(even) {
-                flex-direction: column;
-                padding: 48px 20px;
-                gap: 32px;
-            }
-
-            .feature-img {
-                flex: 0 0 auto;
-                width: 100%;
-                height: 220px;
-            }
-
-            .feature-text {
-                text-align: center;
-            }
-
-            .discord-section {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .discord-widget iframe {
-                width: 100%;
-                max-width: 350px;
-            }
-
-            .footer-content {
-                flex-direction: column;
-            }
+            .hero h1 { font-size: 2.4rem; }
+            .umbrella-logo { max-width: 240px; }
+            .umbrella-lore h2 { font-size: 1.5rem; }
+            .features-quick { grid-template-columns: repeat(2, 1fr); }
+            .discord-section { flex-direction: column; text-align: center; }
+            .discord-widget iframe { width: 100%; max-width: 350px; }
+            .footer-content { flex-direction: column; }
         }
 
         @media (max-width: 420px) {
-            .hero h1 {
-                font-size: 1.8rem;
-            }
-
-            .feature-img {
-                height: 180px;
-            }
+            .hero h1 { font-size: 1.8rem; }
+            .features-quick { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -326,52 +269,59 @@
         <a href="/login" class="btn btn-primary">Comece Agora</a>
     </section>
 
-    <!-- Features -->
-    <section class="feature-section">
-        <div class="feature-img">
-            <div class="feature-img-placeholder ranking">🏆</div>
+    <!-- Umbrella Corporation Lore -->
+    <section class="umbrella-section">
+        <div class="umbrella-logo-wrapper">
+            <img src="/UmbrellaCorp.png" alt="Umbrella Corporation" class="umbrella-logo">
         </div>
-        <div class="feature-text">
-            <h2>Sistema de <span class="accent-red">Ranking</span></h2>
-            <p>Compita com outros jogadores e suba no ranking do servidor. Acompanhe suas kills de zumbis, tempo de sobrevivência e conquistas.</p>
-            <span class="feature-tag tag-red">Competitivo</span>
-            <span class="feature-tag tag-red">Placar Global</span>
+
+        <div class="umbrella-lore">
+            <h2>A <span>Umbrella Corporation</span> chegou em Knox County</h2>
+            <p>
+                Relatórios interceptados confirmam: a Umbrella Corporation estabeleceu operações secretas
+                por toda Knox County. Eles absorveram a última célula ativa do exército, laboratórios subterrâneos foram descobertos, equipamentos médicos
+                avançados estão aparecendo em locais improváveis, e um novo vírus &mdash; diferente de tudo
+                que já vimos &mdash; está se espalhando entre os infectados.
+            </p>
+            <p>
+                Sobreviventes de todo o condado reportam ter encontrado
+                <span class="highlight">livros de pesquisa, equipamentos de laboratório e compostos químicos</span>
+                aparentemente fornecidos pela corporação. Uma presença de cientistas foi reportada pelos sobreviventes restantes, a Umbrella está movendo suas cartas
+                para que os sobreviventes sejam uma cobaia para o desenvolvimento de uma <span class="highlight">vacina</span>
+                &mdash; ou até mesmo <span class="highlight">a cura</span>.
+            </p>
+            <p>
+                A pergunta é: você tem coragem de entrar nos laboratórios e montar o quebra-cabeças
+                que a Umbrella montou?
+            </p>
         </div>
+
+        <a href="/season-guide" class="btn btn-umbrella">&#9763; Guia da Temporada</a>
     </section>
 
-    <section class="feature-section">
-        <div class="feature-img">
-            <div class="feature-img-placeholder store">🛍️</div>
-        </div>
-        <div class="feature-text">
-            <h2><span class="accent-green">Loja</span> de Itens</h2>
-            <p>Adquira itens e equipamentos exclusivos com os pontos que você ganha jogando. Armas, veículos, suprimentos médicos e muito mais.</p>
-            <span class="feature-tag tag-green">Exclusivos</span>
-            <span class="feature-tag tag-green">Recompensas</span>
-        </div>
-    </section>
+    <div class="umbrella-divider"></div>
 
-    <section class="feature-section">
-        <div class="feature-img">
-            <div class="feature-img-placeholder events">🎉</div>
+    <!-- Quick Feature Cards -->
+    <section class="features-quick">
+        <div class="fq-card">
+            <div class="fq-icon">&#9876;</div>
+            <h3>Zonas PVP &amp; PVE</h3>
+            <p>Áreas controladas com características únicas de zumbis e regras de combate.</p>
         </div>
-        <div class="feature-text">
-            <h2><span class="accent-orange">Eventos</span> Especiais</h2>
-            <p>Participe de eventos especiais organizados pela equipe do servidor. Desafios de sobrevivência, invasões de hordas e missões cooperativas.</p>
-            <span class="feature-tag tag-orange">Semanal</span>
-            <span class="feature-tag tag-orange">Prêmios</span>
+        <div class="fq-card">
+            <div class="fq-icon">&#128176;</div>
+            <h3>Zumbis = Saldo</h3>
+            <p>Cada zumbi abatido vira saldo no site para comprar itens e veículos.</p>
         </div>
-    </section>
-
-    <section class="feature-section">
-        <div class="feature-img">
-            <div class="feature-img-placeholder community">👥</div>
+        <div class="fq-card">
+            <div class="fq-icon">&#128137;</div>
+            <h3>Vacina &amp; Cura</h3>
+            <p>Pesquise, colete amostras e sintetize vacinas nos laboratórios da Umbrella.</p>
         </div>
-        <div class="feature-text">
-            <h2>Nossa <span class="accent-blue">Comunidade</span></h2>
-            <p>Junte-se a centenas de sobreviventes brasileiros. Forme alianças, troque itens e construa bases juntos nesse apocalipse zumbi.</p>
-            <span class="feature-tag tag-blue">Discord</span>
-            <span class="feature-tag tag-blue">Ativo 24/7</span>
+        <div class="fq-card">
+            <div class="fq-icon">&#127942;</div>
+            <h3>Eventos &amp; Rankings</h3>
+            <p>Eventos semanais com recompensas especiais e ranking global de sobreviventes.</p>
         </div>
     </section>
 
@@ -379,8 +329,7 @@
     <section class="discord-section">
         <div class="discord-info">
             <h2>Entre no nosso <span>Discord</span></h2>
-            <p>Fique por dentro das novidades, participe de eventos e converse com outros sobreviventes da comunidade.
-            </p>
+            <p>Fique por dentro das novidades, participe de eventos e converse com outros sobreviventes da comunidade.</p>
         </div>
         <div class="discord-widget">
             <iframe src="https://discord.com/widget?id=1458828572516159534&theme=dark" width="350" height="700"

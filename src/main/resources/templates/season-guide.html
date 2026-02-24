@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guia da Temporada - Apocalipse [BR]</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0d0d1a;
+            color: #ddd;
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        /* ── Layout ── */
+        .page-wrapper {
+            max-width: 920px;
+            margin: 0 auto;
+            padding: 30px 24px 80px;
+        }
+
+        /* ── Back Link ── */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #888;
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-bottom: 28px;
+            transition: color 0.2s;
+        }
+        .back-link:hover { color: #e74c3c; }
+
+        /* ── Hero Banner ── */
+        .guide-hero {
+            text-align: center;
+            padding: 40px 20px 32px;
+            margin-bottom: 40px;
+            background: radial-gradient(ellipse at center, rgba(231,76,60,0.06) 0%, transparent 70%);
+            border-bottom: 1px solid rgba(231,76,60,0.15);
+        }
+        .guide-hero img {
+            max-width: 260px;
+            width: 70%;
+            margin-bottom: 24px;
+            filter: drop-shadow(0 0 30px rgba(192,57,43,0.2));
+        }
+        .guide-hero h1 {
+            font-size: 2.4rem;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+        .guide-hero h1 span { color: #e74c3c; }
+        .guide-hero p {
+            color: #888;
+            font-size: 1.05rem;
+        }
+
+        /* ── Table of Contents ── */
+        .toc {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 12px;
+            padding: 24px 28px;
+            margin-bottom: 48px;
+        }
+        .toc h3 {
+            color: #fff;
+            font-size: 1.1rem;
+            margin-bottom: 14px;
+        }
+        .toc ul {
+            list-style: none;
+            columns: 2;
+            column-gap: 32px;
+        }
+        .toc li { margin-bottom: 8px; }
+        .toc a {
+            color: #aaa;
+            text-decoration: none;
+            font-size: 0.92rem;
+            transition: color 0.2s;
+        }
+        .toc a:hover { color: #e74c3c; }
+
+        /* ── Section ── */
+        .guide-section {
+            margin-bottom: 56px;
+            scroll-margin-top: 80px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .section-icon {
+            font-size: 1.8rem;
+            flex-shrink: 0;
+        }
+        .section-header h2 {
+            font-size: 1.6rem;
+            color: #fff;
+        }
+        .section-header h2 span { color: #e74c3c; }
+
+        .guide-section p {
+            margin-bottom: 14px;
+            color: #bbb;
+            font-size: 0.97rem;
+        }
+
+        .guide-section h3 {
+            font-size: 1.15rem;
+            color: #e8e8e8;
+            margin: 24px 0 12px;
+        }
+
+        .guide-section ul, .guide-section ol {
+            margin: 8px 0 16px 20px;
+            color: #bbb;
+        }
+        .guide-section li { margin-bottom: 6px; font-size: 0.95rem; }
+
+        /* ── Highlight / Accent text ── */
+        .hl { color: #e74c3c; font-weight: 600; }
+        .hl-green { color: #4caf50; font-weight: 600; }
+        .hl-yellow { color: #f1c40f; font-weight: 600; }
+        .hl-blue { color: #5dade2; font-weight: 600; }
+
+        /* ── Info / Warning Boxes ── */
+        .info-box {
+            background: rgba(93,173,226,0.08);
+            border-left: 3px solid #5dade2;
+            border-radius: 0 8px 8px 0;
+            padding: 14px 18px;
+            margin: 16px 0;
+            font-size: 0.93rem;
+            color: #b0cfe0;
+        }
+        .warn-box {
+            background: rgba(231,76,60,0.08);
+            border-left: 3px solid #e74c3c;
+            border-radius: 0 8px 8px 0;
+            padding: 14px 18px;
+            margin: 16px 0;
+            font-size: 0.93rem;
+            color: #e0a8a8;
+        }
+        .note-box {
+            background: rgba(241,196,15,0.06);
+            border-left: 3px solid #f1c40f;
+            border-radius: 0 8px 8px 0;
+            padding: 14px 18px;
+            margin: 16px 0;
+            font-size: 0.93rem;
+            color: #d4c88a;
+        }
+        .update-box {
+            background: rgba(155,89,182,0.08);
+            border-left: 3px solid #9b59b6;
+            border-radius: 0 8px 8px 0;
+            padding: 14px 18px;
+            margin: 16px 0;
+            font-size: 0.93rem;
+            color: #c9a8e0;
+        }
+
+        /* ── Tables ── */
+        .guide-table-wrapper {
+            overflow-x: auto;
+            margin: 16px 0;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.07);
+        }
+        .guide-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        .guide-table th {
+            background: rgba(231,76,60,0.12);
+            color: #e8e8e8;
+            padding: 12px 14px;
+            text-align: left;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .guide-table td {
+            padding: 10px 14px;
+            border-top: 1px solid rgba(255,255,255,0.04);
+            color: #bbb;
+        }
+        .guide-table tr:hover td {
+            background: rgba(255,255,255,0.02);
+        }
+        .guide-table .center { text-align: center; }
+
+        /* ── Recipe Cards ── */
+        .recipe-card {
+            background: rgba(255,255,255,0.025);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            padding: 20px 22px;
+            margin: 20px 0;
+        }
+        .recipe-card h4 {
+            color: #fff;
+            font-size: 1.05rem;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .recipe-card h4 .step-badge {
+            background: rgba(231,76,60,0.2);
+            color: #e74c3c;
+            font-size: 0.75rem;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+        .recipe-grid {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr auto;
+            gap: 8px 16px;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+        .recipe-label {
+            color: #888;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .recipe-arrow {
+            color: #e74c3c;
+            font-size: 1.4rem;
+            text-align: center;
+        }
+        .recipe-items { color: #bbb; }
+        .recipe-items li { margin-bottom: 3px; list-style: none; }
+        .recipe-workstation {
+            color: #5dade2;
+            font-weight: 600;
+            font-size: 0.88rem;
+        }
+
+        /* ── Compact recipe block ── */
+        .recipe-block {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 12px;
+            align-items: start;
+            margin: 10px 0 6px;
+        }
+        .recipe-col {
+            font-size: 0.9rem;
+            color: #bbb;
+        }
+        .recipe-col .label {
+            color: #888;
+            font-size: 0.76rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+            display: block;
+        }
+        .recipe-col ul { list-style: none; margin: 0; padding: 0; }
+        .recipe-col li { margin-bottom: 3px; }
+        .recipe-sep {
+            color: #e74c3c;
+            font-size: 1.4rem;
+            align-self: center;
+            text-align: center;
+            padding-top: 16px;
+        }
+
+        /* ── Divider ── */
+        .divider {
+            width: 80px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #e74c3c, transparent);
+            margin: 48px auto;
+        }
+
+        /* ── Footer ── */
+        footer {
+            background: rgba(255,255,255,0.02);
+            border-top: 1px solid rgba(255,255,255,0.06);
+            padding: 28px 40px;
+            text-align: center;
+        }
+        .footer-copy { color: #555; font-size: 0.85rem; }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .page-wrapper { padding: 20px 16px 60px; }
+            .guide-hero h1 { font-size: 1.8rem; }
+            .toc ul { columns: 1; }
+            .section-header h2 { font-size: 1.3rem; }
+            .recipe-block { grid-template-columns: 1fr; gap: 8px; }
+            .recipe-sep { display: none; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header -->
+    <div th:replace="~{header-component :: header}"></div>
+
+    <!-- Hero -->
+    <div class="guide-hero">
+        <img src="/UmbrellaCorp.png" alt="Umbrella Corporation">
+        <h1>Guia da <span>Temporada</span></h1>
+        <p>Umbrella Corporation &mdash; Knox County, Temporada 1</p>
+    </div>
+
+    <div class="page-wrapper">
+
+        <a href="/" class="back-link">&larr; Voltar para o Início</a>
+
+        <!-- Table of Contents -->
+        <nav class="toc">
+            <h3>&#128220; Índice</h3>
+            <ul>
+                <li><a href="#regions">&#9876; Regiões &mdash; PVE &amp; PVP</a></li>
+                <li><a href="#economy">&#128176; Economia &mdash; Zumbis &amp; Saldo</a></li>
+                <li><a href="#books">&#128214; 1. Encontrando os Livros</a></li>
+                <li><a href="#lab">&#128295; 2. Construindo o Laboratório</a></li>
+                <li><a href="#research">&#129516; 3. Processo de Pesquisa</a></li>
+                <li><a href="#vaccines">&#128137; 4. Tipos de Vacina</a></li>
+                <li><a href="#albumin">&#128138; 5. Albumina</a></li>
+                <li><a href="#bloodtest">&#129656; 6. Testes de Sangue</a></li>
+                <li><a href="#cure">&#9763; 7. A Cura</a></li>
+                <li><a href="#materials">&#128230; Materiais Totais</a></li>
+            </ul>
+        </nav>
+
+        <!-- ══════════════════════════════════════ -->
+        <!--        SECTION: Regions                -->
+        <!-- ══════════════════════════════════════ -->
+        <section id="regions" class="guide-section">
+            <div class="section-header">
+                <span class="section-icon">&#9876;</span>
+                <h2>Regiões &mdash; <span>PVE &amp; PVP</span></h2>
+            </div>
+            <p>
+                O servidor utiliza o sistema <strong>RegionManager</strong> para controlar zonas de PVE e PVP
+                em todo o mapa de Knox County. Cada região possui suas próprias características, como
+                densidade e tipo de zumbis, regras de combate entre jogadores e modificadores especiais.
+            </p>
+            <p>
+                <span class="hl">Áreas PVP</span> são identificadas por uma <strong>caveira</strong> ao
+                lado do seu nome. Áreas militares, grandes rodovias, estações de polícia e lojas de armas
+                são tipicamente zonas PVP &mdash; entre com cautela!
+            </p>
+            <p>
+                Algumas regiões possuem <span class="hl">super-zumbis</span> que rendem <strong>bônus
+                de saldo 3x</strong> ao serem abatidos, como em Westpoint, Ekron, Bradeburg e Riverside.
+            </p>
+
+            <div style="margin-top: 20px; text-align: center;">
+                <button onclick="document.getElementById('mapModal').style.display='flex'" style="
+                    display: inline-flex; align-items: center; gap: 8px;
+                    padding: 12px 24px;
+                    background: rgba(231,76,60,0.12);
+                    border: 1px solid rgba(231,76,60,0.45);
+                    border-radius: 12px;
+                    color: #e8e8e8;
+                    font-size: 1rem;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                " onmouseover="this.style.borderColor='#e74c3c';this.style.background='rgba(231,76,60,0.2)'"
+                   onmouseout="this.style.borderColor='rgba(231,76,60,0.45)';this.style.background='rgba(231,76,60,0.12)'">
+                    &#128506; Ver Mapa de Regiões
+                </button>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════ -->
+        <!--        SECTION: Economy                -->
+        <!-- ══════════════════════════════════════ -->
+        <section id="economy" class="guide-section">
+            <div class="section-header">
+                <span class="section-icon">&#128176;</span>
+                <h2>Economia &mdash; <span>Zumbis &amp; Saldo</span></h2>
+            </div>
+            <p>
+                Cada zumbi abatido gera <span class="hl-green">saldo (&#8371;)</span> automaticamente na
+                sua conta do site. Esse saldo é compartilhado entre todos os seus personagens e temporadas.
+            </p>
+            <p>
+                Com o saldo acumulado, você pode:
+            </p>
+            <ul>
+                <li><strong>Comprar itens premium</strong> na loja do site</li>
+                <li><strong>Adquirir veículos</strong> que são gerados diretamente no jogo</li>
+                <li><strong>Ativar eventos</strong> especiais com recompensas para a comunidade</li>
+            </ul>
+            <p>
+                Visite <a href="/player" style="color:#e74c3c;">seu painel</a> para conferir seu saldo
+                e acessar a loja, garagem e eventos.
+            </p>
+        </section>
+
+        <div class="divider"></div>
+
+        <!-- ══════════════════════════════════════ -->
+        <!--  UMBRELLA VACCINE MOD GUIDE            -->
+        <!-- ══════════════════════════════════════ -->
+         
+
+        <!-- SECTION 1: Books -->
+        <section id="books" class="guide-section">
+            <div class="section-header">
+                <span class="section-icon">&#128214;</span>
+                <h2>1. Encontrando os <span>Livros</span></h2>
+            </div>
+            <p>
+                Existem <strong>6 livros customizados</strong> e <strong>1 revista</strong> no total:
+            </p>
+            <ul>
+                <li><strong>Livros de Equipamento</strong> &mdash; Vol. 1, 2 e 3</li>
+                <li><strong>Livro de Química</strong></li>
+                <li><strong>Livros de Virologia</strong> &mdash; Vol. 1 e 2</li>
+                <li><strong>DIY: Luminárias Decorativas Caseiras</strong> (revista)</li>
+            </ul>
+
+            <p>
+                Os <strong>Livros de Equipamento e a revista</strong> podem ser encontrados pelo mundo todo,
+                onde quer que livros normais apareçam.
+            </p>
+
+            <h3>Livros de Química e Virologia aparecem em:</h3>
+            <ul>
+                <li>Laboratório e Biblioteca da Universidade de Louisville</li>
+                <li>Locais militares e Porão do Laboratório Militar</li>
+                <li>Hospital St. Peregrin</li>
+                <li>Um certo grande laboratório em Louisville... mas eu não recomendaria ir lá.</li>
+            </ul>
+
+            <div class="info-box">
+                &#128161; Não quer passar pelo inferno para encontrá-los? Junte-se à corporação Umbrella e comece com a profissão
+                <strong>Cientista da Umbrella</strong> &mdash; você começa com todos os
+                documentos de pesquisa necessários.
+            </div>
+        </section>
+
+        <!-- SECTION 2: Lab -->
+        <section id="lab" class="guide-section">
+            <div class="section-header">
+                <span class="section-icon">&#128295;</span>
+                <h2>2. Construindo o <span>Laboratório</span></h2>
+            </div>
+            <ol>
+                <li>Construa uma <strong>Bancada de Trabalho</strong> &mdash; encontrada no menu Construção.</li>
+                <li>Clique na bancada para ver as receitas disponíveis. Todos os equipamentos de laboratório agora funcionam como estações de trabalho com menus organizados.</li>
+                <li>Construa uma <strong>Fornalha</strong> primeiro &mdash; você vai precisar de frascos e tubos para quase tudo.</li>
+                <li>Construa o restante dos equipamentos de laboratório.</li>
+            </ol>
+
+            <div class="warn-box">
+                &#9888;&#65039; O <strong>Cromatógrafo</strong> requer <strong>luzes verdes</strong> para ser construído.
+                São raras, mas podem ser obtidas desmontando <strong>rádios bidirecionais (walkie-talkies)</strong>
+                carregados por zumbis policiais ou encontrados em delegacias. Você também pode pintar lâmpadas...
+                Encontre a revista para aprender a receita.
+            </div>
+
+            <div class="warn-box">
+                &#9888;&#65039; O <strong>Cromatógrafo</strong> requer um <strong>Computador</strong> por perto para operar.
+                Sem um, as receitas não aparecerão mesmo que você tenha todos os materiais.
+                Então, roube aquele computador chique que você nunca pôde pagar quando o mundo ainda estava inteiro
+                e coloque bem ao lado do cromatógrafo.
+            </div>
+        </section>
+
+        <!-- SECTION 3: Research -->
+        <section id="research" class="guide-section">
+            <div class="section-header">
+                <span class="section-icon">&#129516;</span>
+                <h2>3. Processo de <span>Pesquisa</span> &mdash; Passo a Passo</h2>
+            </div>
+
+            <div class="info-box">
+                &#128167; Todas as receitas de pesquisa requerem <strong>água purificada</strong>.
+                Encha um Frasco de Laboratório em uma pia, depois ferva em um micro-ondas ou fogão
+                &mdash; ou use pastilhas de cloro!
+            </div>
+
+            <!-- Step 1A -->
+            <div class="recipe-card">
+                <h4>
+                    <span class="step-badge">PASSO 1A</span>
+                    &#129656; Coletando Sangue &mdash; Autópsias
+                </h4>
+                <p>Você pode realizar autópsias diretamente no chão ou usar uma <strong>Mesa de Necrotério</strong> para melhores resultados.</p>
+
+                <h3>&#128298; Autópsia no Chão</h3>
+                <div class="guide-table-wrapper">
+                    <table class="guide-table">
+                        <thead><tr><th>Resultado</th><th>Chance Base</th></tr></thead>
+                        <tbody>
+                            <tr><td>&#9989; Boa amostra (Sangue Infectado)</td><td class="center">40%</td></tr>
+                            <tr><td>&#9888; Amostra ruim (Sangue Contaminado)</td><td class="center">36%</td></tr>
+                            <tr><td>&#10060; Nada</td><td class="center">24%</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p>Produz 1 amostra por autópsia. Concede uma pequena quantidade de XP em Primeiros Socorros. As chances melhoram dinamicamente com seu nível de Primeiros Socorros.</p>
+
+                <h3>&#9904; Autópsia na Mesa de Necrotério</h3>
+                <div class="guide-table-wrapper">
+                    <table class="guide-table">
+                        <thead><tr><th>Resultado</th><th>Chance Base</th></tr></thead>
+                        <tbody>
+                            <tr><td>&#9989; Boa amostra (Sangue Infectado)</td><td class="center">50%</td></tr>
+                            <tr><td>&#9888; Amostra ruim (Sangue Contaminado)</td><td class="center">50%</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p>Produz <strong>3 amostras</strong> por autópsia. Leva 50% menos tempo e concede o dobro de XP. A proporção boa/ruim melhora com seu nível de Primeiros Socorros (+1% por nível).</p>
+
+                <h3>&#129489;&#8205;&#9877; Bônus de Profissão</h3>
+                <div class="guide-table-wrapper">
+                    <table class="guide-table">
+                        <thead><tr><th>Bônus</th><th>&#129489;&#8205;&#9877; Médico</th><th>&#129489;&#8205;&#128300; Cientista da Umbrella</th></tr></thead>
+                        <tbody>
+                            <tr><td>Amostras (Mesa Necrotério)</td><td class="center">4</td><td class="center">6</td></tr>
+                            <tr><td>Chance base de boa amostra</td><td class="center">+5% (55%)</td><td class="center">+25% (75%)</td></tr>
+                            <tr><td>Chance máx. boa amostra (PS 10)</td><td class="center">65%</td><td class="center">75%</td></tr>
+                            <tr><td>Bônus de XP autópsia</td><td class="center">+15%</td><td class="center">+30%</td></tr>
+                            <tr><td>Bônus de velocidade autópsia</td><td class="center">15% mais rápido</td><td class="center">40% mais rápido</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="note-box">
+                    O traço <strong>Hemofóbico</strong> aplica uma penalidade de -10 pontos na sua pontuação de qualidade, reduzindo suas chances de obter boas amostras.
+                </div>
+
+                <p>Após realizar uma autópsia, use <strong>Tubos de Ensaio</strong> para armazenar as amostras de sangue.</p>
+            </div>
+
+            <!-- Step 1B -->
+            <div class="recipe-card">
+                <h4><span class="step-badge">PASSO 1B</span> &#129656; Coletando Sangue &mdash; Armazenamento</h4>
+                <div class="recipe-block">
+                    <div class="recipe-col">
+                        <span class="label">Itens Necessários</span>
+                        <ul>
+                            <li>1&times; Tubo de Ensaio (vazio)</li>
+                            <li>1&times; Sangue Infectado</li>
+                        </ul>
+                    </div>
+                    <div class="recipe-sep">&rarr;</div>
+                    <div class="recipe-col">
+                        <span class="label">Resultado</span>
+                        <ul><li>1&times; Tubo de Ensaio com Sangue Infectado</li></ul>
+                        <span class="recipe-workstation">Craft Manual</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="recipe-card">
+                <h4><span class="step-badge">PASSO 2</span> &#128260; Separar Componentes do Sangue</h4>
+                <div class="recipe-block">
+                    <div class="recipe-col">
+                        <span class="label">Itens Necessários</span>
+                        <ul>
+                            <li>5&times; Tubo de Ensaio com Sangue Infectado</li>
+                            <li>2&times; Frasco (vazio)</li>
+                        </ul>
+                    </div>
+                    <div class="recipe-sep">&rarr;</div>
+                    <div class="recipe-col">
+                        <span class="label">Resultado</span>
+                        <ul>
+                            <li>1&times; Frasco com Plasma Sanguíneo</li>
+                            <li>1&times; Frasco com Células Sanguíneas</li>
+                        </ul>
+                        <span class="recipe-workstation">Centrífuga</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="recipe-card">
+                <h4><span class="step-badge">PASSO 3</span> &#9760; Misturar Sulfato de Amônio</h4>
+                <div class="warn-box" style="margin-top:0">&#9888; Requer: Máscara, Óculos, Avental, Luvas</div>
+                <div class="recipe-block">
+                    <div class="recipe-col">
+                        <span class="label">Itens Necessários</span>
+                        <ul>
+                            <li>1&times; Amônia</li>
+                            <li>1&times; Ácido Sulfúrico</li>
+                            <li>1&times; Frasco (vazio)</li>
+                            <li>1&times; Frasco com Água Purificada</li>
+                        </ul>
+                    </div>
+                    <div class="recipe-sep">&rarr;</div>
+                    <div class="recipe-col">
+                        <span class="label">Resultado</span>
+                        <ul><li>1&times; Frasco com Sulfato de Amônio</li></ul>
+                        <span class="recipe-workstation">Bancada de Química</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="recipe-card">
+                <h4><span class="step-badge">PASSO 4</span> &#128300; Extrair Leucócitos</h4>
+                <div class="recipe-block">
+                    <div class="recipe-col">
+                        <span class="label">Itens Necessários</span>
+                        <ul>
+                            <li>2&times; Pano/Bandagem/Lenço com Álcool</li>
+                            <li>1&times; Frasco (vazio)</li>
+                            <li>1&times; Frasco com Células Sanguíneas</li>
+                            <li>1&times; Frasco com Sulfato de Amônio</li>
+                        </ul>
+                    </div>
+                    <div class="recipe-sep">&rarr;</div>
+                    <div class="recipe-col">
+                        <span class="label">Resultado</span>
+                        <ul><li>1&times; Frasco com Leucócitos</li></ul>
+                        <span class="recipe-workstation">Microscópio</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 5 -->
+            <div class="recipe-card">
+                <h4><span class="step-badge">PASSO 5A</span> &#129504; Extrair Cérebro</h4>
+                <p>
+                    Para criar vacinas e a cura, você precisará extrair fluido de um <strong>cérebro infectado</strong>.
+                </p>
+                <p>Após uma autópsia, você pode:</p>
+                <ul>
+                    <li>Extrair o cérebro diretamente do corpo, ou</li>
+                    <li>Extrair o crânio primeiro, depois abri-lo para coletar o cérebro.</li>
+                </ul>
+                <p>A qualidade do cérebro é determinada dinamicamente pelas suas habilidades e profissão:</p>
+
+                <h3>Chances de extrair um cérebro infectado perfeito:</h3>
+                <div class="guide-table-wrapper">
+                    <table class="guide-table">
+                        <thead><tr><th>Profissão</th><th>Skills 0/0</th><th>Skills 5/5</th><th>Skills 10/10</th></tr></thead>
+                        <tbody>
+                            <tr><td>&#128736; Outras profissões</td><td class="center">10%</td><td class="center">20%</td><td class="center">30%</td></tr>
+                            <tr><td>&#129489;&#8205;&#9877; Médico</td><td class="center">14%</td><td class="center">27%</td><td class="center">40%</td></tr>
+                            <tr><td>&#129489;&#8205;&#128300; Cientista da Umbrella</td><td class="center">20%</td><td class="center">37%</td><td class="center">50%</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p>
+                    As habilidades de <strong>Carniceiro</strong> e <strong>Primeiros Socorros</strong> contribuem igualmente para as chances de qualidade do cérebro.
+                </p>
+                <div class="info-box">
+                    Não se preocupe! Mesmo o cérebro de pior qualidade é útil para produzir uma vacina.
+                    Então, mesmo que você não consiga um cérebro perfeito logo de cara, isso não significa que está condenado!
+                </div>
+            </div>
+
+            <!-- Step 5B -->
+            <div class="recipe-card">
+                <h4><span class="step-badge">PASSO 5B</span> &#129504; Extrair Fluido Cerebrospinal (LCR)</h4>
+                <div class="warn-box" style="margin-top:0">&#9888; Requer: Máscara, Luvas, Bisturi, Pinça</div>
+                <p>Use o Microscópio e as ferramentas adequadas para coletar amostras do cérebro.</p>
+                <div class="recipe-block">
+                    <div class="recipe-col">
+                        <span class="label">Itens Necessários</span>
+                        <ul>
+                            <li>1&times; Cérebro Infectado (Baixo / Médio / Alto)</li>
+                            <li>3&times; Seringa (vazia)</li>
+                            <li>1&times; Frasco com Água Purificada</li>
+                        </ul>
+                    </div>
+                    <div class="recipe-sep">&rarr;</div>
+                    <div class="recipe-col">
+                        <span class="label">Resultado</span>
+                        <ul><li>3&times; Seringa com LCR (qualidade = cérebro)</li></ul>
+                        <span class="recipe-workstation">Microscópio</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 6 -->
+            <div class="recipe-card">
+                <h4><span class="step-badge">PASSO 6</span> &#9760; Misturar Hipoclorito de Sódio</h4>
+                <div class="warn-box" style="margin-top:0">&#9888; Requer: Máscara, Óculos, Avental, Luvas</div>
+                <div class="recipe-block">
+                    <div class="recipe-col">
+                        <span class="label">Itens Necessários</span>
+                        <ul>
+                            <li>1&times; Amônia</li>
+                            <li>1&times; Ácido Clorídrico</li>
+                            <li>1&times; Hidróxido de Sódio</li>
+                            <li>1&times; Frasco (vazio)</li>
+                            <li>1&times; Frasco com Água Purificada</li>
+                        </ul>
+                    </div>
+                    <div class="recipe-sep">&rarr;</div>
+                    <div class="recipe-col">
+                        <span class="label">Resultado</span>
+                        <ul><li>1&times; Frasco com Hipoclorito de Sódio</li></ul>
+                        <span class="recipe-workstation">Bancada de Química</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 7A -->
+            <div class="recipe-card">
+                <h4><span class="step-badge">PASSO 7A</span> &#128137; Sintetizar Vacina Simples</h4>
+                <div class="info-box" style="margin-top:0">Qualidade de LCR necessária: <strong>Baixa</strong> ou superior. Pule este passo se planeja ir direto para a cura.</div>
+                <div class="recipe-block">
+                    <div class="recipe-col">
+                        <span class="label">Itens Necessários</span>
+                        <ul>
+                            <li>1&times; Seringa (vazia)</li>
+                            <li>1&times; Frasco com Água Purificada</li>
+                            <li>1&times; Frasco com Plasma Sanguíneo</li>
+                            <li>2&times; Frasco com Leucócitos</li>
+                            <li>1&times; Frasco com Hipoclorito de Sódio</li>
+                            <li>1&times; Seringa com LCR (Baixo+)</li>
+                        </ul>
+                    </div>
+                    <div class="recipe-sep">&rarr;</div>
+                    <div class="recipe-col">
+                        <span class="label">Resultado</span>
+                        <ul><li>1&times; <strong>Vacina Simples</strong></li></ul>
+                        <span class="recipe-workstation">Bancada de Química</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 7B -->
+            <div class="recipe-card">
+                <h4><span class="step-badge">PASSO 7B</span> &#128137; Sintetizar Vacina de Qualidade</h4>
+                <div class="info-box" style="margin-top:0">Qualidade de LCR necessária: <strong>Média</strong> ou superior. Pule este passo se planeja ir direto para a cura.</div>
+                <div class="recipe-block">
+                    <div class="recipe-col">
+                        <span class="label">Itens Necessários</span>
+                        <ul>
+                            <li>1&times; Seringa (vazia)</li>
+                            <li>2&times; Frasco com Água Purificada</li>
+                            <li>2&times; Frasco com Plasma Sanguíneo</li>
+                            <li>4&times; Frasco com Leucócitos</li>
+                            <li>1&times; Frasco com Hipoclorito de Sódio</li>
+                            <li>1&times; Seringa com LCR (Médio+)</li>
+                        </ul>
+                    </div>
+                    <div class="recipe-sep">&rarr;</div>
+                    <div class="recipe-col">
+                        <span class="label">Resultado</span>
+                        <ul><li>1&times; <strong>Vacina de Qualidade</strong></li></ul>
+                        <span class="recipe-workstation">Bancada de Química</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 8 -->
+            <div class="recipe-card">
+                <h4><span class="step-badge">PASSO 8</span> &#129516; Extrair Anticorpos</h4>
+                <div class="warn-box" style="margin-top:0">&#9888; Requer Computador por perto</div>
+                <div class="recipe-block">
+                    <div class="recipe-col">
+                        <span class="label">Itens Necessários</span>
+                        <ul>
+                            <li>1&times; Carvão</li>
+                            <li>1&times; Tubo de Ensaio (vazio)</li>
+                            <li>1&times; Frasco com Leucócitos</li>
+                            <li>1&times; Frasco com Sulfato de Amônio</li>
+                        </ul>
+                    </div>
+                    <div class="recipe-sep">&rarr;</div>
+                    <div class="recipe-col">
+                        <span class="label">Resultado</span>
+                        <ul><li>1&times; Tubo de Ensaio com Anticorpos</li></ul>
+                        <span class="recipe-workstation">Cromatógrafo</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 9A -->
+            <div class="recipe-card">
+                <h4><span class="step-badge">PASSO 9A</span> &#128137; Sintetizar Vacina Avançada</h4>
+                <div class="info-box" style="margin-top:0">Qualidade de LCR necessária: <strong>Alta</strong> apenas</div>
+                <div class="recipe-block">
+                    <div class="recipe-col">
+                        <span class="label">Itens Necessários</span>
+                        <ul>
+                            <li>1&times; Seringa (vazia)</li>
+                            <li>3&times; Frasco com Água Purificada</li>
+                            <li>3&times; Frasco com Plasma Sanguíneo</li>
+                            <li>5&times; Frasco com Leucócitos</li>
+                            <li>1&times; Frasco com Hipoclorito de Sódio</li>
+                            <li>1&times; Tubo de Ensaio com Anticorpos</li>
+                            <li>1&times; Seringa com LCR (Alto)</li>
+                        </ul>
+                    </div>
+                    <div class="recipe-sep">&rarr;</div>
+                    <div class="recipe-col">
+                        <span class="label">Resultado</span>
+                        <ul><li>1&times; <strong>Vacina Avançada</strong></li></ul>
+                        <span class="recipe-workstation">Bancada de Química</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 9B -->
+            <div class="recipe-card">
+                <h4><span class="step-badge">PASSO 9B</span> &#9763; Sintetizar a Cura</h4>
+                <div class="warn-box" style="margin-top:0">Qualidade de LCR necessária: <strong>Alta</strong> apenas</div>
+                <div class="recipe-block">
+                    <div class="recipe-col">
+                        <span class="label">Itens Necessários</span>
+                        <ul>
+                            <li>1&times; Seringa (vazia)</li>
+                            <li>4&times; Frasco com Água Purificada</li>
+                            <li>4&times; Frasco com Plasma Sanguíneo</li>
+                            <li>2&times; Frasco com Hipoclorito de Sódio</li>
+                            <li>12&times; Tubo de Ensaio com Anticorpos</li>
+                            <li>2&times; Seringa com LCR (Alto)</li>
+                        </ul>
+                    </div>
+                    <div class="recipe-sep">&rarr;</div>
+                    <div class="recipe-col">
+                        <span class="label">Resultado</span>
+                        <ul><li>1&times; <strong>Cura Experimental</strong></li></ul>
+                        <span class="recipe-workstation">Bancada de Química</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════ -->
+        <!--  SECTION: Total Materials              -->
+        <!-- ══════════════════════════════════════ -->
+        <section id="materials" class="guide-section">
+            <div class="section-header">
+                <span class="section-icon">&#128230;</span>
+                <h2>Materiais Totais &mdash; <span>Do Zero</span></h2>
+            </div>
+            <p>Tudo que você precisa coletar no mundo, incluindo todas as etapas intermediárias.</p>
+            <div class="guide-table-wrapper">
+                <table class="guide-table">
+                    <thead>
+                        <tr>
+                            <th>Material</th>
+                            <th class="center">&#128137; Simples</th>
+                            <th class="center">&#128137; Qualidade</th>
+                            <th class="center">&#128137; Avançada</th>
+                            <th class="center">&#9763; Cura</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>&#129656; Sangue Infectado</td><td class="center">10&times;</td><td class="center">20&times;</td><td class="center">30&times;</td><td class="center">60&times;</td></tr>
+                        <tr><td>&#129514; Tubo de Ensaio</td><td class="center">~</td><td class="center">~</td><td class="center">~</td><td class="center">~</td></tr>
+                        <tr><td>&#9879; Frasco</td><td class="center">~</td><td class="center">~</td><td class="center">~</td><td class="center">~</td></tr>
+                        <tr><td>&#128167; Água Purificada (frasco)</td><td class="center">3&times;</td><td class="center">4&times;</td><td class="center">6&times;</td><td class="center">8&times;</td></tr>
+                        <tr><td>&#129531; Amônia (10 usos/item)</td><td class="center">3 usos</td><td class="center">5 usos</td><td class="center">8 usos</td><td class="center">24 usos</td></tr>
+                        <tr><td>&#129531; Ácido Sulfúrico (10 usos/item)</td><td class="center">2 usos</td><td class="center">4 usos</td><td class="center">7 usos</td><td class="center">24 usos</td></tr>
+                        <tr><td>&#129531; Ácido Clorídrico (10 usos/item)</td><td class="center">1 uso</td><td class="center">1 uso</td><td class="center">1 uso</td><td class="center">1 uso</td></tr>
+                        <tr><td>&#129531; Hidróxido de Sódio (10 usos/item)</td><td class="center">1 uso</td><td class="center">1 uso</td><td class="center">1 uso</td><td class="center">1 uso</td></tr>
+                        <tr><td>&#129657; Pano/Bandagem/Lenço c/ Álcool</td><td class="center">4&times;</td><td class="center">8&times;</td><td class="center">12&times;</td><td class="center">24&times;</td></tr>
+                        <tr><td>&#9899; Carvão</td><td class="center">&mdash;</td><td class="center">&mdash;</td><td class="center">1&times;</td><td class="center">12&times;</td></tr>
+                        <tr><td>&#129504; Cérebro Infectado (Baixo+)</td><td class="center">1&times;</td><td class="center">&mdash;</td><td class="center">&mdash;</td><td class="center">&mdash;</td></tr>
+                        <tr><td>&#129504; Cérebro Infectado (Médio+)</td><td class="center">&mdash;</td><td class="center">1&times;</td><td class="center">&mdash;</td><td class="center">&mdash;</td></tr>
+                        <tr><td>&#129504; Cérebro Infectado (Alto)</td><td class="center">&mdash;</td><td class="center">&mdash;</td><td class="center">1&times;</td><td class="center">1&times;</td></tr>
+                        <tr><td>&#128137; Seringa (vazia)</td><td class="center">4&times;</td><td class="center">4&times;</td><td class="center">4&times;</td><td class="center">5&times;</td></tr>
+                        <tr><td>&#128298; Bisturi</td><td class="center">1&times;</td><td class="center">1&times;</td><td class="center">1&times;</td><td class="center">1&times;</td></tr>
+                        <tr><td>&#129690; Pinça</td><td class="center">1&times;</td><td class="center">1&times;</td><td class="center">1&times;</td><td class="center">1&times;</td></tr>
+                        <tr><td>&#128187; Computador por perto</td><td class="center">&mdash;</td><td class="center">&mdash;</td><td class="center">&#9989;</td><td class="center">&#9989;</td></tr>
+                        <tr><td>&#129523; EPI (máscara/óculos/avental/luvas)</td><td class="center">&#9989;</td><td class="center">&#9989;</td><td class="center">&#9989;</td><td class="center">&#9989;</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <div class="divider"></div>
+
+        <!-- ══════════════════════════════════════ -->
+        <!--  SECTION: Vaccine Types                -->
+        <!-- ══════════════════════════════════════ -->
+        <section id="vaccines" class="guide-section">
+            <div class="section-header">
+                <span class="section-icon">&#128137;</span>
+                <h2>4. Tipos de <span>Vacina</span></h2>
+            </div>
+            <div class="guide-table-wrapper">
+                <table class="guide-table">
+                    <thead>
+                        <tr><th>Propriedade</th><th class="center">Simples</th><th class="center">Qualidade</th><th class="center">Avançada</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Faixa de infecção efetiva</td><td class="center">10&ndash;86%</td><td class="center">10&ndash;91%</td><td class="center">5&ndash;96%</td></tr>
+                        <tr><td>Chance de cura</td><td class="center">5%</td><td class="center">10%</td><td class="center">15%</td></tr>
+                        <tr><td>Proteção (uso saudável)</td><td class="center">&#10060; Infecta (40%)</td><td class="center">20% / 7 dias</td><td class="center">65% / 21 dias</td></tr>
+                        <tr><td>Risco de auto-infecção</td><td class="center">40%</td><td class="center">10%</td><td class="center">1%</td></tr>
+                        <tr><td>Reação de albumina</td><td class="center">Baixa</td><td class="center">Média</td><td class="center">Forte</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <h3>Como a proteção funciona:</h3>
+            <p>
+                Quando usada enquanto saudável, as vacinas de <strong>Qualidade</strong> e <strong>Avançada</strong> fornecem imunidade.
+                Se você for mordido, a infecção começa a subir, mas em um limite seu corpo reage.
+                Após um período, uma chance de cura é rolada. <span class="hl-green">Ganhou:</span> você está curado.
+                <span class="hl">Perdeu:</span> a infecção progride, mas você ganhou tempo valioso para produzir mais amostras
+                ou até mesmo uma cura. Sempre monitore sua infecção com testes de sangue!
+            </p>
+        </section>
+
+        <!-- ══════════════════════════════════════ -->
+        <!--  SECTION: Albumin                      -->
+        <!-- ══════════════════════════════════════ -->
+        <section id="albumin" class="guide-section">
+            <div class="section-header">
+                <span class="section-icon">&#128138;</span>
+                <h2>5. <span>Albumina</span></h2>
+            </div>
+            <p>
+                Pílulas de albumina reagem com vacinas para estender seus efeitos.
+            </p>
+            <ul>
+                <li>Quando <strong>saudável</strong>: restaura levemente a saúde.</li>
+                <li>Quando <strong>infectado e vacinado</strong>: ajuda a desacelerar a progressão da infecção.</li>
+            </ul>
+            <div class="guide-table-wrapper">
+                <table class="guide-table">
+                    <thead><tr><th>Vacina</th><th class="center">Usos Máximos de Albumina</th></tr></thead>
+                    <tbody>
+                        <tr><td>Simples</td><td class="center">3&times;</td></tr>
+                        <tr><td>Qualidade</td><td class="center">5&times;</td></tr>
+                        <tr><td>Avançada</td><td class="center">8&times;</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════ -->
+        <!--  SECTION: Blood Tests                  -->
+        <!-- ══════════════════════════════════════ -->
+        <section id="bloodtest" class="guide-section">
+            <div class="section-header">
+                <span class="section-icon">&#129656;</span>
+                <h2>6. Testes de <span>Sangue</span></h2>
+            </div>
+            <p>
+                Foi arranhado e não tem certeza se está ferrado? Faça um teste de sangue rápido!
+            </p>
+            <p>Você vai precisar de:</p>
+            <ul>
+                <li>Um algodão com álcool</li>
+                <li>Uma seringa</li>
+            </ul>
+            <p>
+                Clique na seringa para coletar seu próprio sangue, depois use um
+                <strong>Espectrômetro</strong> por perto para executar o teste.
+                Os resultados são impressos em papel e seu personagem comentará sobre o estágio
+                da infecção para que você tenha uma ideia de quanto tempo lhe resta.
+            </p>
+        </section>
+
+        <!-- ══════════════════════════════════════ -->
+        <!--  SECTION: The Cure                     -->
+        <!-- ══════════════════════════════════════ -->
+        <section id="cure" class="guide-section">
+            <div class="section-header">
+                <span class="section-icon">&#9763;</span>
+                <h2>7. A <span>Cura</span></h2>
+            </div>
+            <p>
+                Obviamente, ela cura você da infecção completamente.
+                Você ainda terá que tratar seus ferimentos de mordida, mas pelo menos não vai virar
+                seu vizinho ambulante.
+            </p>
+            <div class="warn-box">
+                &#9888;&#65039; <strong>VOCÊ NÃO FICARÁ IMUNE!</strong><br>
+                A cura não vai impedir que você seja infectado novamente se decidir bancar o herói lá fora.
+                Foi mordido de novo? É melhor sempre ter uma injeção reserva por perto.
+                E mantenha seu sistema protegido com as vacinas!
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <span class="footer-copy">&copy; 2026 Apocalipse [BR]. Todos os direitos reservados.</span>
+    </footer>
+
+    <!-- Map Regions Modal -->
+    <div id="mapModal" style="
+        display: none;
+        position: fixed; inset: 0;
+        z-index: 10000;
+        align-items: center; justify-content: center;
+        background: rgba(0,0,0,0.80);
+    " onclick="if(event.target===this)this.style.display='none'">
+        <div style="
+            width: min(96vw, 1600px);
+            height: min(92vh, 1000px);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            position: relative;
+        ">
+            <iframe id="mapIframe" style="width:100%;height:100%;border:none;display:block"></iframe>
+        </div>
+    </div>
+
+    <script>
+        // Load iframe only when modal opens, and listen for close message
+        const mapModal = document.getElementById('mapModal');
+        const mapIframe = document.getElementById('mapIframe');
+        const observer = new MutationObserver(() => {
+            if (mapModal.style.display === 'flex' && !mapIframe.src) {
+                mapIframe.src = '/map-regions';
+            }
+        });
+        observer.observe(mapModal, { attributes: true, attributeFilter: ['style'] });
+
+        window.addEventListener('message', (e) => {
+            if (e.data === 'closeMapRegions') {
+                mapModal.style.display = 'none';
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && mapModal.style.display === 'flex') {
+                mapModal.style.display = 'none';
+            }
+        });
+    </script>
+
+</body>
+</html>
