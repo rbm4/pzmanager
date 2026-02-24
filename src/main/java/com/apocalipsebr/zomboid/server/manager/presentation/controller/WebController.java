@@ -41,6 +41,11 @@ public class WebController {
         return "index";
     }
 
+    @GetMapping("/season-guide")
+    public String seasonGuide() {
+        return "season-guide";
+    }
+
     @GetMapping("/login")
     public String login(@RequestParam(required = false) String error, Model model) {
         if (error != null) {
