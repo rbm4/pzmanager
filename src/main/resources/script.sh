@@ -7,6 +7,16 @@ ROLLBACK_JAR="rollback.jar"
 VERSION_FILE="current-version.txt"
 STARTUP_TIMEOUT=30
 
+# ── JVM memory tuning ─────────────────────────────────────────────
+# Without explicit limits the JVM auto-sizes to ~25% of host RAM,
+# which on a 16 GB server means ~4 GB max heap — far too much.
+JVM_OPTS="-Xms128m -Xmx384m \
+  -XX:+UseSerialGC \
+  -XX:MaxMetaspaceSize=128m \
+  -XX:ReservedCodeCacheSize=64m \
+  -XX:MaxDirectMemorySize=32m \
+  -XX:-TieredCompilation"
+
 # Ensure deploy directory exists (outside the repo)
 mkdir -p "$DEPLOY_DIR"
 
@@ -22,7 +32,7 @@ if [ -z "$LATEST_VERSION" ]; then
   echo "⚠️ Could not determine latest release version"
   if [ -f "$DEPLOY_DIR/$JAR_NAME" ]; then
     echo "Running existing JAR..."
-    java -Dspring.profiles.active=prod -jar "$DEPLOY_DIR/$JAR_NAME"
+    java $JVM_OPTS -Dspring.profiles.active=prod -jar "$DEPLOY_DIR/$JAR_NAME"
   fi
   exit 1
 fi
@@ -39,7 +49,7 @@ echo "Current version: ${CURRENT_VERSION:-none}"
 
 if [ "$LATEST_VERSION" = "$CURRENT_VERSION" ] && [ -f "$DEPLOY_DIR/$JAR_NAME" ]; then
   echo "✅ Already running the latest version ($CURRENT_VERSION). Skipping download."
-  java -Dspring.profiles.active=prod -jar "$DEPLOY_DIR/$JAR_NAME"
+  java $JVM_OPTS -Dspring.profiles.active=prod -jar "$DEPLOY_DIR/$JAR_NAME"
   exit $?
 fi
 
@@ -63,7 +73,7 @@ if [ ! -f "$DEPLOY_DIR/$JAR_NAME" ]; then
   if [ -f "$DEPLOY_DIR/$ROLLBACK_JAR" ]; then
     echo "⏪ Rolling back to previous version..."
     mv "$DEPLOY_DIR/$ROLLBACK_JAR" "$DEPLOY_DIR/$JAR_NAME"
-    java -Dspring.profiles.active=prod -jar "$DEPLOY_DIR/$JAR_NAME"
+    java $JVM_OPTS -Dspring.profiles.active=prod -jar "$DEPLOY_DIR/$JAR_NAME"
   fi
   exit 1
 fi
@@ -72,7 +82,7 @@ echo "✅ Downloaded $LATEST_VERSION successfully"
 
 # ── Start new version and verify it survives startup ──────────────
 
-java -Dspring.profiles.active=prod -jar "$DEPLOY_DIR/$JAR_NAME" &
+java $JVM_OPTS -Dspring.profiles.active=prod -jar "$DEPLOY_DIR/$JAR_NAME" &
 APP_PID=$!
 
 echo "Waiting ${STARTUP_TIMEOUT}s for application to start (PID $APP_PID)..."
@@ -97,7 +107,7 @@ else
     if [ -n "$CURRENT_VERSION" ]; then
       echo "$CURRENT_VERSION" > "$DEPLOY_DIR/$VERSION_FILE"
     fi
-    java -Dspring.profiles.active=prod -jar "$DEPLOY_DIR/$JAR_NAME"
+    java $JVM_OPTS -Dspring.profiles.active=prod -jar "$DEPLOY_DIR/$JAR_NAME"
   else
     echo "❌ No rollback JAR available. Cannot recover."
     exit 1
