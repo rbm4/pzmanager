@@ -395,7 +395,7 @@
     </div>
 
     <!-- ═══════════ Active Events ═══════════ -->
-    <div class="section-panel">
+    <!-- <div class="section-panel">
         <h2>&#9889; Eventos em Andamento <span class="badge-count" th:text="${activeEvents.size()}">0</span></h2>
 
         <div class="events-grid" th:if="${!activeEvents.isEmpty()}">
@@ -415,10 +415,10 @@
                     <div class="ev-progress-bar" th:style="'width:' + ${event.fundingPercentage} + '%'"></div>
                 </div>
             </div>
-        </div>
+        </div> -->
 
         <!-- Pending / Funded events waiting for contributions -->
-        <div th:if="${!pendingEvents.isEmpty()}" style="margin-top: 18px;">
+        <!-- <div th:if="${!pendingEvents.isEmpty()}" style="margin-top: 18px;">
             <h3 style="font-size: 0.95rem; color: #aaa; margin-bottom: 12px;">&#128172; Aguardando Contribuições</h3>
             <div class="events-grid">
                 <div class="event-card" th:each="event : ${pendingEvents}">
@@ -443,7 +443,7 @@
 
         <div class="no-events" th:if="${activeEvents.isEmpty() && pendingEvents.isEmpty()}">
             Nenhum evento ativo no momento. <a href="/events/create" style="color: #4facfe;">Criar um evento</a>
-        </div>
+        </div> -->
     </div>
 
     <!-- ═══════════ Rankings: Top Kills ═══════════ -->

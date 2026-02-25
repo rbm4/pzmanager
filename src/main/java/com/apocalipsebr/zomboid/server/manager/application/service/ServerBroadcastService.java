@@ -35,7 +35,7 @@ public class ServerBroadcastService {
             "Visite nosso site para conferir a loja, garagem e mais! Https://apocalipse.cloud/",
             "Participe dos eventos semanais e ganhe recompensas!",
             "Lembre-se: trabalho em equipe aumenta suas chances de sobrevivência!",
-            "Super-zumbis em Westpoint, Ekron, Bradeburg, Riverside dão 3x saldo extra no site!",
+            "Abates de super-zumbis em Riverside dão saldo extra no site!",
             "Doe para manter o servidor online! Acesse a aba de doações no site.",
             "Novidades e atualizações sao anunciadas no Discord. Fique ligado!",
             "Cada zumbi abatido você ganha saldo para comprar itens e carros no site! Https://apocalipse.cloud/",
