@@ -460,7 +460,11 @@
             const x2 = document.getElementById('x2').value;
             const y2 = document.getElementById('y2').value;
             if (x1 && y1 && x2 && y2) {
-                url += `?x1=${x1}&y1=${y1}&x2=${x2}&y2=${y2}`;
+                const encX1 = encodeURIComponent(x1);
+                const encY1 = encodeURIComponent(y1);
+                const encX2 = encodeURIComponent(x2);
+                const encY2 = encodeURIComponent(y2);
+                url += `?x1=${encX1}&y1=${encY1}&x2=${encX2}&y2=${encY2}`;
             }
             iframe.src = url;
             overlay.classList.add('active');
