@@ -39,6 +39,7 @@ public enum RegionProperty {
     MEMORY_RANDOM_CHANCE("memoryRandomChance","0"),
     ARMOR_EFFECTIVENESS_MULTIPLIER("armorEffectivenessMultiplier","0"),
     ARMOR_DEFENSE_PERCENTAGE("armorDefensePercentage","0"),
+    TOUGH_ZOMBIE_ARMOR("maxHits","2"),
     MESSAGE("message","Voce acabou de entrar em uma zona XXX!");
 
     private RegionPropetyRecord properties;

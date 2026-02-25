@@ -220,6 +220,74 @@
             margin-top: 4px;
         }
 
+        /* Map Selector Modal */
+        .map-selector-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        .map-selector-overlay.active { display: flex; }
+        .map-selector-frame {
+            width: 90vw;
+            height: 85vh;
+            border: 2px solid rgba(0, 242, 254, 0.4);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        .map-selector-frame iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .select-map-btn {
+            padding: 12px 24px;
+            background: rgba(0, 242, 254, 0.15);
+            border: 1px solid rgba(0, 242, 254, 0.5);
+            color: #00f2fe;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        .select-map-btn:hover {
+            background: rgba(0, 242, 254, 0.25);
+            border-color: #00f2fe;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 242, 254, 0.3);
+        }
+
+        .coords-display {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .coord-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+        .coord-box .coord-label {
+            display: block;
+            color: #888;
+            font-size: 0.8rem;
+            margin-bottom: 4px;
+        }
+        .coord-box .coord-value {
+            color: #00f2fe;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
         @media (max-width: 768px) {
             .container {
                 margin-left: 0;
@@ -232,6 +300,10 @@
             .form-row,
             .form-row-4 {
                 grid-template-columns: 1fr;
+            }
+
+            .coords-display {
+                grid-template-columns: 1fr 1fr;
             }
         }
     </style>
@@ -277,25 +349,34 @@
                 <!-- Coordinates -->
                 <div class="form-section">
                     <div class="form-section-title">📍 Coordenadas</div>
-                    <div class="form-row-4">
-                        <div class="form-group">
-                            <label for="x1">X1</label>
-                            <input type="number" id="x1" name="x1" class="form-input" required>
+                    <div class="coords-display">
+                        <div class="coord-box">
+                            <span class="coord-label">X1</span>
+                            <span class="coord-value" id="dispX1">—</span>
                         </div>
-                        <div class="form-group">
-                            <label for="y1">Y1</label>
-                            <input type="number" id="y1" name="y1" class="form-input" required>
+                        <div class="coord-box">
+                            <span class="coord-label">Y1</span>
+                            <span class="coord-value" id="dispY1">—</span>
                         </div>
-                        <div class="form-group">
-                            <label for="x2">X2</label>
-                            <input type="number" id="x2" name="x2" class="form-input" required>
+                        <div class="coord-box">
+                            <span class="coord-label">X2</span>
+                            <span class="coord-value" id="dispX2">—</span>
                         </div>
-                        <div class="form-group">
-                            <label for="y2">Y2</label>
-                            <input type="number" id="y2" name="y2" class="form-input" required>
+                        <div class="coord-box">
+                            <span class="coord-label">Y2</span>
+                            <span class="coord-value" id="dispY2">—</span>
                         </div>
                     </div>
-                    <div class="form-group" style="max-width: 200px;">
+                    <!-- Hidden inputs for form submission -->
+                    <input type="hidden" id="x1" name="x1">
+                    <input type="hidden" id="y1" name="y1">
+                    <input type="hidden" id="x2" name="x2">
+                    <input type="hidden" id="y2" name="y2">
+                    <button type="button" class="select-map-btn" onclick="openMapSelector()">
+                        🗺️ Selecionar no Mapa
+                    </button>
+                    <div class="help-text" style="margin-top: 8px;">Clique para abrir o mapa e desenhar o retângulo da região</div>
+                    <div class="form-group" style="max-width: 200px; margin-top: 15px;">
                         <label for="z">Z (Nível)</label>
                         <input type="number" id="z" name="z" class="form-input" value="0">
                     </div>
@@ -348,6 +429,13 @@
         </div>
     </div>
 
+    <!-- Map Selector Modal -->
+    <div class="map-selector-overlay" id="mapSelectorOverlay">
+        <div class="map-selector-frame">
+            <iframe id="mapSelectorFrame" src="about:blank"></iframe>
+        </div>
+    </div>
+
     <script>
         function addPropertyRow(name, value) {
             const container = document.getElementById('propsContainer');
@@ -360,6 +448,55 @@
         `;
             container.appendChild(row);
         }
+
+        // Map Selector logic
+        function openMapSelector() {
+            const overlay = document.getElementById('mapSelectorOverlay');
+            const iframe = document.getElementById('mapSelectorFrame');
+            let url = '/regions/map-selector';
+            // Pass current values if already set
+            const x1 = document.getElementById('x1').value;
+            const y1 = document.getElementById('y1').value;
+            const x2 = document.getElementById('x2').value;
+            const y2 = document.getElementById('y2').value;
+            if (x1 && y1 && x2 && y2) {
+                const encX1 = encodeURIComponent(x1);
+                const encY1 = encodeURIComponent(y1);
+                const encX2 = encodeURIComponent(x2);
+                const encY2 = encodeURIComponent(y2);
+                url += `?x1=${encX1}&y1=${encY1}&x2=${encX2}&y2=${encY2}`;
+            }
+            iframe.src = url;
+            overlay.classList.add('active');
+        }
+
+        function closeMapSelector() {
+            const overlay = document.getElementById('mapSelectorOverlay');
+            const iframe = document.getElementById('mapSelectorFrame');
+            overlay.classList.remove('active');
+            iframe.src = 'about:blank';
+        }
+
+        window.addEventListener('message', function(e) {
+            if (e.data && e.data.type === 'regionCoords') {
+                document.getElementById('x1').value = e.data.x1;
+                document.getElementById('y1').value = e.data.y1;
+                document.getElementById('x2').value = e.data.x2;
+                document.getElementById('y2').value = e.data.y2;
+                document.getElementById('dispX1').textContent = e.data.x1;
+                document.getElementById('dispY1').textContent = e.data.y1;
+                document.getElementById('dispX2').textContent = e.data.x2;
+                document.getElementById('dispY2').textContent = e.data.y2;
+                closeMapSelector();
+            } else if (e.data && e.data.type === 'closeRegionSelector') {
+                closeMapSelector();
+            }
+        });
+
+        // Close modal on Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeMapSelector();
+        });
     </script>
     
     <!-- Pre-populate with known properties from RegionProperty enum -->
