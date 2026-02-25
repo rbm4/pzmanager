@@ -77,9 +77,6 @@ public class ServerBroadcastService {
     public void broadcastMessage() {
         int index = messageIndex.getAndUpdate(i -> (i + 1) % BROADCAST_MESSAGES.size());
         String message = BROADCAST_MESSAGES.get(index);
-        if (index > BROADCAST_MESSAGES.size()){
-            index = 0;
-        }
         try {
             String command = "servermsg \"" + message + "\"";
             logger.info("Broadcasting message: " + command);
