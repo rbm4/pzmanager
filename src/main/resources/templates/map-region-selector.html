@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Seletor de Coordenadas - Apocalipse [BR]</title>
+    <style>
+        :root {
+            --bg: #0b0f14;
+            --text: #e6eef9;
+            --muted: #9fb1c6;
+            --border: #203044;
+            --accent: #00f2fe;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            height: 100%;
+            background: var(--bg);
+            color: var(--text);
+            font: 14px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Noto Sans", "Helvetica Neue", Arial;
+            overflow: hidden;
+        }
+
+        canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+        canvas.panning { cursor: grabbing; }
+
+        .topBar {
+            position: absolute;
+            left: 12px; top: 12px; right: 12px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .topBar > * { pointer-events: auto; }
+
+        .hud {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            background: rgba(10, 17, 26, 0.88);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 8px 14px;
+        }
+        .hud .kv { color: var(--muted); font-size: 12px; }
+        .hud .kv b { color: var(--text); font-weight: 600; }
+
+        button {
+            background: rgba(10, 17, 26, 0.9);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 8px 14px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        button:hover { border-color: #2f4a68; }
+
+        .bottomBar {
+            position: absolute;
+            left: 12px; bottom: 12px; right: 12px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .bottomBar > * { pointer-events: auto; }
+
+        .coordsPanel {
+            background: rgba(10, 17, 26, 0.92);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 12px 18px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .coordsPanel .coord-label {
+            color: var(--muted);
+            font-size: 12px;
+        }
+        .coordsPanel .coord-value {
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .confirmBtn {
+            background: rgba(0, 242, 254, 0.15);
+            border-color: rgba(0, 242, 254, 0.5);
+            color: #00f2fe;
+            padding: 10px 24px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .confirmBtn:hover { border-color: #00f2fe; background: rgba(0, 242, 254, 0.25); }
+        .confirmBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .cancelBtn {
+            background: rgba(231, 76, 60, 0.12);
+            border-color: rgba(231, 76, 60, 0.45);
+            color: #f0a0a0;
+            padding: 10px 18px;
+            font-weight: 600;
+        }
+        .cancelBtn:hover { border-color: #e74c3c; color: #fff; }
+
+        .resetSelBtn {
+            background: rgba(255, 193, 7, 0.12);
+            border-color: rgba(255, 193, 7, 0.45);
+            color: #ffd54f;
+        }
+        .resetSelBtn:hover { border-color: #ffc107; color: #fff; }
+
+        .instructions {
+            position: absolute;
+            left: 50%; top: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(10, 17, 26, 0.95);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px 32px;
+            z-index: 15;
+            text-align: center;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .instructions h3 { color: var(--accent); margin-bottom: 8px; font-size: 16px; }
+        .instructions p { color: var(--muted); font-size: 13px; line-height: 1.6; }
+        .instructions .key { background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; font-family: monospace; }
+
+        .legend {
+            position: absolute;
+            right: 12px; bottom: 70px;
+            width: 220px;
+            background: rgba(10, 17, 26, 0.92);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 10px 14px;
+            z-index: 10;
+        }
+        .legend h3 { margin: 0 0 6px 0; font-size: 12px; color: #d8e6ff; }
+        .legRow { display: flex; gap: 8px; align-items: center; margin: 4px 0; }
+        .legBox { width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.2); flex: 0 0 auto; }
+        .legTxt { color: var(--muted); font-size: 11px; }
+
+        @media (max-width: 640px) {
+            .legend { display: none; }
+            .coordsPanel { flex-direction: column; gap: 8px; }
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="c"></canvas>
+
+    <!-- Instructions overlay (auto-hides after first draw) -->
+    <div class="instructions" id="instrOverlay">
+        <h3>🗺️ Seletor de Coordenadas</h3>
+        <p>
+            <b>Clique e arraste</b> no mapa para desenhar o retângulo da região.<br>
+            Use <span class="key">Scroll</span> para zoom e <b>botão direito</b> para mover o mapa.<br>
+            Após selecionar, clique em <b>Confirmar</b>.
+        </p>
+    </div>
+
+    <div class="topBar">
+        <div class="hud">
+            <div class="kv">Zoom: <b id="hudZoom">0.080</b></div>
+            <div class="kv">Cursor: <b id="hudCursor">—</b></div>
+            <div class="kv"><b>Clique+Arraste</b> = seleção · <b>Direito+Arraste</b> = mover</div>
+        </div>
+        <div class="hud">
+            <button id="btnReset">Resetar vista</button>
+            <button class="resetSelBtn" id="btnClearSel">Limpar seleção</button>
+        </div>
+    </div>
+
+    <div class="legend">
+        <h3>Legenda</h3>
+        <div class="legRow">
+            <div class="legBox" style="background:transparent; border:2px solid rgba(0,242,254,0.8)"></div>
+            <div class="legTxt">Seleção atual</div>
+        </div>
+        <div class="legRow">
+            <div class="legBox" style="background:transparent; border:2px solid rgba(200,130,255,0.65)"></div>
+            <div class="legTxt">Região PVE</div>
+        </div>
+        <div class="legRow">
+            <div class="legBox" style="background:transparent; border:2px solid rgba(231,76,60,0.75)"></div>
+            <div class="legTxt">Região PVP</div>
+        </div>
+        <div class="legRow">
+            <div class="legBox" style="background:transparent; border:2px solid rgba(80,200,120,0.65)"></div>
+            <div class="legTxt">Permanente</div>
+        </div>
+    </div>
+
+    <!-- Bottom bar with coordinates + actions -->
+    <div class="bottomBar">
+        <div class="coordsPanel">
+            <div>
+                <span class="coord-label">X1:</span>
+                <span class="coord-value" id="dispX1">—</span>
+            </div>
+            <div>
+                <span class="coord-label">Y1:</span>
+                <span class="coord-value" id="dispY1">—</span>
+            </div>
+            <div>
+                <span class="coord-label">X2:</span>
+                <span class="coord-value" id="dispX2">—</span>
+            </div>
+            <div>
+                <span class="coord-label">Y2:</span>
+                <span class="coord-value" id="dispY2">—</span>
+            </div>
+        </div>
+        <button class="confirmBtn" id="btnConfirm" disabled>✓ Confirmar</button>
+        <button class="cancelBtn" id="btnCancel">✕ Cancelar</button>
+    </div>
+
+    <script>
+        const $ = (id) => document.getElementById(id);
+        function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+        /* ---------- URL Params (for edit mode pre-load) ---------- */
+        const params = new URLSearchParams(window.location.search);
+        const initX1 = params.get("x1") ? parseInt(params.get("x1")) : null;
+        const initY1 = params.get("y1") ? parseInt(params.get("y1")) : null;
+        const initX2 = params.get("x2") ? parseInt(params.get("x2")) : null;
+        const initY2 = params.get("y2") ? parseInt(params.get("y2")) : null;
+        const excludeId = params.get("excludeId") ? parseInt(params.get("excludeId")) : null;
+
+        /* ---------- Canvas / Camera ---------- */
+        const canvas = $("c");
+        const ctx = canvas.getContext("2d");
+        let W = 0, H = 0, dpr = 1;
+        let camX = 9000, camY = 8000;
+        let zoom = 0.08;
+        let isPanning = false, panStart = null;
+
+        function resize() {
+            dpr = window.devicePixelRatio || 1;
+            W = canvas.clientWidth; H = canvas.clientHeight;
+            canvas.width = Math.floor(W * dpr); canvas.height = Math.floor(H * dpr);
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            draw();
+        }
+        window.addEventListener("resize", resize);
+
+        function worldToScreen(x, y) { return { x: (x - camX) * zoom + W / 2, y: (y - camY) * zoom + H / 2 }; }
+        function screenToWorld(x, y) { return { x: (x - W / 2) / zoom + camX, y: (y - H / 2) / zoom + camY }; }
+
+        function setZoom(newZoom, anchorScreen) {
+            const a = anchorScreen || { x: W / 2, y: H / 2 };
+            const before = screenToWorld(a.x, a.y);
+            zoom = clamp(newZoom, 0.01, 2.5);
+            const after = screenToWorld(a.x, a.y);
+            camX += (before.x - after.x);
+            camY += (before.y - after.y);
+        }
+
+        /* ---------- Basemap ---------- */
+        let mapImg = null, mapImgReady = false;
+        const LOCK_TR = { x: 19796, y: 4 };
+        const LOCK_BL = { x: 0, y: 15899 };
+
+        (function loadMapImage() {
+            mapImg = new Image();
+            mapImg.onload = () => { mapImgReady = true; draw(); };
+            mapImg.onerror = () => { draw(); };
+            mapImg.src = "/map.jpg?cachebust=" + Date.now();
+        })();
+
+        /* ---------- Data ---------- */
+        let regions = [];
+
+        /* ---------- Selection state ---------- */
+        let selection = null; // { x1, y1, x2, y2 } in world coords
+        let isDrawing = false;
+        let drawStart = null; // world coords of drag start
+
+        // Pre-load selection from URL params (edit mode)
+        if (initX1 !== null && initY1 !== null && initX2 !== null && initY2 !== null) {
+            selection = { x1: initX1, y1: initY1, x2: initX2, y2: initY2 };
+            // Center camera on the existing selection
+            camX = (initX1 + initX2) / 2;
+            camY = (initY1 + initY2) / 2;
+            zoom = 0.15;
+            updateCoordsDisplay();
+            // Hide instructions
+            $("instrOverlay").style.opacity = "0";
+        }
+
+        function updateCoordsDisplay() {
+            if (selection) {
+                const sx1 = Math.min(selection.x1, selection.x2);
+                const sy1 = Math.min(selection.y1, selection.y2);
+                const sx2 = Math.max(selection.x1, selection.x2);
+                const sy2 = Math.max(selection.y1, selection.y2);
+                $("dispX1").textContent = Math.round(sx1);
+                $("dispY1").textContent = Math.round(sy1);
+                $("dispX2").textContent = Math.round(sx2);
+                $("dispY2").textContent = Math.round(sy2);
+                $("btnConfirm").disabled = false;
+            } else {
+                $("dispX1").textContent = "—";
+                $("dispY1").textContent = "—";
+                $("dispX2").textContent = "—";
+                $("dispY2").textContent = "—";
+                $("btnConfirm").disabled = true;
+            }
+        }
+
+        /* ---------- Region color helper ---------- */
+        function regionColor(rg) {
+            const cats = (rg.categories || "").toLowerCase();
+            if (cats.includes("pvp")) return { stroke: "rgba(231,76,60,0.75)", fill: "rgba(231,76,60,0.06)", label: "#e74c3c" };
+            if (rg.permanent) return { stroke: "rgba(80,200,120,0.65)", fill: "rgba(80,200,120,0.06)", label: "#50c878" };
+            return { stroke: "rgba(200,130,255,0.65)", fill: "rgba(200,130,255,0.06)", label: "#c882ff" };
+        }
+
+        /* ---------- Drawing ---------- */
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+
+            // basemap
+            if (mapImgReady) {
+                const pTL = worldToScreen(LOCK_BL.x, LOCK_TR.y);
+                const pBR = worldToScreen(LOCK_TR.x, LOCK_BL.y);
+                ctx.globalAlpha = 0.9;
+                ctx.drawImage(mapImg, pTL.x, pTL.y, (pBR.x - pTL.x), (pBR.y - pTL.y));
+                ctx.globalAlpha = 1.0;
+            }
+
+            // grid
+            ctx.strokeStyle = "rgba(255,255,255,0.04)";
+            ctx.lineWidth = 1;
+            const gridSize = 300;
+            const topLeft = screenToWorld(0, 0);
+            const botRight = screenToWorld(W, H);
+            const gx0 = Math.floor(topLeft.x / gridSize) * gridSize;
+            const gy0 = Math.floor(topLeft.y / gridSize) * gridSize;
+            const gx1 = Math.ceil(botRight.x / gridSize) * gridSize;
+            const gy1 = Math.ceil(botRight.y / gridSize) * gridSize;
+
+            for (let x = gx0; x <= gx1; x += gridSize) {
+                const p1 = worldToScreen(x, topLeft.y);
+                const p2 = worldToScreen(x, botRight.y);
+                ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+            }
+            for (let y = gy0; y <= gy1; y += gridSize) {
+                const p1 = worldToScreen(topLeft.x, y);
+                const p2 = worldToScreen(botRight.x, y);
+                ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+            }
+
+            // existing regions (read-only)
+            for (const rg of regions) {
+                if (excludeId !== null && rg.id === excludeId) continue;
+                const rx1 = Math.min(rg.x1, rg.x2), ry1 = Math.min(rg.y1, rg.y2);
+                const rx2 = Math.max(rg.x1, rg.x2), ry2 = Math.max(rg.y1, rg.y2);
+                const tl = worldToScreen(rx1, ry1);
+                const br = worldToScreen(rx2, ry2);
+                const sw = br.x - tl.x, sh = br.y - tl.y;
+                const c = regionColor(rg);
+
+                ctx.fillStyle = c.fill;
+                ctx.fillRect(tl.x, tl.y, sw, sh);
+                ctx.strokeStyle = c.stroke;
+                ctx.setLineDash([]);
+                ctx.lineWidth = 2;
+                ctx.strokeRect(tl.x, tl.y, sw, sh);
+
+                if (sw > 50) {
+                    const cats = (rg.categories || "").toLowerCase();
+                    const isPvp = cats.includes("pvp");
+                    const label = (rg.name || rg.code) + (isPvp ? " ☠️" : "");
+                    ctx.font = sw > 120 ? "bold 13px sans-serif" : "11px sans-serif";
+                    ctx.fillStyle = c.label;
+                    ctx.fillText(label, tl.x + 5, tl.y + 16);
+                }
+            }
+
+            // current selection rectangle
+            if (selection) {
+                const sx1 = Math.min(selection.x1, selection.x2);
+                const sy1 = Math.min(selection.y1, selection.y2);
+                const sx2 = Math.max(selection.x1, selection.x2);
+                const sy2 = Math.max(selection.y1, selection.y2);
+                const tl = worldToScreen(sx1, sy1);
+                const br = worldToScreen(sx2, sy2);
+                const sw = br.x - tl.x, sh = br.y - tl.y;
+
+                // fill
+                ctx.fillStyle = "rgba(0, 242, 254, 0.10)";
+                ctx.fillRect(tl.x, tl.y, sw, sh);
+
+                // border (animated dash)
+                ctx.strokeStyle = "rgba(0, 242, 254, 0.9)";
+                ctx.lineWidth = 2.5;
+                ctx.setLineDash([8, 4]);
+                ctx.lineDashOffset = -(Date.now() / 50 % 12);
+                ctx.strokeRect(tl.x, tl.y, sw, sh);
+                ctx.setLineDash([]);
+
+                // corner markers
+                ctx.fillStyle = "#00f2fe";
+                const ms = 5;
+                ctx.fillRect(tl.x - ms, tl.y - ms, ms * 2, ms * 2);
+                ctx.fillRect(br.x - ms, tl.y - ms, ms * 2, ms * 2);
+                ctx.fillRect(tl.x - ms, br.y - ms, ms * 2, ms * 2);
+                ctx.fillRect(br.x - ms, br.y - ms, ms * 2, ms * 2);
+
+                // label
+                const label = `(${Math.round(sx1)}, ${Math.round(sy1)}) → (${Math.round(sx2)}, ${Math.round(sy2)})`;
+                ctx.font = "bold 12px sans-serif";
+                ctx.fillStyle = "#00f2fe";
+                ctx.fillText(label, tl.x + 5, tl.y - 8);
+            }
+
+            // HUD
+            $("hudZoom").textContent = zoom.toFixed(3);
+
+            // animate selection dash
+            if (selection || isDrawing) requestAnimationFrame(draw);
+        }
+
+        /* ---------- Mouse events ---------- */
+        canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+
+        canvas.addEventListener("mousedown", (e) => {
+            const r = canvas.getBoundingClientRect();
+            const sx = e.clientX - r.left, sy = e.clientY - r.top;
+
+            if (e.button === 2) {
+                // Right-click: pan
+                isPanning = true;
+                panStart = { sx, sy, camX, camY };
+                canvas.classList.add("panning");
+            } else if (e.button === 0) {
+                // Left-click: start drawing selection
+                const world = screenToWorld(sx, sy);
+                isDrawing = true;
+                drawStart = world;
+                selection = { x1: world.x, y1: world.y, x2: world.x, y2: world.y };
+                $("instrOverlay").style.opacity = "0";
+                updateCoordsDisplay();
+                draw();
+            }
+        });
+
+        canvas.addEventListener("mousemove", (e) => {
+            const r = canvas.getBoundingClientRect();
+            const sx = e.clientX - r.left, sy = e.clientY - r.top;
+            const world = screenToWorld(sx, sy);
+
+            // Update cursor HUD
+            $("hudCursor").textContent = `${Math.round(world.x)}, ${Math.round(world.y)}`;
+
+            if (isPanning && panStart) {
+                camX = panStart.camX - (sx - panStart.sx) / zoom;
+                camY = panStart.camY - (sy - panStart.sy) / zoom;
+                draw();
+            } else if (isDrawing && drawStart) {
+                selection.x2 = world.x;
+                selection.y2 = world.y;
+                updateCoordsDisplay();
+                draw();
+            }
+        });
+
+        canvas.addEventListener("mouseup", (e) => {
+            if (e.button === 2) {
+                isPanning = false;
+                panStart = null;
+                canvas.classList.remove("panning");
+            } else if (e.button === 0 && isDrawing) {
+                isDrawing = false;
+                drawStart = null;
+                // Normalize selection
+                if (selection) {
+                    const dx = Math.abs(selection.x2 - selection.x1);
+                    const dy = Math.abs(selection.y2 - selection.y1);
+                    if (dx < 10 && dy < 10) {
+                        // Too small, discard
+                        selection = null;
+                    }
+                }
+                updateCoordsDisplay();
+                draw();
+            }
+        });
+
+        canvas.addEventListener("wheel", (e) => {
+            e.preventDefault();
+            const r = canvas.getBoundingClientRect();
+            const sx = e.clientX - r.left, sy = e.clientY - r.top;
+            const factor = Math.exp(-e.deltaY * 0.0012);
+            setZoom(zoom * factor, { x: sx, y: sy });
+            draw();
+        }, { passive: false });
+
+        /* ---------- Touch support ---------- */
+        let lastTouches = null;
+        let touchDrawing = false;
+
+        canvas.addEventListener("touchstart", (e) => {
+            e.preventDefault();
+            const touches = Array.from(e.touches).map(t => ({ x: t.clientX, y: t.clientY }));
+
+            if (touches.length === 1) {
+                const r = canvas.getBoundingClientRect();
+                const sx = touches[0].x - r.left, sy = touches[0].y - r.top;
+                const world = screenToWorld(sx, sy);
+                // Single touch: start drawing
+                touchDrawing = true;
+                isDrawing = true;
+                drawStart = world;
+                selection = { x1: world.x, y1: world.y, x2: world.x, y2: world.y };
+                $("instrOverlay").style.opacity = "0";
+                updateCoordsDisplay();
+                draw();
+            } else if (touches.length === 2) {
+                // Two fingers: pan/zoom
+                touchDrawing = false;
+                isDrawing = false;
+            }
+            lastTouches = touches;
+        }, { passive: false });
+
+        canvas.addEventListener("touchmove", (e) => {
+            e.preventDefault();
+            const touches = Array.from(e.touches).map(t => ({ x: t.clientX, y: t.clientY }));
+
+            if (touches.length === 1 && touchDrawing && isDrawing) {
+                const r = canvas.getBoundingClientRect();
+                const sx = touches[0].x - r.left, sy = touches[0].y - r.top;
+                const world = screenToWorld(sx, sy);
+                selection.x2 = world.x;
+                selection.y2 = world.y;
+                updateCoordsDisplay();
+                draw();
+            } else if (touches.length === 2 && lastTouches && lastTouches.length === 2) {
+                // Pinch zoom + pan
+                const prevDist = Math.hypot(lastTouches[1].x - lastTouches[0].x, lastTouches[1].y - lastTouches[0].y);
+                const curDist = Math.hypot(touches[1].x - touches[0].x, touches[1].y - touches[0].y);
+                if (prevDist > 0) {
+                    const mid = { x: (touches[0].x + touches[1].x) / 2, y: (touches[0].y + touches[1].y) / 2 };
+                    const r = canvas.getBoundingClientRect();
+                    setZoom(zoom * (curDist / prevDist), { x: mid.x - r.left, y: mid.y - r.top });
+
+                    // Pan
+                    const prevMid = { x: (lastTouches[0].x + lastTouches[1].x) / 2, y: (lastTouches[0].y + lastTouches[1].y) / 2 };
+                    camX -= (mid.x - prevMid.x) / zoom;
+                    camY -= (mid.y - prevMid.y) / zoom;
+
+                    draw();
+                }
+            }
+            lastTouches = touches;
+        }, { passive: false });
+
+        canvas.addEventListener("touchend", (e) => {
+            if (e.touches.length === 0) {
+                if (touchDrawing && isDrawing && selection) {
+                    const dx = Math.abs(selection.x2 - selection.x1);
+                    const dy = Math.abs(selection.y2 - selection.y1);
+                    if (dx < 10 && dy < 10) selection = null;
+                }
+                isDrawing = false;
+                touchDrawing = false;
+                drawStart = null;
+                updateCoordsDisplay();
+                draw();
+            }
+            lastTouches = e.touches.length ? Array.from(e.touches).map(t => ({ x: t.clientX, y: t.clientY })) : null;
+        });
+
+        /* ---------- Load existing regions ---------- */
+        async function loadRegions() {
+            try {
+                const resp = await fetch("/map-regions/api/regions");
+                if (!resp.ok) return;
+                regions = await resp.json();
+                draw();
+            } catch (e) { /* silent */ }
+        }
+
+        /* ---------- UI Actions ---------- */
+        $("btnReset").onclick = () => { camX = 9000; camY = 8000; zoom = 0.08; draw(); };
+
+        $("btnClearSel").onclick = () => {
+            selection = null;
+            isDrawing = false;
+            drawStart = null;
+            updateCoordsDisplay();
+            draw();
+        };
+
+        $("btnConfirm").onclick = () => {
+            if (!selection) return;
+            const x1 = Math.round(Math.min(selection.x1, selection.x2));
+            const y1 = Math.round(Math.min(selection.y1, selection.y2));
+            const x2 = Math.round(Math.max(selection.x1, selection.x2));
+            const y2 = Math.round(Math.max(selection.y1, selection.y2));
+
+            if (window.parent !== window) {
+                window.parent.postMessage({ type: "regionCoords", x1, y1, x2, y2 }, "*");
+            }
+        };
+
+        $("btnCancel").onclick = () => {
+            if (window.parent !== window) {
+                window.parent.postMessage({ type: "closeRegionSelector" }, "*");
+            } else {
+                history.back();
+            }
+        };
+
+        /* ---------- Init ---------- */
+        resize();
+        loadRegions();
+        updateCoordsDisplay();
+    </script>
+</body>
+
+</html>

@@ -3,8 +3,11 @@ package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 import com.apocalipsebr.zomboid.server.manager.application.service.CharacterService;
 import com.apocalipsebr.zomboid.server.manager.application.service.PlayerStatsService;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Character;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.GameEvent;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.GameEvent.EventStatus;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.PlayerStats;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
+import com.apocalipsebr.zomboid.server.manager.domain.repository.app.GameEventRepository;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.UserRepository;
 
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,11 +26,14 @@ public class WebController {
     private final PlayerStatsService playerStatsService;
     private final CharacterService characterService;
     private final UserRepository userRepository;
+    private final GameEventRepository gameEventRepository;
 
-    public WebController(PlayerStatsService playerStatsService, CharacterService characterService, UserRepository userRepository) {
+    public WebController(PlayerStatsService playerStatsService, CharacterService characterService,
+                         UserRepository userRepository, GameEventRepository gameEventRepository) {
         this.playerStatsService = playerStatsService;
         this.characterService = characterService;
         this.userRepository = userRepository;
+        this.gameEventRepository = gameEventRepository;
     }
 
     @GetMapping("/")
@@ -94,6 +100,11 @@ public class WebController {
         List<Character> topCharactersByKills = characterService.getTopCharactersByKills();
         List<Character> topCharactersByHours = characterService.getTopCharactersByHoursSurvived();
         
+        // Get active and pending/funded events for dashboard
+        List<GameEvent> activeEvents = gameEventRepository.findByStatus(EventStatus.ACTIVE);
+        List<GameEvent> pendingEvents = gameEventRepository.findByStatusIn(
+            List.of(EventStatus.PENDING, EventStatus.FUNDED));
+        
         model.addAttribute("username", user.getUsername());
         model.addAttribute("role", user.getRole());
         model.addAttribute("stats", stats);
@@ -103,6 +114,8 @@ public class WebController {
         model.addAttribute("topCharactersByHours", topCharactersByHours);
         model.addAttribute("totalKills", totalKills);
         model.addAttribute("totalPoints", totalPoints);
+        model.addAttribute("activeEvents", activeEvents);
+        model.addAttribute("pendingEvents", pendingEvents);
         
         return "player";
     }

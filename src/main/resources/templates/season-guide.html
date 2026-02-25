@@ -327,7 +327,7 @@
 
     <div class="page-wrapper">
 
-        <a href="/" class="back-link">&larr; Voltar para o Início</a>
+        <a href="javascript:void(0)" onclick="history.back()" class="back-link">&larr; Voltar</a>
 
         <!-- Table of Contents -->
         <nav class="toc">
@@ -335,6 +335,7 @@
             <ul>
                 <li><a href="#regions">&#9876; Regiões &mdash; PVE &amp; PVP</a></li>
                 <li><a href="#economy">&#128176; Economia &mdash; Zumbis &amp; Saldo</a></li>
+                <li><a href="#umbrella-research">&#9764; Pesquisa da Umbrella</a></li>
                 <li><a href="#books">&#128214; 1. Encontrando os Livros</a></li>
                 <li><a href="#lab">&#128295; 2. Construindo o Laboratório</a></li>
                 <li><a href="#research">&#129516; 3. Processo de Pesquisa</a></li>
@@ -355,7 +356,7 @@
                 <h2>Regiões &mdash; <span>PVE &amp; PVP</span></h2>
             </div>
             <p>
-                O servidor utiliza o sistema <strong>RegionManager</strong> para controlar zonas de PVE e PVP
+                O servidor utiliza um sistema próprio de <strong>gestão de regiões</strong> para controlar zonas de PVE e PVP
                 em todo o mapa de Knox County. Cada região possui suas próprias características, como
                 densidade e tipo de zumbis, regras de combate entre jogadores e modificadores especiais.
             </p>
@@ -418,7 +419,29 @@
         <!-- ══════════════════════════════════════ -->
         <!--  UMBRELLA VACCINE MOD GUIDE            -->
         <!-- ══════════════════════════════════════ -->
-         
+
+        <section id="umbrella-research" class="guide-section">
+            <div class="section-header">
+                <span class="section-icon">&#9764;</span>
+                <h2>Pesquisa da <span>Umbrella</span></h2>
+            </div>
+            <p>
+                A <strong>Umbrella Corporation</strong> deixou para trás vestígios de sua pesquisa secreta
+                espalhados por Knox County. Com os materiais certos, equipamentos de laboratório e muito
+                conhecimento, é possível replicar o trabalho deles &mdash; e criar <span class="hl">vacinas</span>
+                e até mesmo uma <span class="hl">cura</span> para a infecção zumbi.
+            </p>
+            <p>
+                O processo é longo e perigoso: você precisará encontrar <strong>documentos de pesquisa</strong>,
+                montar um <strong>laboratório completo</strong>, coletar <strong>amostras biológicas</strong>
+                de zumbis e passar por diversas etapas de síntese química. Cada passo requer materiais
+                específicos e estações de trabalho diferentes.
+            </p>
+            <div class="info-box">
+                &#128161; Este guia detalha <strong>todos os passos</strong>, do primeiro livro até a cura final.
+                Siga na ordem para não se perder &mdash; ou pule direto para a etapa que precisa usando o índice acima.
+            </div>
+        </section>
 
         <!-- SECTION 1: Books -->
         <section id="books" class="guide-section">

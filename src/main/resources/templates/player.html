@@ -5,11 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel do Jogador - Apocalipse [BR]</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -19,8 +15,6 @@
             display: flex;
         }
 
-
-
         .main-content {
             margin-left: 280px;
             flex: 1;
@@ -28,397 +22,609 @@
             overflow-y: auto;
         }
 
-        .header {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 20px 30px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .header h1 {
-            background: linear-gradient(45deg, #4facfe, #00f2fe);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-size: 2rem;
-        }
-
+        /* ── Alerts ── */
         .alert {
-            padding: 15px 20px;
-            border-radius: 8px;
+            padding: 14px 18px;
+            border-radius: 10px;
             margin-bottom: 20px;
             display: flex;
             align-items: center;
             gap: 10px;
+            font-size: 0.92rem;
         }
+        .alert-success { background: rgba(76,175,80,0.15); border: 1px solid rgba(76,175,80,0.4); color: #4caf50; }
+        .alert-error   { background: rgba(244,67,54,0.15); border: 1px solid rgba(244,67,54,0.4); color: #f44336; }
 
-        .alert-success {
-            background: rgba(76, 175, 80, 0.2);
-            border: 1px solid #4caf50;
-            color: #4caf50;
+        /* ── Dashboard Header ── */
+        .dash-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
         }
-
-        .alert-error {
-            background: rgba(244, 67, 54, 0.2);
-            border: 1px solid #f44336;
-            color: #f44336;
+        .dash-header h1 {
+            font-size: 1.8rem;
+            color: #fff;
         }
-
-        .card-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .stats-card {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 25px;
-            border-radius: 10px;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        .stats-card:hover {
-            transform: translateY(-5px);
-            border-color: #4facfe;
-        }
-
-        .stats-card h3 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
+        .dash-header h1 span {
             background: linear-gradient(45deg, #4facfe, #00f2fe);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
-        .stats-card p {
-            color: #aaa;
-            font-size: 0.95rem;
+        /* ── Stats Row ── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
         }
-
-        .purchase-card {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 30px;
-            border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 20px;
+        .stat-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            padding: 20px 22px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: all 0.25s;
         }
-
-        .purchase-card h2 {
-            color: #4facfe;
-            margin-bottom: 20px;
+        .stat-card:hover {
+            border-color: rgba(79,172,254,0.35);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+        }
+        .stat-icon {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
             font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+        .stat-icon.kills   { background: rgba(231,76,60,0.15); }
+        .stat-icon.balance  { background: rgba(241,196,15,0.15); }
+        .stat-icon.chars    { background: rgba(79,172,254,0.15); }
+        .stat-value {
+            font-size: 1.7rem;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+        .stat-value.kills   { color: #e74c3c; }
+        .stat-value.balance { color: #f1c40f; }
+        .stat-value.chars   { color: #4facfe; }
+        .stat-label {
+            font-size: 0.82rem;
+            color: #888;
+            margin-top: 2px;
         }
 
-        .item-display {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 20px;
+        /* ── Quick Actions Strip ── */
+        .quick-actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+        }
+        .qa-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
             border-radius: 10px;
-            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.04);
+            color: #ddd;
+            font-size: 0.9rem;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
         }
-
-        .item-name {
-            font-size: 1.3rem;
-            font-weight: 600;
-            margin-bottom: 10px;
+        .qa-btn:hover {
+            border-color: rgba(79,172,254,0.5);
+            background: rgba(79,172,254,0.08);
             color: #fff;
         }
-
-        .item-description {
-            color: #aaa;
-            line-height: 1.6;
-            margin-bottom: 15px;
+        .qa-btn.accent {
+            border-color: rgba(231,76,60,0.4);
+            background: rgba(231,76,60,0.08);
+        }
+        .qa-btn.accent:hover {
+            border-color: #e74c3c;
+            background: rgba(231,76,60,0.18);
         }
 
-        .price-tag {
-            font-size: 1.2rem;
-            color: #ffc107;
-            font-weight: 600;
+        /* ── Active Events Section ── */
+        .section-panel {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 24px;
         }
-
-        .btn-purchase {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(45deg, #4facfe, #00f2fe);
-            border: none;
-            color: white;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
+        .section-panel h2 {
+            font-size: 1.25rem;
+            color: #fff;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-
-        .btn-purchase:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(79, 172, 254, 0.4);
-        }
-
-        .btn-purchase:disabled {
-            background: rgba(255, 255, 255, 0.1);
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
-
-        .ranking-section {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 30px;
-            border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 30px;
-        }
-
-        .ranking-section h2 {
+        .section-panel h2 .badge-count {
+            background: rgba(79,172,254,0.2);
             color: #4facfe;
-            margin-bottom: 20px;
-            font-size: 1.8rem;
+            font-size: 0.78rem;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-weight: 600;
         }
+
+        .events-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 14px;
+        }
+        .event-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 16px 18px;
+            transition: border-color 0.2s;
+        }
+        .event-card:hover { border-color: rgba(79,172,254,0.3); }
+        .event-card .ev-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #e8e8e8;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .event-card .ev-desc {
+            font-size: 0.83rem;
+            color: #888;
+            margin-bottom: 10px;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .event-card .ev-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.8rem;
+        }
+        .ev-status {
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+        .ev-status.active  { background: rgba(76,175,80,0.2); color: #4caf50; }
+        .ev-status.pending { background: rgba(241,196,15,0.2); color: #f1c40f; }
+        .ev-status.funded  { background: rgba(79,172,254,0.2); color: #4facfe; }
+        .ev-timer { color: #aaa; }
+        .ev-progress {
+            height: 4px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .ev-progress-bar {
+            height: 100%;
+            border-radius: 2px;
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            transition: width 0.3s;
+        }
+        .no-events {
+            text-align: center;
+            color: #666;
+            padding: 30px 0;
+            font-size: 0.9rem;
+        }
+
+        /* ── Rankings ── */
+        .ranking-section {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .ranking-section .ranking-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .ranking-section .ranking-header h2 {
+            font-size: 1.25rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0;
+        }
+
+        .ranking-table-wrap { overflow-x: auto; }
 
         .ranking-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
         }
-
         .ranking-table th {
-            background: rgba(79, 172, 254, 0.1);
-            padding: 15px;
+            background: rgba(79,172,254,0.08);
+            padding: 12px 14px;
             text-align: left;
             color: #4facfe;
             font-weight: 600;
-            border-bottom: 2px solid #4facfe;
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            border-bottom: 1px solid rgba(79,172,254,0.15);
         }
-
         .ranking-table td {
-            padding: 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            color: #fff;
+            padding: 11px 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            color: #ccc;
+            font-size: 0.9rem;
         }
-
-        .ranking-table tr:hover {
-            background: rgba(255, 255, 255, 0.05);
-        }
+        .ranking-table tbody tr:hover td { background: rgba(255,255,255,0.03); }
 
         .rank-badge {
-            display: inline-block;
-            width: 35px;
-            height: 35px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px; height: 30px;
             border-radius: 50%;
-            text-align: center;
-            line-height: 35px;
-            font-weight: bold;
-            font-size: 1rem;
+            font-weight: 700;
+            font-size: 0.85rem;
         }
-
-        .rank-1 { background: linear-gradient(45deg, #FFD700, #FFA500); }
-        .rank-2 { background: linear-gradient(45deg, #C0C0C0, #808080); }
-        .rank-3 { background: linear-gradient(45deg, #CD7F32, #8B4513); }
-        .rank-other { background: rgba(255, 255, 255, 0.1); }
+        .rank-1 { background: linear-gradient(135deg, #FFD700, #FFA500); color: #1a1a2e; }
+        .rank-2 { background: linear-gradient(135deg, #C0C0C0, #808080); color: #1a1a2e; }
+        .rank-3 { background: linear-gradient(135deg, #CD7F32, #8B4513); color: #fff; }
+        .rank-other { background: rgba(255,255,255,0.08); color: #aaa; }
 
         .status-badge {
-            padding: 5px 12px;
-            border-radius: 15px;
-            font-size: 0.85rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.78rem;
             font-weight: 600;
         }
+        .status-alive { background: rgba(76,175,80,0.15); color: #4caf50; }
+        .status-dead  { background: rgba(244,67,54,0.15); color: #f44336; }
 
-        .status-alive {
-            background: rgba(76, 175, 80, 0.2);
-            color: #4caf50;
-        }
-
-        .status-dead {
-            background: rgba(244, 67, 54, 0.2);
-            color: #f44336;
-        }
-
-        .user-characters {
-            margin-top: 30px;
-        }
-
-        .character-card {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        /* ── Pagination ── */
+        .pagination {
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 16px;
         }
-
-        .character-info h4 {
+        .pagination button {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #bbb;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        .pagination button:hover:not(:disabled) {
+            background: rgba(79,172,254,0.12);
+            border-color: rgba(79,172,254,0.4);
+            color: #fff;
+        }
+        .pagination button:disabled { opacity: 0.35; cursor: default; }
+        .pagination button.active {
+            background: rgba(79,172,254,0.2);
+            border-color: #4facfe;
             color: #4facfe;
-            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .pagination .page-info {
+            font-size: 0.8rem;
+            color: #666;
+            margin: 0 4px;
         }
 
-        .character-stats {
-            display: flex;
-            gap: 20px;
-            font-size: 0.9rem;
-            color: #aaa;
+        /* ── Responsive ── */
+        @media (max-width: 900px) {
+            .stats-row { grid-template-columns: 1fr; }
+            .events-grid { grid-template-columns: 1fr; }
         }
-
         @media (max-width: 768px) {
-            .main-content {
-                margin-left: 0;
-            }
-
-            body {
-                flex-direction: column;
-            }
-            
-            .ranking-table {
-                font-size: 0.85rem;
-            }
-            
-            .ranking-table th,
-            .ranking-table td {
-                padding: 10px;
-            }
+            .main-content { margin-left: 0; padding: 20px 16px; }
+            body { flex-direction: column; }
+            .dash-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .ranking-table { font-size: 0.82rem; }
+            .ranking-table th, .ranking-table td { padding: 9px 10px; }
+            .quick-actions { flex-direction: column; }
         }
     </style>
 </head>
 <body>
 <div th:replace="~{header-component :: header}"></div>
-<!-- Sidebar -->
 <div th:replace="~{sidebar-component :: sidebar}"></div>
 
-<!-- Main Content -->
 <main class="main-content">
-    <div class="header">
-        <h1>Painel do Jogador</h1>
-    </div>
 
-    <!-- Success/Error Messages -->
-    <div th:if="${param.purchase != null}" class="alert" 
+    <!-- Alerts -->
+    <div th:if="${param.purchase != null}" class="alert"
          th:classappend="${param.purchase[0] == 'success' ? 'alert-success' : 'alert-error'}">
-        <span th:if="${param.purchase[0] == 'success'}">✅ Diário de Recuperação de Habilidades comprado com sucesso!</span>
-        <span th:if="${param.purchase[0] == 'error'}">❌ Compra falhou. Moeda insuficiente.</span>
+        <span th:if="${param.purchase[0] == 'error'}">&#10060; Compra falhou. Moeda insuficiente.</span>
     </div>
 
-    <!-- Stats Cards -->
-    <div class="card-grid">
-        <div class="stats-card">
-            <h3 th:text="${totalKills}">0</h3>
-            <p>🧟 Abates de Zumbis</p>
+    <!-- Dashboard Header -->
+    <div class="dash-header">
+        <h1>&#128075; Bem-vindo, <span th:text="${username}">Jogador</span></h1>
+    </div>
+
+    <!-- ═══════════ Stats Row ═══════════ -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-icon kills">&#129503;</div>
+            <div>
+                <div class="stat-value kills" th:text="${totalKills}">0</div>
+                <div class="stat-label">Abates de Zumbis</div>
+            </div>
         </div>
-        <div class="stats-card">
-            <h3>₳ <span th:text="${totalPoints}">0</span></h3>
-            <p>Dólares do apocalipse</p>
+        <div class="stat-card">
+            <div class="stat-icon balance">&#8371;</div>
+            <div>
+                <div class="stat-value balance" th:text="${totalPoints}">0</div>
+                <div class="stat-label">Dólares do Apocalipse</div>
+            </div>
         </div>
-        <div class="stats-card">
-            <h3 th:text="${userCharacters.size()}">0</h3>
-            <p>👤 Personagens</p>
+        <div class="stat-card">
+            <div class="stat-icon chars">&#128100;</div>
+            <div>
+                <div class="stat-value chars" th:text="${userCharacters.size()}">0</div>
+                <div class="stat-label">Personagens (Temporada)</div>
+            </div>
         </div>
     </div>
 
-    <!-- Player Rankings Section -->
+    <!-- ═══════════ Active Events ═══════════ -->
+    <div class="section-panel">
+        <h2>&#9889; Eventos em Andamento <span class="badge-count" th:text="${activeEvents.size()}">0</span></h2>
+
+        <div class="events-grid" th:if="${!activeEvents.isEmpty()}">
+            <div class="event-card" th:each="event : ${activeEvents}">
+                <div class="ev-title">
+                    <span th:text="${event.title}">Evento</span>
+                </div>
+                <div class="ev-desc" th:text="${event.description}">Descrição do evento...</div>
+                <div class="ev-meta">
+                    <span class="ev-status active">Ativo</span>
+                    <span class="ev-timer" th:if="${event.expirationDate != null}"
+                          th:attr="data-expires=${event.expirationDate}">
+                        &#9202;
+                    </span>
+                </div>
+                <div class="ev-progress" th:if="${event.totalCost != null && event.totalCost > 0}">
+                    <div class="ev-progress-bar" th:style="'width:' + ${event.fundingPercentage} + '%'"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending / Funded events waiting for contributions -->
+        <div th:if="${!pendingEvents.isEmpty()}" style="margin-top: 18px;">
+            <h3 style="font-size: 0.95rem; color: #aaa; margin-bottom: 12px;">&#128172; Aguardando Contribuições</h3>
+            <div class="events-grid">
+                <div class="event-card" th:each="event : ${pendingEvents}">
+                    <div class="ev-title">
+                        <span th:text="${event.title}">Evento</span>
+                    </div>
+                    <div class="ev-desc" th:text="${event.description}">Descrição...</div>
+                    <div class="ev-meta">
+                        <span class="ev-status" th:classappend="${event.status.name() == 'FUNDED' ? 'funded' : 'pending'}"
+                              th:text="${event.status.name() == 'FUNDED' ? 'Financiado' : 'Pendente'}">Pendente</span>
+                        <span style="color: #f1c40f; font-size: 0.82rem;">
+                            &#8371; <span th:text="${event.amountCollected}">0</span> / <span th:text="${event.totalCost}">0</span>
+                        </span>
+                    </div>
+                    <div class="ev-progress">
+                        <div class="ev-progress-bar" th:style="'width:' + ${event.fundingPercentage} + '%'"
+                             style="background: linear-gradient(90deg, #f1c40f, #e67e22);"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="no-events" th:if="${activeEvents.isEmpty() && pendingEvents.isEmpty()}">
+            Nenhum evento ativo no momento. <a href="/events/create" style="color: #4facfe;">Criar um evento</a>
+        </div>
+    </div>
+
+    <!-- ═══════════ Rankings: Top Kills ═══════════ -->
     <div class="ranking-section">
-        <h2>🏆 Top Exterminadores de Zumbis</h2>
-        <table class="ranking-table">
-            <thead>
-                <tr>
-                    <th>Rank</th>
-                    <th>Nome do Personagem</th>
-                    <th>Jogador</th>
-                    <th>Abates de Zumbis</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="character, iterStat : ${topCharactersByKills}">
-                    <td>
-                        <span class="rank-badge" 
-                              th:classappend="${iterStat.index == 0 ? 'rank-1' : (iterStat.index == 1 ? 'rank-2' : (iterStat.index == 2 ? 'rank-3' : 'rank-other'))}"
-                              th:text="${iterStat.index + 1}">1</span>
-                    </td>
-                    <td th:text="${character.playerName}">Character Name</td>
-                    <td th:text="${character.user.username}">Username</td>
-                    <td>
-                        <strong th:text="${character.zombieKills}">0</strong>
-                    </td>
-                    <td>
-                        <span class="status-badge" 
-                              th:classappend="${character.isDead ? 'status-dead' : 'status-alive'}"
-                              th:text="${character.isDead ? '💀 Morto' : '✅ Vivo'}">Status</span>
-                    </td>
-                </tr>
-                <tr th:if="${topCharactersByKills.empty}">
-                    <td colspan="5" style="text-align: center; color: #aaa;">Nenhum dado de personagem disponível ainda.</td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="ranking-header">
+            <h2>&#127942; Top Exterminadores</h2>
+        </div>
+        <div class="ranking-table-wrap">
+            <table class="ranking-table" id="killsTable">
+                <thead>
+                    <tr>
+                        <th style="width:50px">#</th>
+                        <th>Personagem</th>
+                        <th>Jogador</th>
+                        <th>Abates</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="character, iterStat : ${topCharactersByKills}">
+                        <td>
+                            <span class="rank-badge"
+                                  th:classappend="${iterStat.index == 0 ? 'rank-1' : (iterStat.index == 1 ? 'rank-2' : (iterStat.index == 2 ? 'rank-3' : 'rank-other'))}"
+                                  th:text="${iterStat.index + 1}">1</span>
+                        </td>
+                        <td th:text="${character.playerName}">Name</td>
+                        <td style="color:#888" th:text="${character.user.username}">User</td>
+                        <td><strong th:text="${character.zombieKills}">0</strong></td>
+                        <td>
+                            <span class="status-badge"
+                                  th:classappend="${character.isDead ? 'status-dead' : 'status-alive'}"
+                                  th:text="${character.isDead ? '&#128128; Morto' : '&#9989; Vivo'}">Status</span>
+                        </td>
+                    </tr>
+                    <tr th:if="${topCharactersByKills.empty}">
+                        <td colspan="5" style="text-align:center;color:#666;padding:24px;">Nenhum dado disponível.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="pagination" id="killsPagination"></div>
     </div>
 
-    <!-- Longest Survivors Rankings Section -->
+    <!-- ═══════════ Rankings: Longest Survivors ═══════════ -->
     <div class="ranking-section">
-        <h2>⏱️ Sobreviventes Mais Resistentes</h2>
-        <table class="ranking-table">
-            <thead>
-                <tr>
-                    <th>Rank</th>
-                    <th>Nome do Personagem</th>
-                    <th>Jogador</th>
-                    <th>Horas Sobrevividas</th>
-                    <th>Abates de Zumbis</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="character, iterStat : ${topCharactersByHours}">
-                    <td>
-                        <span class="rank-badge" 
-                              th:classappend="${iterStat.index == 0 ? 'rank-1' : (iterStat.index == 1 ? 'rank-2' : (iterStat.index == 2 ? 'rank-3' : 'rank-other'))}"
-                              th:text="${iterStat.index + 1}">1</span>
-                    </td>
-                    <td th:text="${character.playerName}">Character Name</td>
-                    <td th:text="${character.user.username}">Username</td>
-                    <td>
-                        <strong th:text="${character.hoursSurvived != null ? character.hoursSurvived + 'h' : 'N/A'}">0h</strong>
-                    </td>
-                    <td th:text="${character.zombieKills}">0</td>
-                    <td>
-                        <span class="status-badge" 
-                              th:classappend="${character.isDead ? 'status-dead' : 'status-alive'}"
-                              th:text="${character.isDead ? '💀 Morto' : '✅ Vivo'}">Status</span>
-                    </td>
-                </tr>
-                <tr th:if="${topCharactersByHours.empty}">
-                    <td colspan="6" style="text-align: center; color: #aaa;">Nenhum dado de personagem disponível ainda.</td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="ranking-header">
+            <h2>&#9201; Sobreviventes Mais Resistentes</h2>
+        </div>
+        <div class="ranking-table-wrap">
+            <table class="ranking-table" id="hoursTable">
+                <thead>
+                    <tr>
+                        <th style="width:50px">#</th>
+                        <th>Personagem</th>
+                        <th>Jogador</th>
+                        <th>Horas</th>
+                        <th>Abates</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="character, iterStat : ${topCharactersByHours}">
+                        <td>
+                            <span class="rank-badge"
+                                  th:classappend="${iterStat.index == 0 ? 'rank-1' : (iterStat.index == 1 ? 'rank-2' : (iterStat.index == 2 ? 'rank-3' : 'rank-other'))}"
+                                  th:text="${iterStat.index + 1}">1</span>
+                        </td>
+                        <td th:text="${character.playerName}">Name</td>
+                        <td style="color:#888" th:text="${character.user.username}">User</td>
+                        <td><strong th:text="${character.hoursSurvived != null ? character.hoursSurvived + 'h' : 'N/A'}">0h</strong></td>
+                        <td th:text="${character.zombieKills}">0</td>
+                        <td>
+                            <span class="status-badge"
+                                  th:classappend="${character.isDead ? 'status-dead' : 'status-alive'}"
+                                  th:text="${character.isDead ? '&#128128; Morto' : '&#9989; Vivo'}">Status</span>
+                        </td>
+                    </tr>
+                    <tr th:if="${topCharactersByHours.empty}">
+                        <td colspan="6" style="text-align:center;color:#666;padding:24px;">Nenhum dado disponível.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="pagination" id="hoursPagination"></div>
     </div>
 
-    <!-- Stats Cards (Legacy - Hidden) -->
-    <div class="card-grid" style="display: none;">
-        <div class="stats-card">
-            <h3 th:text="${stats.zombieKills}">0</h3>
-            <p>🧟 Zombie Kills</p>
-        </div>
-        <div class="stats-card">
-            <h3 th:text="${stats.money}">0</h3>
-            <p>💰 Money</p>
-        </div>
-        <div class="stats-card">
-            <h3 th:text="${stats.currencyPoints}">0</h3>
-            <p>⭐ Currency Points</p>
-        </div>
-    </div>
-
-    <!-- Purchase Card -->
-    <div class="purchase-card">
-
-        <p style="margin-top: 15px; color: #aaa; font-size: 0.9rem;">
-            💡 Ganhe dólares do apocalipse matando zumbis e acumulando dinheiro no jogo!
-        </p>
-    </div>
 </main>
+
+<!-- ═══════════ Map Regions Modal ═══════════ -->
+<div id="mapModal" style="
+    display:none; position:fixed; inset:0; z-index:10000;
+    align-items:center; justify-content:center;
+    background:rgba(0,0,0,0.82);
+" onclick="if(event.target===this)this.style.display='none'">
+    <div style="
+        width:min(96vw,1600px); height:min(92vh,1000px);
+        border-radius:16px; overflow:hidden;
+        border:1px solid rgba(255,255,255,0.1);
+        box-shadow:0 20px 60px rgba(0,0,0,0.6);
+        position:relative;
+    ">
+        <iframe id="mapIframe" style="width:100%;height:100%;border:none;display:block"></iframe>
+    </div>
+</div>
+
+<script>
+/* ── Map Modal ── */
+const mapModal = document.getElementById('mapModal');
+const mapIframe = document.getElementById('mapIframe');
+new MutationObserver(() => {
+    if (mapModal.style.display === 'flex' && !mapIframe.src) mapIframe.src = '/map-regions';
+}).observe(mapModal, { attributes: true, attributeFilter: ['style'] });
+window.addEventListener('message', e => { if (e.data === 'closeMapRegions') mapModal.style.display = 'none'; });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && mapModal.style.display === 'flex') mapModal.style.display = 'none'; });
+
+/* ── Event countdown timers ── */
+document.querySelectorAll('[data-expires]').forEach(el => {
+    const exp = new Date(el.dataset.expires);
+    function tick() {
+        const diff = exp - Date.now();
+        if (diff <= 0) { el.textContent = '⏰ Expirado'; return; }
+        const d = Math.floor(diff / 86400000);
+        const h = Math.floor((diff % 86400000) / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        el.textContent = '⏲ ' + (d > 0 ? d + 'd ' : '') + h + 'h ' + m + 'm';
+    }
+    tick();
+    setInterval(tick, 60000);
+});
+
+/* ── Client-side Pagination ── */
+function setupPagination(tableId, paginationId, perPage) {
+    const table = document.getElementById(tableId);
+    const paginationEl = document.getElementById(paginationId);
+    if (!table || !paginationEl) return;
+
+    const rows = Array.from(table.querySelectorAll('tbody tr'));
+    // If only 1 row and it's the "no data" row, skip
+    if (rows.length <= 1 && rows[0] && rows[0].querySelector('td[colspan]')) return;
+    if (rows.length <= perPage) return; // No pagination needed
+
+    const totalPages = Math.ceil(rows.length / perPage);
+    let currentPage = 1;
+
+    function render() {
+        const start = (currentPage - 1) * perPage;
+        const end = start + perPage;
+        rows.forEach((row, i) => {
+            row.style.display = (i >= start && i < end) ? '' : 'none';
+        });
+
+        // Build pagination controls
+        let html = '';
+        html += '<button ' + (currentPage === 1 ? 'disabled' : '') + ' data-page="' + (currentPage - 1) + '">&laquo;</button>';
+
+        const maxVisible = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+        let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+        if (endPage - startPage < maxVisible - 1) startPage = Math.max(1, endPage - maxVisible + 1);
+
+        for (let p = startPage; p <= endPage; p++) {
+            html += '<button class="' + (p === currentPage ? 'active' : '') + '" data-page="' + p + '">' + p + '</button>';
+        }
+
+        html += '<button ' + (currentPage === totalPages ? 'disabled' : '') + ' data-page="' + (currentPage + 1) + '">&raquo;</button>';
+        html += '<span class="page-info">' + currentPage + ' de ' + totalPages + '</span>';
+        paginationEl.innerHTML = html;
+
+        paginationEl.querySelectorAll('button[data-page]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentPage = parseInt(btn.dataset.page);
+                render();
+            });
+        });
+    }
+
+    render();
+}
+
+setupPagination('killsTable', 'killsPagination', 10);
+setupPagination('hoursTable', 'hoursPagination', 10);
+</script>
 </body>
 </html>

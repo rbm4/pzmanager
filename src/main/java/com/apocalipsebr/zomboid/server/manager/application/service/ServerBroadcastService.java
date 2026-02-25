@@ -31,6 +31,7 @@ public class ServerBroadcastService {
 
     private static final List<String> BROADCAST_MESSAGES = List.of(
             "Bem-vindo ao Apocalipse BR! Divirta-se e respeite as regras.",
+            "Iniciem as pesquisas! A vacina sob patente da Umbrella corp já está em Knox County! Https://apocalipse.cloud/season-guide",
             "Visite nosso site para conferir a loja, garagem e mais! Https://apocalipse.cloud/",
             "Participe dos eventos semanais e ganhe recompensas!",
             "Lembre-se: trabalho em equipe aumenta suas chances de sobrevivência!",
@@ -76,7 +77,9 @@ public class ServerBroadcastService {
     public void broadcastMessage() {
         int index = messageIndex.getAndUpdate(i -> (i + 1) % BROADCAST_MESSAGES.size());
         String message = BROADCAST_MESSAGES.get(index);
-
+        if (index > BROADCAST_MESSAGES.size()){
+            index = 0;
+        }
         try {
             String command = "servermsg \"" + message + "\"";
             logger.info("Broadcasting message: " + command);

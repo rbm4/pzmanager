@@ -32,6 +32,14 @@ public class RegionWebController {
         this.regionService = regionService;
     }
 
+    // ==================== Map Selector ====================
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/map-selector")
+    public String mapSelectorPage() {
+        return "map-region-selector";
+    }
+
     // ==================== Admin Management ====================
 
     @PreAuthorize("hasRole('ADMIN')")
