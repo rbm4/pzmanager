@@ -268,7 +268,12 @@
         let url = '/regions/map-selector';
         const params = [];
         if (x1 && y1 && x2 && y2) {
-            params.push(`x1=${x1}`, `y1=${y1}`, `x2=${x2}`, `y2=${y2}`);
+            params.push(
+                `x1=${encodeURIComponent(x1)}`,
+                `y1=${encodeURIComponent(y1)}`,
+                `x2=${encodeURIComponent(x2)}`,
+                `y2=${encodeURIComponent(y2)}`
+            );
         }
         if (regionId) {
             params.push(`excludeId=${regionId}`);
