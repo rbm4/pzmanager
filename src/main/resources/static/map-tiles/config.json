@@ -1,0 +1,31 @@
+{
+  "worldBounds": {
+    "x1": 0,
+    "y1": 4,
+    "x2": 19796,
+    "y2": 15899
+  },
+  "levels": [
+    {
+      "minZoom": 0,
+      "maxZoom": 0.15,
+      "cols": 1,
+      "rows": 1,
+      "folder": "0"
+    },
+    {
+      "minZoom": 0.15,
+      "maxZoom": 0.50,
+      "cols": 4,
+      "rows": 3,
+      "folder": "1"
+    },
+    {
+      "minZoom": 0.50,
+      "maxZoom": 999,
+      "cols": 8,
+      "rows": 6,
+      "folder": "2"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "route": {
+    "default": "map_data/"
+  },
+  "version": "1.1.10",
+  "git_branch": "refs/heads/main",
+  "git_commit": "f399c8bce0e3278423d7891f4ff483f742cd96c9"
+}
