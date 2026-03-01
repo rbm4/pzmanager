@@ -28,6 +28,11 @@ public class MapRegionsController {
         return "map-regions";
     }
 
+    @GetMapping("/viewer")
+    public String mapRegionViewerPage() {
+        return "map-region-viewer";
+    }
+
     @GetMapping("/api/regions")
     @ResponseBody
     public ResponseEntity<List<Map<String, Object>>> getRegions() {

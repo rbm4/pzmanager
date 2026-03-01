@@ -33,28 +33,21 @@ public class CharacterService {
     
     @Transactional
     public Character updateCharacterStats(User user, ZombieKillsUpdateDTO dto) {
-        logger.info("Updating stats for character: " + dto.playerName() + " (User: " + user.getUsername() + ")");
-        
         Season currentSeason = seasonService.getCurrentSeason();
         Optional<Character> existingCharacter = characterRepository.findByUserAndPlayerNameAndSeason(user, dto.playerName(), currentSeason);
         
         Character character;
         if (existingCharacter.isPresent()) {
             character = existingCharacter.get();
-            logger.info("Updating existing character: " + dto.playerName() + " (Season: " + currentSeason.getName() + ")");
         } else {
             character = new Character(user, dto.playerName(), dto.serverName(), currentSeason);
-            logger.info("Creating new character: " + dto.playerName() + " (Season: " + currentSeason.getName() + ")");
         }
         
         // Update character stats
         if (dto.killsSinceLastUpdate() != null && dto.killsSinceLastUpdate() > 0) {
             character.setZombieKills(character.getZombieKills() + dto.killsSinceLastUpdate());
-            
             // Award currency points based on kills (1 point per kill)
             character.setCurrencyPoints(character.getCurrencyPoints() + (dto.killsSinceLastUpdate()*CURRENCY_MULTIPLIER));
-            
-            logger.info("Added " + dto.killsSinceLastUpdate() + " kills. Total: " + character.getZombieKills());
         }
         
         // Update location

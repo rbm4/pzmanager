@@ -19,271 +19,415 @@ import java.util.List;
  */
 public enum EventPropertySuggestion {
 
-    // ==================== SANDBOX PROPERTIES (Global Server Changes) ====================
+    // ==================== SANDBOX PROPERTIES (Global Server Changes)
+    // ====================
 
     // XP_BOOST(
-    //     "Aumento de XP", "MultiplierConfig.Global", PropertyTarget.SANDBOX,
-    //     SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
-    //     "Aumenta a taxa de experiência de todos os jogadores",
-    //     1.0, 0.05, 3.0, 100
+    // "Aumento de XP", "MultiplierConfig.Global", PropertyTarget.SANDBOX,
+    // SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+    // "Aumenta a taxa de experiência de todos os jogadores",
+    // 1.0, 0.05, 3.0, 100
     // ),
 
     // ---- LOOT SETTINGS (individual categories) ----
 
     FOOD_LOOT_NEW(
-        "Loot de Comida", "FoodLootNew", PropertyTarget.SANDBOX,
-        SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
-        "Comida perecível e alimentos que podem estragar",
-        0.6, 0.0, 4.0, 170
-    ),
+            "Loot de Comida", "FoodLootNew", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Comida perecível e alimentos que podem estragar",
+            0.6, 0.0, 4.0, 170, null),
 
     LITERATURE_LOOT_NEW(
-        "Loot de Literatura", "LiteratureLootNew", PropertyTarget.SANDBOX,
-        SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
-        "Itens de leitura, incluindo panfletos e livros",
-        0.6, 0.0, 4.0, 270
-    ),
+            "Loot de Literatura", "LiteratureLootNew", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Itens de leitura, incluindo panfletos e livros",
+            0.6, 0.0, 4.0, 270, null),
 
     MEDICAL_LOOT_NEW(
-        "Loot Médico", "MedicalLootNew", PropertyTarget.SANDBOX,
-        SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
-        "Remédios, bandagens e itens de primeiros socorros",
-        0.6, 0.0, 4.0, 170
-    ),
+            "Loot Médico", "MedicalLootNew", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Remédios, bandagens e itens de primeiros socorros",
+            0.6, 0.0, 4.0, 170, null),
 
     SURVIVAL_GEARS_LOOT_NEW(
-        "Loot de Sobrevivência", "SurvivalGearsLootNew", PropertyTarget.SANDBOX,
-        SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
-        "Varas de pesca, barracas e equipamento de camping",
-        0.6, 0.0, 4.0, 170
-    ),
+            "Loot de Sobrevivência", "SurvivalGearsLootNew", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Varas de pesca, barracas e equipamento de camping",
+            0.6, 0.0, 4.0, 170, null),
 
     CANNED_FOOD_LOOT_NEW(
-        "Loot de Enlatados", "CannedFoodLootNew", PropertyTarget.SANDBOX,
-        SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
-        "Comida enlatada, seca e bebidas",
-        0.6, 0.0, 4.0, 270
-    ),
+            "Loot de Enlatados", "CannedFoodLootNew", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Comida enlatada, seca e bebidas",
+            0.6, 0.0, 4.0, 270, null),
 
     WEAPON_LOOT_NEW(
-        "Loot de Armas", "WeaponLootNew", PropertyTarget.SANDBOX,
-        SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
-        "Armas que não são ferramentas de outras categorias",
-        0.6, 0.0, 4.0, 390
-    ),
+            "Loot de Armas", "WeaponLootNew", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Armas que não são ferramentas de outras categorias",
+            0.6, 0.0, 4.0, 390, null),
 
     RANGED_WEAPON_LOOT_NEW(
-        "Loot de Armas de Fogo", "RangedWeaponLootNew", PropertyTarget.SANDBOX,
-        SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
-        "Inclui acessórios e anexos para armas de fogo",
-        0.6, 0.0, 4.0, 450
-    ),
+            "Loot de Armas de Fogo", "RangedWeaponLootNew", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Inclui acessórios e anexos para armas de fogo",
+            0.6, 0.0, 4.0, 450, null),
 
     AMMO_LOOT_NEW(
-        "Loot de Munição", "AmmoLootNew", PropertyTarget.SANDBOX,
-        SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
-        "Munição solta, caixas e carregadores",
-        0.6, 0.0, 4.0, 650
-    ),
+            "Loot de Munição", "AmmoLootNew", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Munição solta, caixas e carregadores",
+            0.6, 0.0, 4.0, 650, null),
 
     MECHANICS_LOOT_NEW(
-        "Loot de Mecânica", "MechanicsLootNew", PropertyTarget.SANDBOX,
-        SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
-        "Peças de veículos e ferramentas para instalação",
-        0.6, 0.0, 4.0, 180
-    ),
+            "Loot de Mecânica", "MechanicsLootNew", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Peças de veículos e ferramentas para instalação",
+            0.6, 0.0, 4.0, 180, null),
 
     OTHER_LOOT_NEW(
-        "Loot Diversos", "OtherLootNew", PropertyTarget.SANDBOX,
-        SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
-        "Todo o resto. Afeta também forrageamento em zonas urbanas",
-        0.6, 0.0, 4.0, 170
-    ),
+            "Loot Diversos", "OtherLootNew", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Todo o resto. Afeta também forrageamento em zonas urbanas",
+            0.6, 0.0, 4.0, 170, null),
 
     CLOTHING_LOOT_NEW(
-        "Loot de Roupas", "ClothingLootNew", PropertyTarget.SANDBOX,
-        SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
-        "Itens vestíveis que não são contêineres",
-        0.6, 0.0, 4.0, 170
-    ),
+            "Loot de Roupas", "ClothingLootNew", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Itens vestíveis que não são contêineres",
+            0.6, 0.0, 4.0, 170, null),
 
     CONTAINER_LOOT_NEW(
-        "Loot de Mochilas", "ContainerLootNew", PropertyTarget.SANDBOX,
-        SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
-        "Mochilas e contêineres vestíveis/equipáveis",
-        0.6, 0.0, 4.0, 200
-    ),
+            "Loot de Mochilas", "ContainerLootNew", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Mochilas e contêineres vestíveis/equipáveis",
+            0.6, 0.0, 4.0, 200, null),
 
     KEY_LOOT_NEW(
-        "Loot de Chaves", "KeyLootNew", PropertyTarget.SANDBOX,
-        SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
-        "Chaves de prédios/carros, chaveiros e cadeados",
-        0.6, 0.0, 4.0, 170
-    ),
+            "Loot de Chaves", "KeyLootNew", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Chaves de prédios/carros, chaveiros e cadeados",
+            0.6, 0.0, 4.0, 170, null),
 
     MEDIA_LOOT_NEW(
-        "Loot de Mídia", "MediaLootNew", PropertyTarget.SANDBOX,
-        SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
-        "Fitas VHS e CDs",
-        0.6, 0.0, 4.0, 250
-    ),
+            "Loot de Mídia", "MediaLootNew", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Fitas VHS e CDs",
+            0.6, 0.0, 4.0, 250, null),
 
     MEMENTO_LOOT_NEW(
-        "Loot de Lembranças", "MementoLootNew", PropertyTarget.SANDBOX,
-        SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
-        "Itens Spiffo, pelúcias e colecionáveis",
-        0.6, 0.0, 4.0, 50
-    ),
+            "Loot de Lembranças", "MementoLootNew", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Itens Spiffo, pelúcias e colecionáveis",
+            0.6, 0.0, 4.0, 50, null),
 
     COOKWARE_LOOT_NEW(
-        "Loot de Utensílios", "CookwareLootNew", PropertyTarget.SANDBOX,
-        SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
-        "Itens usados na culinária, incluindo facas. Não inclui comida",
-        0.6, 0.0, 4.0, 165
-    ),
+            "Loot de Utensílios", "CookwareLootNew", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Itens usados na culinária, incluindo facas. Não inclui comida",
+            0.6, 0.0, 4.0, 165, null),
 
     MATERIAL_LOOT_NEW(
-        "Loot de Materiais", "MaterialLootNew", PropertyTarget.SANDBOX,
-        SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
-        "Ingredientes para fabricação ou construção. Não inclui ferramentas",
-        0.6, 0.0, 4.0, 165
-    ),
+            "Loot de Materiais", "MaterialLootNew", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Ingredientes para fabricação ou construção. Não inclui ferramentas",
+            0.6, 0.0, 4.0, 165, null),
 
     FARMING_LOOT_NEW(
-        "Loot de Fazenda", "FarmingLootNew", PropertyTarget.SANDBOX,
-        SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
-        "Itens de agricultura como sementes, pás e espátulas",
-        0.6, 0.0, 4.0, 165
-    ),
+            "Loot de Fazenda", "FarmingLootNew", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Itens de agricultura como sementes, pás e espátulas",
+            0.6, 0.0, 4.0, 165, null),
 
     TOOL_LOOT_NEW(
-        "Loot de Ferramentas", "ToolLootNew", PropertyTarget.SANDBOX,
-        SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
-        "Ferramentas diversas não incluídas em outras categorias",
-        0.6, 0.0, 4.0, 180
-    ),
+            "Loot de Ferramentas", "ToolLootNew", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Ferramentas diversas não incluídas em outras categorias",
+            0.6, 0.0, 4.0, 180, null),
 
     FARMING_SPEED(
-        "Velocidade de Cultivo", "Farming", PropertyTarget.SANDBOX,
-        SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
-        "Acelera o crescimento de plantações e cultivos",
-        1.0, 0.05, 3.0, 180
-    ),
+            "Velocidade de Cultivo", "Farming", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Acelera o crescimento de plantações e cultivos",
+            1.0, 0.05, 3.0, 180, null),
 
     MELEE_XP_BOOST(
-        "XP de Combate Corpo-a-Corpo", "XPMultiplier.Maintenance", PropertyTarget.SANDBOX,
-        SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
-        "Aumenta a experiência ganha em combate corpo-a-corpo",
-        1.0, 0.05, 3.0, 490
-    ),
-
-    CRAFTING_XP_BOOST(
-        "XP de Fabricação", "XPMultiplier.Crafting", PropertyTarget.SANDBOX,
-        SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
-        "Aumenta a experiência ao fabricar itens",
-        1.0, 0.05, 3.0, 570
-    ),
-
-    COOKING_XP_BOOST(
-        "XP de Culinária", "XPMultiplier.Cooking", PropertyTarget.SANDBOX,
-        SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
-        "Aumenta a experiência ao cozinhar",
-        1.0, 0.05, 3.0, 360
-    ),
-
-    NATURE_ABUNDANCE(
-        "Abundância Natural", "NatureAbundance", PropertyTarget.SANDBOX,
-        SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
-        "Aumenta recursos naturais como frutas, bagas e cogumelos",
-        1.0, 0.05, 3.0, 190
-    ),
+            "XP de Combate Corpo-a-Corpo", "MultiplierConfig.Maintenance", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em combate corpo-a-corpo",
+            1.0, 1.0, 5.0, 490, null),
 
     FITNESS_XP_BOOST(
-        "XP de Condicionamento", "XPMultiplier.Fitness", PropertyTarget.SANDBOX,
-        SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
-        "Aumenta a experiência de condicionamento físico",
-        1.0, 0.05, 3.0, 260
-    ),
+            "XP de Condicionamento Físico", "MultiplierConfig.Fitness", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Condicionamento Físico",
+            1.0, 1.0, 5.0, 500, null),
 
-    SURVIVAL_XP_BOOST(
-        "XP de Sobrevivência", "XPMultiplier.Survival", PropertyTarget.SANDBOX,
-        SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
-        "Aumenta a experiência de habilidades de sobrevivência",
-        1.0, 0.05, 3.0, 130
-    ),
+    STRENGTH_XP_BOOST(
+            "XP de Força", "MultiplierConfig.Strength", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Força",
+            1.0, 1.0, 5.0, 500, null),
 
-    // ==================== REGION PROPERTIES (Zone-specific Changes) ====================
+    SPRINTING_XP_BOOST(
+            "XP de Corrida", "MultiplierConfig.Sprinting", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Corrida",
+            1.0, 1.0, 5.0, 380, null),
+
+    LIGHTFOOT_XP_BOOST(
+            "XP de Pés Leves", "MultiplierConfig.Lightfoot", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Pés Leves",
+            1.0, 1.0, 5.0, 380, null),
+
+    NIMBLE_XP_BOOST(
+            "XP de Agilidade", "MultiplierConfig.Nimble", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Agilidade",
+            1.0, 1.0, 5.0, 380, null),
+
+    SNEAK_XP_BOOST(
+            "XP de Furtividade", "MultiplierConfig.Sneak", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Furtividade",
+            1.0, 1.0, 5.0, 380, null),
+
+    AXE_XP_BOOST(
+            "XP de Machado", "MultiplierConfig.Axe", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Machado",
+            1.0, 1.0, 5.0, 250, null),
+
+    BLUNT_XP_BOOST(
+            "XP de Contundente Longo", "MultiplierConfig.Blunt", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Contundente Longo",
+            1.0, 1.0, 5.0, 250, null),
+
+    SMALL_BLUNT_XP_BOOST(
+            "XP de Contundente Curto", "MultiplierConfig.SmallBlunt", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Contundente Curto",
+            1.0, 1.0, 5.0, 250, null),
+
+    LONG_BLADE_XP_BOOST(
+            "XP de Lâmina Longa", "MultiplierConfig.LongBlade", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Lâmina Longa",
+            1.0, 1.0, 5.0, 250, null),
+
+    SMALL_BLADE_XP_BOOST(
+            "XP de Lâmina Curta", "MultiplierConfig.SmallBlade", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Lâmina Curta",
+            1.0, 1.0, 5.0, 250, null),
+
+    SPEAR_XP_BOOST(
+            "XP de Lança", "MultiplierConfig.Spear", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Lança",
+            1.0, 1.0, 5.0, 250, null),
+
+    WOODWORK_XP_BOOST(
+            "XP de Carpintaria", "MultiplierConfig.Woodwork", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Carpintaria",
+            1.0, 1.0, 5.0, 350, null),
+
+    COOKING_XP_BOOST(
+            "XP de Culinária", "MultiplierConfig.Cooking", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Culinária",
+            1.0, 1.0, 5.0, 180, null),
+
+    FARMING_XP_BOOST(
+            "XP de Agricultura", "MultiplierConfig.Farming", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Agricultura",
+            1.0, 1.0, 5.0, 180, null),
+
+    DOCTOR_XP_BOOST(
+            "XP de Primeiros Socorros", "MultiplierConfig.Doctor", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Primeiros Socorros",
+            1.0, 1.0, 5.0, 400, null),
+
+    ELECTRICITY_XP_BOOST(
+            "XP de Eletricidade", "MultiplierConfig.Electricity", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Eletricidade",
+            1.0, 1.0, 5.0, 300, null),
+
+    METAL_WELDING_XP_BOOST(
+            "XP de Soldagem", "MultiplierConfig.MetalWelding", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Soldagem",
+            1.0, 1.0, 5.0, 300, null),
+
+    MECHANICS_XP_BOOST(
+            "XP de Mecânica", "MultiplierConfig.Mechanics", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Mecânica",
+            1.0, 1.0, 5.0, 300, null),
+
+    TAILORING_XP_BOOST(
+            "XP de Costura", "MultiplierConfig.Tailoring", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Costura",
+            1.0, 1.0, 5.0, 380, null),
+
+    AIMING_XP_BOOST(
+            "XP de Mira", "MultiplierConfig.Aiming", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Mira",
+            1.0, 1.0, 5.0, 700, null),
+
+    RELOADING_XP_BOOST(
+            "XP de Recarga", "MultiplierConfig.Reloading", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Recarga",
+            1.0, 1.0, 5.0, 700, null),
+
+    FISHING_XP_BOOST(
+            "XP de Pesca", "MultiplierConfig.Fishing", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Pesca",
+            1.0, 1.0, 5.0, 280, null),
+
+    TRAPPING_XP_BOOST(
+            "XP de Armadilhas", "MultiplierConfig.Trapping", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Armadilhas",
+            1.0, 1.0, 5.0, 280, null),
+
+    FORAGING_XP_BOOST(
+            "XP de Foraging", "MultiplierConfig.PlantScavenging", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Foraging",
+            1.0, 1.0, 5.0, 180, null),
+
+    FLINT_KNAPPING_XP_BOOST(
+            "XP de Lascamento", "MultiplierConfig.FlintKnapping", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Lascamento de Pedra",
+            1.0, 1.0, 5.0, 280, null),
+
+    MASONRY_XP_BOOST(
+            "XP de Alvenaria", "MultiplierConfig.Masonry", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Alvenaria",
+            1.0, 1.0, 5.0, 380, null),
+
+    POTTERY_XP_BOOST(
+            "XP de Cerâmica", "MultiplierConfig.Pottery", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Cerâmica",
+            1.0, 1.0, 5.0, 280, null),
+
+    CARVING_XP_BOOST(
+            "XP de Entalhe", "MultiplierConfig.Carving", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Entalhe",
+            1.0, 1.0, 5.0, 280, null),
+
+    HUSBANDRY_XP_BOOST(
+            "XP de Cuidado Animal", "MultiplierConfig.Husbandry", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Cuidado Animal",
+            1.0, 1.0, 5.0, 220, null),
+
+    TRACKING_XP_BOOST(
+            "XP de Rastreamento", "MultiplierConfig.Tracking", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Rastreamento",
+            1.0, 1.0, 5.0, 180, null),
+
+    BLACKSMITH_XP_BOOST(
+            "XP de Ferraria", "MultiplierConfig.Blacksmith", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Ferraria",
+            1.0, 1.0, 5.0, 300, null),
+
+    BUTCHERING_XP_BOOST(
+            "XP de Abate", "MultiplierConfig.Butchering", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Abate",
+            1.0, 1.0, 5.0, 180, null),
+
+    GLASSMAKING_XP_BOOST(
+            "XP de Vidraria", "MultiplierConfig.Glassmaking", PropertyTarget.SANDBOX,
+            SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
+            "Aumenta a experiência ganha em Vidraria",
+            1.0, 1.0, 5.0, 300, null),
+
+    // ==================== REGION PROPERTIES (Zone-specific Changes)
+    // ====================
 
     SPRINTER_ZONE(
-        "Zona de Sprinters", "sprinterChance", PropertyTarget.REGION,
-        null, ValueType.PERCENTAGE,
-        "Cria uma zona perigosa com zumbis corredores",
-        0.0, 5.0, 100.0, 500
-    ),
+            "Zona de Sprinters", "sprinterChance", PropertyTarget.REGION,
+            null, ValueType.PERCENTAGE,
+            "Cria uma zona perigosa com zumbis corredores",
+            0.0, 5.0, 100.0, 500, null),
 
     PVP_ZONE(
-        "Zona de Combate PVP", "pvpEnabled", PropertyTarget.REGION,
-        null, ValueType.BOOLEAN,
-        "Habilita combate entre jogadores na zona definida",
-        null, null, null, 500
-    ),
+            "Zona de Combate PVP", "pvpEnabled", PropertyTarget.REGION,
+            null, ValueType.BOOLEAN,
+            "Habilita combate entre jogadores na zona definida",
+            null, null, null, 500, null),
 
     TOUGH_ZOMBIE_ZONE(
-        "Zona de Zumbis Resistentes", "toughnessChance", PropertyTarget.REGION,
-        null, ValueType.PERCENTAGE,
-        "Cria uma zona com zumbis mais difíceis de matar",
-        0.0, 5.0, 100.0, 350
-    ),
+            "Zona de Zumbis Resistentes", "toughnessChance", PropertyTarget.REGION,
+            null, ValueType.PERCENTAGE,
+            "Cria uma zona com zumbis mais difíceis de matar",
+            0.0, 5.0, 100.0, 350, null),
 
     ARMORED_ZOMBIE_ZONE(
-        "Zona de Zumbis Blindados", "zombieArmorFactor", PropertyTarget.REGION,
-        null, ValueType.PERCENTAGE,
-        "Cria uma zona onde zumbis possuem blindagem extra",
-        0.0, 5.0, 100.0, 530
-    ),
+            "Zona de Zumbis Blindados", "zombieArmorFactor", PropertyTarget.REGION,
+            null, ValueType.PERCENTAGE,
+            "Cria uma zona onde zumbis possuem blindagem extra",
+            0.0, 5.0, 100.0, 530, null),
 
     HAWK_VISION_ZONE(
-        "Zona de Visão Aguçada", "hawkVisionChance", PropertyTarget.REGION,
-        null, ValueType.PERCENTAGE,
-        "Cria uma zona onde zumbis detectam jogadores com facilidade",
-        0.0, 5.0, 100.0, 320
-    ),
+            "Zona de Visão Aguçada", "hawkVisionChance", PropertyTarget.REGION,
+            null, ValueType.PERCENTAGE,
+            "Cria uma zona onde zumbis detectam jogadores com facilidade",
+            0.0, 5.0, 100.0, 320, null),
 
     GOOD_HEARING_ZONE(
-        "Zona de Audição Apurada", "goodHearingChance", PropertyTarget.REGION,
-        null, ValueType.PERCENTAGE,
-        "Cria uma zona onde zumbis possuem audição ampliada",
-        0.0, 5.0, 100.0, 310
-    ),
+            "Zona de Audição Apurada", "goodHearingChance", PropertyTarget.REGION,
+            null, ValueType.PERCENTAGE,
+            "Cria uma zona onde zumbis possuem audição ampliada",
+            0.0, 5.0, 100.0, 310, null),
 
     SUPERHUMAN_ZOMBIE_ZONE(
-        "Zona de Zumbis Super-Humanos", "superhumanChance", PropertyTarget.REGION,
-        null, ValueType.PERCENTAGE,
-        "Cria uma zona com zumbis extremamente poderosos",
-        0.0, 5.0, 100.0, 350
-    ),
+            "Zona de Zumbis Super-Humanos", "superhumanChance", PropertyTarget.REGION,
+            null, ValueType.PERCENTAGE,
+            "Cria uma zona com zumbis extremamente poderosos",
+            0.0, 5.0, 100.0, 350, null),
 
     REGION_MESSAGE(
-        "Mensagem da Região", "regionMessage", PropertyTarget.REGION,
-        null, ValueType.TEXT,
-        "Exibe uma mensagem personalizada quando jogadores entram na zona",
-        null, null, null, 550
-    ),
+            "Mensagem da Região", "regionMessage", PropertyTarget.REGION,
+            null, ValueType.TEXT,
+            "Exibe uma mensagem personalizada quando jogadores entram na zona",
+            null, null, null, 550,null),
 
     KILL_POINTS_MULTIPLIER(
-        "Multiplicador de Pontos por Kill", "killPointsMultiplier", PropertyTarget.REGION,
-        null, ValueType.ABSOLUTE,
-        "Aumenta os pontos ganhos por abater zumbis dentro da zona",
-        1.0, 5.0, 100.0, 150
-    );
+            "Multiplicador de Pontos por Kill", "killPointsMultiplier", PropertyTarget.REGION,
+            null, ValueType.ABSOLUTE,
+            "Aumenta os pontos ganhos por abater zumbis dentro da zona",
+            1.0, 5.0, 100.0, 150,null);
 
     // ==================== PERCENTAGE TIERS ====================
 
     /** Available percentage options for PERCENTAGE value types. */
-    public static final int[] PERCENTAGE_TIERS = {5, 10, 15, 30, 50, 100};
+    public static final int[] PERCENTAGE_TIERS = { 5, 10, 15, 30, 50, 100 };
 
-    /** Cost multiplier for each percentage tier (index-matched with PERCENTAGE_TIERS). */
-    public static final int[] PERCENTAGE_COST_MULTIPLIERS = {1, 2, 3, 6, 10, 20};
+    /**
+     * Cost multiplier for each percentage tier (index-matched with
+     * PERCENTAGE_TIERS).
+     */
+    public static final int[] PERCENTAGE_COST_MULTIPLIERS = { 1, 2, 3, 6, 10, 20 };
 
     // ==================== NESTED ENUMS ====================
 
@@ -311,11 +455,12 @@ public enum EventPropertySuggestion {
     private final Double minValue;
     private final Double maxValue;
     private final int baseCost;
+    private final EventPropertySuggestion[] conflicts;
 
     EventPropertySuggestion(String displayName, String propertyKey, PropertyTarget target,
-                            SandboxSetting.ConfigType configType, ValueType valueType,
-                            String description, Double baseValue, Double minValue,
-                            Double maxValue, int baseCost) {
+            SandboxSetting.ConfigType configType, ValueType valueType,
+            String description, Double baseValue, Double minValue,
+            Double maxValue, int baseCost, EventPropertySuggestion[] conflicts) {
         this.displayName = displayName;
         this.propertyKey = propertyKey;
         this.target = target;
@@ -326,6 +471,7 @@ public enum EventPropertySuggestion {
         this.minValue = minValue;
         this.maxValue = maxValue;
         this.baseCost = baseCost;
+        this.conflicts = conflicts;
     }
 
     // ==================== COST CALCULATION ====================
@@ -354,7 +500,8 @@ public enum EventPropertySuggestion {
         if (valueType != ValueType.ABSOLUTE) {
             throw new IllegalStateException("Not an absolute value property");
         }
-        if (maxValue == null || maxValue == 0) return baseCost;
+        if (maxValue == null || maxValue == 0)
+            return baseCost;
         double ratio = Math.abs(value - (baseValue != null ? baseValue : 0)) / maxValue;
         return (int) Math.ceil(baseCost * Math.max(1, ratio * 20));
     }
@@ -362,9 +509,10 @@ public enum EventPropertySuggestion {
     /**
      * Calculates the delta value for a percentage tier.
      * <ul>
-     *   <li>SANDBOX PERCENTAGE: fraction of base value (e.g., 20% of 1.0 = 0.2)</li>
-     *   <li>REGION PERCENTAGE: the percentage itself is the value (e.g., 30 = 30% chance)</li>
-     *   <li>BOOLEAN: always 1.0 (true)</li>
+     * <li>SANDBOX PERCENTAGE: fraction of base value (e.g., 20% of 1.0 = 0.2)</li>
+     * <li>REGION PERCENTAGE: the percentage itself is the value (e.g., 30 = 30%
+     * chance)</li>
+     * <li>BOOLEAN: always 1.0 (true)</li>
      * </ul>
      */
     public double calculateDelta(int percentageTier) {
@@ -400,15 +548,18 @@ public enum EventPropertySuggestion {
     /** Validates whether a given percentage tier is allowed. */
     public boolean isValidPercentageTier(int tier) {
         for (int t : PERCENTAGE_TIERS) {
-            if (t == tier) return true;
+            if (t == tier)
+                return true;
         }
         return false;
     }
 
     /** Validates whether a given absolute value is within allowed bounds. */
     public boolean isValidAbsoluteValue(double value) {
-        if (minValue != null && value < minValue) return false;
-        if (maxValue != null && value > maxValue) return false;
+        if (minValue != null && value < minValue)
+            return false;
+        if (maxValue != null && value > maxValue)
+            return false;
         return true;
     }
 
@@ -416,21 +567,22 @@ public enum EventPropertySuggestion {
 
     public static List<EventPropertySuggestion> getSandboxSuggestions() {
         return Arrays.stream(values())
-            .filter(s -> s.target == PropertyTarget.SANDBOX)
-            .toList();
+                .filter(s -> s.target == PropertyTarget.SANDBOX)
+                .toList();
     }
 
     public static List<EventPropertySuggestion> getRegionSuggestions() {
         return Arrays.stream(values())
-            .filter(s -> s.target == PropertyTarget.REGION)
-            .toList();
+                .filter(s -> s.target == PropertyTarget.REGION)
+                .toList();
     }
 
     /**
      * Safely resolves an enum value by name. Returns null if not found.
      */
     public static EventPropertySuggestion fromName(String name) {
-        if (name == null) return null;
+        if (name == null)
+            return null;
         try {
             return valueOf(name);
         } catch (IllegalArgumentException e) {
@@ -440,14 +592,47 @@ public enum EventPropertySuggestion {
 
     // ==================== GETTERS ====================
 
-    public String getDisplayName() { return displayName; }
-    public String getPropertyKey() { return propertyKey; }
-    public PropertyTarget getTarget() { return target; }
-    public SandboxSetting.ConfigType getConfigType() { return configType; }
-    public ValueType getValueType() { return valueType; }
-    public String getDescription() { return description; }
-    public Double getBaseValue() { return baseValue; }
-    public Double getMinValue() { return minValue; }
-    public Double getMaxValue() { return maxValue; }
-    public int getBaseCost() { return baseCost; }
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public String getPropertyKey() {
+        return propertyKey;
+    }
+
+    public PropertyTarget getTarget() {
+        return target;
+    }
+
+    public SandboxSetting.ConfigType getConfigType() {
+        return configType;
+    }
+
+    public ValueType getValueType() {
+        return valueType;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public Double getBaseValue() {
+        return baseValue;
+    }
+
+    public Double getMinValue() {
+        return minValue;
+    }
+
+    public Double getMaxValue() {
+        return maxValue;
+    }
+
+    public int getBaseCost() {
+        return baseCost;
+    }
+
+    public EventPropertySuggestion[] getConflicts() {
+        return conflicts;
+    }
 }

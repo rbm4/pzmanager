@@ -741,6 +741,14 @@
     </div>
 </div>
 
+<!-- ==================== REGION VIEWER OVERLAY ==================== -->
+<div id="regionViewerOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:10000; align-items:center; justify-content:center;">
+    <div style="position:relative; width:90%; height:90%; max-width:1200px; border-radius:12px; overflow:hidden; border:1px solid rgba(255,152,0,0.3);">
+        <button onclick="closeRegionViewer()" style="position:absolute; top:10px; right:10px; z-index:10001; background:rgba(0,0,0,0.7); border:1px solid rgba(255,255,255,0.3); color:white; width:36px; height:36px; border-radius:50%; cursor:pointer; font-size:1.2rem; display:flex; align-items:center; justify-content:center;">×</button>
+        <iframe id="regionViewerIframe" style="width:100%; height:100%; border:none;" src="about:blank"></iframe>
+    </div>
+</div>
+
 <!-- ==================== CANCEL MODAL ==================== -->
 <div id="cancelModal" class="modal-overlay">
     <div class="modal-content">
@@ -897,6 +905,7 @@
                     html += '<div style="text-align: center;"><span style="color: #888; font-size: 0.8rem; display: block;">X2</span><span style="color: #ffb74d; font-weight: 600; font-size: 1.1rem;">' + data.regionZone.x2 + '</span></div>';
                     html += '<div style="text-align: center;"><span style="color: #888; font-size: 0.8rem; display: block;">Y2</span><span style="color: #ffb74d; font-weight: 600; font-size: 1.1rem;">' + data.regionZone.y2 + '</span></div>';
                     html += '</div>';
+                    html += '<button onclick="openRegionViewer(' + data.regionZone.x1 + ',' + data.regionZone.y1 + ',' + data.regionZone.x2 + ',' + data.regionZone.y2 + ',\'' + (data.regionZone.name || data.title || 'Região').replace(/'/g, "\\'") + '\')" style="margin-top: 12px; width: 100%; padding: 10px; background: rgba(255, 152, 0, 0.15); border: 1px solid rgba(255, 152, 0, 0.5); color: #ffb74d; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.3s ease;">🗺️ Ver no Mapa</button>';
                     html += '</div>';
                 }
 
@@ -940,6 +949,38 @@
     function hideAlert(id) {
         document.getElementById(id).style.display = 'none';
     }
+
+    // ==================== REGION VIEWER ====================
+    function openRegionViewer(x1, y1, x2, y2, name) {
+        const overlay = document.getElementById('regionViewerOverlay');
+        const iframe = document.getElementById('regionViewerIframe');
+        const params = new URLSearchParams({x1, y1, x2, y2, name: name || 'Região'});
+        iframe.src = '/map-regions/viewer?' + params.toString();
+        overlay.style.display = 'flex';
+    }
+
+    function closeRegionViewer() {
+        const overlay = document.getElementById('regionViewerOverlay');
+        const iframe = document.getElementById('regionViewerIframe');
+        overlay.style.display = 'none';
+        iframe.src = 'about:blank';
+    }
+
+    window.addEventListener('message', function(e) {
+        if (e.data === 'closeRegionViewer') {
+            closeRegionViewer();
+        }
+    });
+
+    document.getElementById('regionViewerOverlay').addEventListener('click', function(e) {
+        if (e.target === this) closeRegionViewer();
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && document.getElementById('regionViewerOverlay').style.display === 'flex') {
+            closeRegionViewer();
+        }
+    });
 
     // Close modals on overlay click
     document.querySelectorAll('.modal-overlay').forEach(modal => {

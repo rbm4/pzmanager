@@ -41,6 +41,26 @@ public interface GameEventRepository extends JpaRepository<GameEvent, Long> {
            "END, e.createdAt DESC")
     Page<GameEvent> findAllOrdered(Pageable pageable);
 
+    @Query("SELECT e FROM GameEvent e WHERE e.status IN :statuses ORDER BY " +
+           "CASE e.status " +
+           "  WHEN 'ACTIVE' THEN 1 " +
+           "  WHEN 'FUNDED' THEN 2 " +
+           "  WHEN 'PENDING' THEN 3 " +
+           "  WHEN 'EXPIRED' THEN 4 " +
+           "  WHEN 'CANCELLED' THEN 5 " +
+           "END, e.createdAt DESC")
+    Page<GameEvent> findByStatusInOrdered(@Param("statuses") List<EventStatus> statuses, Pageable pageable);
+
+    @Query("SELECT e FROM GameEvent e WHERE " +
+           "(:search IS NULL OR :search = '' OR " +
+           "LOWER(e.title) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "LOWER(e.description) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
+           "e.status IN :statuses " +
+           "ORDER BY e.createdAt DESC")
+    Page<GameEvent> searchEventsWithStatuses(@Param("search") String search,
+                                             @Param("statuses") List<EventStatus> statuses,
+                                             Pageable pageable);
+
     long countByStatus(EventStatus status);
 
     long countByCreatedByAndCreatedAtAfter(User createdBy, LocalDateTime createdAfter);

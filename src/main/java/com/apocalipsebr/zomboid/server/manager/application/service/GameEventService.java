@@ -58,11 +58,19 @@ public class GameEventService {
 
     // ==================== QUERY METHODS ====================
 
+    private static final List<EventStatus> DEFAULT_VISIBLE_STATUSES =
+            List.of(EventStatus.ACTIVE, EventStatus.FUNDED, EventStatus.PENDING);
+
     public Page<GameEvent> getEventsPaginated(String search, EventStatus status, Pageable pageable) {
-        if (search == null && status == null) {
-            return gameEventRepository.findAllOrdered(pageable);
+        // When an explicit status filter is set, show that status (including EXPIRED/CANCELLED)
+        if (status != null) {
+            return gameEventRepository.searchEvents(search, status, pageable);
         }
-        return gameEventRepository.searchEvents(search, status, pageable);
+        // No status filter: hide EXPIRED and CANCELLED by default
+        if (search == null || search.isEmpty()) {
+            return gameEventRepository.findByStatusInOrdered(DEFAULT_VISIBLE_STATUSES, pageable);
+        }
+        return gameEventRepository.searchEventsWithStatuses(search, DEFAULT_VISIBLE_STATUSES, pageable);
     }
 
     public Optional<GameEvent> getEventById(Long id) {
