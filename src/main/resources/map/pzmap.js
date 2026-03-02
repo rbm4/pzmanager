@@ -1120,10 +1120,12 @@ Promise.all(pmodules).then(() => {
                     const rx2 = g.query_string.region_x2;
                     const ry2 = g.query_string.region_y2;
                     if (rx1 && ry1 && rx2 && ry2) {
-                        regions.goToRegion(
-                            parseFloat(rx1), parseFloat(ry1),
-                            parseFloat(rx2), parseFloat(ry2)
-                        );
+                        const x1 = parseFloat(rx1), y1 = parseFloat(ry1);
+                        const x2 = parseFloat(rx2), y2 = parseFloat(ry2);
+                        const regionName = g.query_string.region_name
+                            ? decodeURIComponent(g.query_string.region_name) : null;
+                        regions.highlightRegion(x1, y1, x2, y2, regionName);
+                        regions.goToRegion(x1, y1, x2, y2);
                     }
                 }
                 return Promise.resolve();

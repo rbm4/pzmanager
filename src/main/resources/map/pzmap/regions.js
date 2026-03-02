@@ -250,6 +250,70 @@ export function goToRegion(x1, y1, x2, y2, padding = 0.2) {
     g.viewer.viewport.fitBounds(rect);
 }
 
+/**
+ * Create a temporary highlighted overlay for a region that may not exist in the DB.
+ * Used to show event region zones in the viewer.
+ */
+export function highlightRegion(x1, y1, x2, y2, name) {
+    if (!g.viewer || !mapWidth) return;
+    const rx1 = Math.min(x1, x2);
+    const ry1 = Math.min(y1, y2);
+    const rx2 = Math.max(x1, x2);
+    const ry2 = Math.max(y1, y2);
+
+    const el = document.createElement('div');
+    el.className = 'pzmap-region-highlight';
+    el.style.cssText = `
+        background: rgba(255,152,0,0.15);
+        border: 3px solid rgba(255,152,0,0.85);
+        box-sizing: border-box;
+        pointer-events: none;
+        animation: regionPulse 2s ease-in-out infinite;
+    `;
+
+    // Add pulsing animation style if not yet added
+    if (!document.getElementById('region-highlight-style')) {
+        const style = document.createElement('style');
+        style.id = 'region-highlight-style';
+        style.textContent = `
+            @keyframes regionPulse {
+                0%, 100% { border-color: rgba(255,152,0,0.85); background: rgba(255,152,0,0.15); }
+                50% { border-color: rgba(255,152,0,0.45); background: rgba(255,152,0,0.08); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // Add name label
+    if (name) {
+        const label = document.createElement('div');
+        label.textContent = name;
+        label.style.cssText = `
+            position: absolute; top: 4px; left: 6px;
+            color: #ffb74d; font-size: 13px; font-weight: bold;
+            font-family: system-ui, sans-serif;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+            white-space: nowrap; pointer-events: none;
+        `;
+        el.appendChild(label);
+    }
+
+    const topLeft = pixelToViewport(rx1, ry1);
+    const bottomRight = pixelToViewport(rx2, ry2);
+    const rect = new OpenSeadragon.Rect(
+        topLeft.x, topLeft.y,
+        bottomRight.x - topLeft.x,
+        bottomRight.y - topLeft.y
+    );
+
+    g.viewer.addOverlay({
+        element: el,
+        location: rect,
+        placement: OpenSeadragon.Placement.TOP_LEFT
+    });
+    overlayElements.push(el);
+}
+
 /** Get all loaded regions data */
 export function getRegions() {
     return regionsData;

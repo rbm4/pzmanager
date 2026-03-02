@@ -64,13 +64,14 @@
         const y2 = params.get('y2') || '';
         const name = params.get('name') || 'Região';
 
-        // Build the pzmap URL with region query params for auto-zoom
+        // Build the pzmap URL with region query params for auto-zoom and highlight
         let pzmapUrl = '/pzmap/pzmap.html';
         if (x1 && y1 && x2 && y2) {
             pzmapUrl += '?region_x1=' + encodeURIComponent(x1)
                 + '&region_y1=' + encodeURIComponent(y1)
                 + '&region_x2=' + encodeURIComponent(x2)
-                + '&region_y2=' + encodeURIComponent(y2);
+                + '&region_y2=' + encodeURIComponent(y2)
+                + '&region_name=' + encodeURIComponent(name);
         }
         document.getElementById('mapFrame').src = pzmapUrl;
 

@@ -633,8 +633,9 @@
                     <span th:if="${event.status.name() == 'ACTIVE' && event.expirationDate != null}">
                         ⏳ Expira: <span class="time-value" th:text="${#temporals.format(event.expirationDate, 'dd/MM HH:mm')}">01/01 12:00</span>
                     </span>
-                    <span th:if="${event.status.name() == 'PENDING'}">
-                        ⏰ Faltam: <span class="time-value" th:text="${event.remainingAmount}">0</span> ₳
+                    <span th:if="${event.status.name() == 'PENDING'}" class="pending-countdown"
+                          th:data-deadline="${#temporals.format(event.createdAt.plusDays(7), 'yyyy-MM-dd''T''HH:mm:ss')}">
+                        ⏰ <span class="time-value countdown-text">Calculando...</span>
                     </span>
                     <span th:if="${event.status.name() == 'EXPIRED'}">
                         ✅ Expirado
@@ -954,13 +955,16 @@
     function openRegionViewer(x1, y1, x2, y2, name) {
         const overlay = document.getElementById('regionViewerOverlay');
         const iframe = document.getElementById('regionViewerIframe');
-        // Load pzmap directly with region query params for auto-zoom
+        // Load pzmap directly with region query params for auto-zoom and highlight
         let url = '/pzmap/pzmap.html';
         if (x1 && y1 && x2 && y2) {
             url += '?region_x1=' + encodeURIComponent(x1)
                  + '&region_y1=' + encodeURIComponent(y1)
                  + '&region_x2=' + encodeURIComponent(x2)
                  + '&region_y2=' + encodeURIComponent(y2);
+            if (name) {
+                url += '&region_name=' + encodeURIComponent(name);
+            }
         }
         iframe.src = url;
         overlay.style.display = 'flex';
@@ -988,6 +992,37 @@
             closeRegionViewer();
         }
     });
+
+    // ==================== PENDING COUNTDOWN ====================
+    function updateCountdowns() {
+        document.querySelectorAll('.pending-countdown').forEach(el => {
+            const deadline = new Date(el.dataset.deadline);
+            const now = new Date();
+            const diff = deadline - now;
+            const textEl = el.querySelector('.countdown-text');
+            if (diff <= 0) {
+                textEl.textContent = 'Expirado';
+                textEl.style.color = '#f44336';
+                return;
+            }
+            const days = Math.floor(diff / 86400000);
+            const hours = Math.floor((diff % 86400000) / 3600000);
+            const minutes = Math.floor((diff % 3600000) / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+            let parts = [];
+            if (days > 0) parts.push(days + 'd');
+            if (hours > 0 || days > 0) parts.push(hours + 'h');
+            parts.push(minutes + 'm');
+            parts.push(seconds + 's');
+            textEl.textContent = parts.join(' ');
+            // Color based on urgency
+            if (diff < 86400000) { textEl.style.color = '#f44336'; } // < 1 day
+            else if (diff < 259200000) { textEl.style.color = '#ff9800'; } // < 3 days
+            else { textEl.style.color = '#4caf50'; }
+        });
+    }
+    updateCountdowns();
+    setInterval(updateCountdowns, 1000);
 
     // Close modals on overlay click
     document.querySelectorAll('.modal-overlay').forEach(modal => {
