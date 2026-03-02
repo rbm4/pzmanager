@@ -573,7 +573,7 @@
                    placeholder="Buscar eventos..." th:value="${search}">
             <select name="status" class="search-input" style="flex: 0.4;">
                 <option value="">Todos os Status</option>
-                <option th:each="s : ${statuses}" th:value="${s.name()}" th:text="${s.name()}"
+                <option th:each="s : ${statuses}" th:value="${s.name()}" th:text="${s.displayName}"
                         th:selected="${status == s.name()}">STATUS</option>
             </select>
             <button type="submit" class="search-btn">🔍 Buscar</button>
@@ -588,7 +588,7 @@
             <div class="card-header">
                 <div class="card-title" th:text="${event.title}">Evento</div>
                 <span class="status-badge" th:classappend="${event.status.name()}"
-                      th:text="${event.status.name()}">STATUS</span>
+                      th:text="${event.status.displayName}">STATUS</span>
             </div>
 
             <div class="card-body">
@@ -879,7 +879,7 @@
                 }
 
                 let html = '<div class="contribute-info">';
-                html += '<div class="contribute-info-row"><span class="contribute-info-label">Status:</span><span class="status-badge ' + data.status + '">' + data.status + '</span></div>';
+                html += '<div class="contribute-info-row"><span class="contribute-info-label">Status:</span><span class="status-badge ' + data.status + '">' + data.statusDisplayName + '</span></div>';
                 html += '<div class="contribute-info-row"><span class="contribute-info-label">Criado por:</span><span class="contribute-info-value">' + data.createdBy + '</span></div>';
                 html += '<div class="contribute-info-row"><span class="contribute-info-label">Financiamento:</span><span class="contribute-info-value" style="color: #ffc107;">' + data.amountCollected + ' / ' + data.totalCost + ' ₳</span></div>';
 
@@ -954,8 +954,15 @@
     function openRegionViewer(x1, y1, x2, y2, name) {
         const overlay = document.getElementById('regionViewerOverlay');
         const iframe = document.getElementById('regionViewerIframe');
-        const params = new URLSearchParams({x1, y1, x2, y2, name: name || 'Região'});
-        iframe.src = '/map-regions/viewer?' + params.toString();
+        // Load pzmap directly with region query params for auto-zoom
+        let url = '/pzmap/pzmap.html';
+        if (x1 && y1 && x2 && y2) {
+            url += '?region_x1=' + encodeURIComponent(x1)
+                 + '&region_y1=' + encodeURIComponent(y1)
+                 + '&region_x2=' + encodeURIComponent(x2)
+                 + '&region_y2=' + encodeURIComponent(y2);
+        }
+        iframe.src = url;
         overlay.style.display = 'flex';
     }
 

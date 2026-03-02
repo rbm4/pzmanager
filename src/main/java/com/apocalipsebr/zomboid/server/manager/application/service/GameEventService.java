@@ -5,7 +5,7 @@ import com.apocalipsebr.zomboid.server.manager.application.constants.EventProper
 import com.apocalipsebr.zomboid.server.manager.application.constants.EventPropertySuggestion.ValueType;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.*;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Character;
-import com.apocalipsebr.zomboid.server.manager.domain.entity.app.GameEvent.EventStatus;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.EventStatus;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.*;
 
 import org.springframework.data.domain.Page;

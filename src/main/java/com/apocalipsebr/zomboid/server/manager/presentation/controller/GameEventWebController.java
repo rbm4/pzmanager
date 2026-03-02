@@ -3,7 +3,7 @@ package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 import com.apocalipsebr.zomboid.server.manager.application.constants.EventPropertySuggestion;
 import com.apocalipsebr.zomboid.server.manager.application.service.GameEventService;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.GameEvent;
-import com.apocalipsebr.zomboid.server.manager.domain.entity.app.GameEvent.EventStatus;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.EventStatus;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.GameEventProperty;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
 
@@ -207,6 +207,7 @@ public class GameEventWebController {
                 data.put("title", event.getTitle());
                 data.put("description", event.getDescription());
                 data.put("status", event.getStatus().name());
+                data.put("statusDisplayName", event.getStatus().getDisplayName());
                 data.put("totalCost", event.getTotalCost());
                 data.put("amountCollected", event.getAmountCollected());
                 data.put("remaining", event.getRemainingAmount());

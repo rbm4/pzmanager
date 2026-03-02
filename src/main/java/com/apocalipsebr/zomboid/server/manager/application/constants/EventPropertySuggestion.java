@@ -590,6 +590,19 @@ public enum EventPropertySuggestion {
         }
     }
 
+    /**
+     * Resolves an enum value by its propertyKey. Returns null if not found.
+     */
+    public static EventPropertySuggestion fromPropertyKey(String key) {
+        if (key == null)
+            return null;
+        for (EventPropertySuggestion s : values()) {
+            if (s.propertyKey.equals(key))
+                return s;
+        }
+        return null;
+    }
+
     // ==================== GETTERS ====================
 
     public String getDisplayName() {

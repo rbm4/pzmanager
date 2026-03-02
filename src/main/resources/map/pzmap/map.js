@@ -334,7 +334,7 @@ export class Map {
 
     availableTypes() {
         let t = [];
-        for (let type of ['iso', 'top']) {
+        for (let type of ['top']) {
             t.push(this.isTypeAvailable(type));
         }
         return Promise.all(t).then((r) => {
@@ -365,8 +365,7 @@ export class Map {
     initMap() {
         this.suffix = this.typeToSuffix(this.type);
 
-        const types = ['base', 'zombie', 'foraging'];
-        if (this.type !== 'top') types.push('rooms', 'objects');
+        const types = ['base'];
         const getinfo = (type) => {
             return window.fetch(this.root + type + this.suffix + '/map_info.json')
                 .then((r) => r.json()).catch((e) => Promise.resolve({}));
@@ -419,76 +418,11 @@ export class Map {
             }
         };
 
-        const markTypes = ['base', 'zombie', 'foraging', 'rooms', 'objects', 'streets'];
-        const getmarks = (type) => {
-            return window.fetch(this.root + type + '/marks.json') // always use marks in folder without suffix
-                .then((r) => r.json()).catch((e) => Promise.resolve(null));
-        };
-
-        const setmarks = (r) => {
-            const options = markTypes.map((t) => {
-                const option = {
-                    type: t,
-                    mode: this.type,
-                    onScreenLimit: g.query_string.mark_limit || 256,
-                    indexType: 'rtree',
-                    onlyCurrentLayer: true,
-                    defaultValue: {
-                        text_position: 'top',
-                        background: 'transparent',
-                        visible_zoom_level: 2,
-                    },
-                    renderOptions: { renderMethod: 'svg' },
-                };
-                if (t === 'streets') {
-                    option.onlyCurrentLayer = false;
-                    option.onScreenLimit = 0;
-                    option.defaultValue.text_position = 'dynamic';
-                    option.defaultValue.layer = 0;
-                    option.renderOptions.formatterOptions = { hide_text_level: 1 };
-                }
-                return option;
-            });
-            const buildIndexOptions = options.map((o) => {
-                const { onlyCurrentLayer, indexType, mode } = o;
-                return { onlyCurrentLayer, indexType, mode, defaultValue: {
-                    layer: o.defaultValue.layer || 0,
-                    visible_zoom_level: o.defaultValue.visible_zoom_level || 0,
-                } };
-            });
-            const worker = new Worker('pzmap/mark/loader.js', { type: "module" });
-            worker.postMessage([r, buildIndexOptions]);
-            worker.onmessage = (e) => {
-                const [r, indexes] = e.data;
-                for (const i in markTypes) {
-                    const type = markTypes[i];
-                    if (!r[i] || !Array.isArray(r[i])) continue;
-                    this.marks[type] = new MarkManager(options[i]);
-                    this.marks[type].disable();
-                    this.marks[type].load(r[i], indexes[i]);
-                    console.log(`${this.root}${type} loaded (${r[i].length} marks)`);
-                }
-                this.redrawMarks(g.overlays);
-                worker.terminate();
-            };
-            return Promise.resolve(this);
-        };
-
-        const getmarksAsync = (r) => {
-            const pmarks = [];
-            for (const type of markTypes) {
-                pmarks.push(getmarks(type));
-            }
-            Promise.all(pmarks).then(setmarks);
-
-            return Promise.resolve(r);
-        }
-
         const ptypes = [];
         for (const type of types) {
             ptypes.push(getinfo(type));
         }
-        return Promise.all(ptypes).then(setinfo).then(setlayer).then(getmarksAsync);
+        return Promise.all(ptypes).then(setinfo).then(setlayer);
     }
 };
 

@@ -4,7 +4,7 @@ import com.apocalipsebr.zomboid.server.manager.application.service.CharacterServ
 import com.apocalipsebr.zomboid.server.manager.application.service.PlayerStatsService;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Character;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.GameEvent;
-import com.apocalipsebr.zomboid.server.manager.domain.entity.app.GameEvent.EventStatus;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.EventStatus;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.PlayerStats;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.GameEventRepository;

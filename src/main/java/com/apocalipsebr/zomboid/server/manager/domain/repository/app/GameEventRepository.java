@@ -1,7 +1,7 @@
 package com.apocalipsebr.zomboid.server.manager.domain.repository.app;
 
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.GameEvent;
-import com.apocalipsebr.zomboid.server.manager.domain.entity.app.GameEvent.EventStatus;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.EventStatus;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
 
 import org.springframework.data.domain.Page;
