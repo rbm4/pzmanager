@@ -945,17 +945,20 @@ function onChangeView() {
 
 function reloadView(keep_mod_map=false) {
     g.viewer.destroy();
-    let setup_maps = null;
-    if (keep_mod_map) {
-        const map_names = [];
-        for (const mod_map of g.mod_maps) {
-            map_names.push(mod_map.name);
-        }
-        setup_maps = function () {
-            addMap(map_names);
-            return Promise.resolve();
-        }
-    }
+    // Always force top-down view
+    g.map_type = 'top';
+    // Always reload all mod maps
+    const setup_maps = function () {
+        return window.fetch(globals.getRoot() + 'mod_maps/map_list.json')
+            .then((r) => r.json())
+            .catch(() => [])
+            .then((names) => {
+                if (names && names.length > 0) {
+                    return addMap(names);
+                }
+                return Promise.resolve();
+            });
+    };
     return init(setup_maps);
 }
 
@@ -1095,21 +1098,36 @@ function onKeyDown(event) {
 }
 
 Promise.all(pmodules).then(() => {
+    // Force top-down view (no isometric)
+    g.map_type = 'top';
+
     init(function() {
-        // After viewer is ready, check for region_x1/y1/x2/y2 query params to auto-zoom
-        if (regions && g.query_string) {
-            const rx1 = g.query_string.region_x1;
-            const ry1 = g.query_string.region_y1;
-            const rx2 = g.query_string.region_x2;
-            const ry2 = g.query_string.region_y2;
-            if (rx1 && ry1 && rx2 && ry2) {
-                regions.goToRegion(
-                    parseFloat(rx1), parseFloat(ry1),
-                    parseFloat(rx2), parseFloat(ry2)
-                );
-            }
-        }
-        return Promise.resolve();
+        // Auto-load all mod maps
+        return window.fetch(globals.getRoot() + 'mod_maps/map_list.json')
+            .then((r) => r.json())
+            .catch(() => [])
+            .then((names) => {
+                if (names && names.length > 0) {
+                    return addMap(names);
+                }
+                return Promise.resolve();
+            })
+            .then(() => {
+                // Check for region_x1/y1/x2/y2 query params to auto-zoom
+                if (regions && g.query_string) {
+                    const rx1 = g.query_string.region_x1;
+                    const ry1 = g.query_string.region_y1;
+                    const rx2 = g.query_string.region_x2;
+                    const ry2 = g.query_string.region_y2;
+                    if (rx1 && ry1 && rx2 && ry2) {
+                        regions.goToRegion(
+                            parseFloat(rx1), parseFloat(ry1),
+                            parseFloat(rx2), parseFloat(ry2)
+                        );
+                    }
+                }
+                return Promise.resolve();
+            });
     });
 }).catch((e) => {
     const output = document.getElementById('main_output');

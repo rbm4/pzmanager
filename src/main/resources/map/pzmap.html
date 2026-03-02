@@ -10,6 +10,13 @@
     html, body { height: 100%; margin: 0; padding: 0; background-color: Black; }
     /* Hide trimmer (requires local filesystem access via server.py) */
     #trimmer_btn, #trimmer_ui { display: none !important; }
+    /* Hide view toggle (only top-down) and mod map button (auto-loaded) */
+    #change_view_btn, #map_btn, #map_ui { display: none !important; }
+    /* Hide overlay/marker buttons, layer selector, roof slider, language selector */
+    #zombie_btn, #foraging_btn, #rooms_btn, #objects_btn, #streets_btn,
+    #marker_btn, #marker_ui,
+    #layer_selector, #roof_opacity_slider,
+    #language_selector { display: none !important; }
     .legend { height: 1em; width: 1em; display: inline-block; border-width: 1px;
         border-style: solid; border-color: Black; background-color: White;
         vertical-align: bottom; margin-left: 1em; }
@@ -72,7 +79,7 @@
       <div style="flex: 0 1 auto; background-color:white;">
         <select id="layer_selector" onchange="onLayerSelect()"></select>
         <input type="range" id="roof_opacity_slider" class="iso-only-btn" oninput="updateRoofOpacity()"
-            min="0" max="100" value="0" step="10" >
+                    min="0" max="100" value="0" step="10" >
         <button id="map_btn" onclick="toggleModMapUI()"></button>
         <button id="grid_btn" onclick="toggleGrid()"></button>
         <button id="zombie_btn" onclick="toggleOverlay('zombie')"></button>

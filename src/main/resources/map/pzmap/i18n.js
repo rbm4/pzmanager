@@ -1,7 +1,7 @@
 import { g } from "./globals.js";
 import * as util from "./util.js";
 
-export const ALL = ['en', 'cn'];
+export const ALL = ['pt', 'en', 'cn'];
 const DEFAULT = ALL[0];
 var lang = ALL[0];
 
