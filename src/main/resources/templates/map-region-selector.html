@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Seletor de Coordenadas - Apocalipse [BR]</title>
+    <script type="text/javascript" src="/pzmap/openseadragon/openseadragon.js"></script>
     <style>
         :root {
             --bg: #0b0f14;
@@ -24,8 +25,8 @@
             overflow: hidden;
         }
 
-        canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
-        canvas.panning { cursor: grabbing; }
+        #mapDiv { width: 100%; height: 100%; cursor: crosshair; }
+        #mapDiv.panning { cursor: grabbing; }
 
         .topBar {
             position: absolute;
@@ -154,6 +155,53 @@
         .legBox { width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.2); flex: 0 0 auto; }
         .legTxt { color: var(--muted); font-size: 11px; }
 
+        /* Selection overlay rendered by OpenSeadragon */
+        .selection-overlay {
+            background: rgba(0, 242, 254, 0.10);
+            border: 2.5px dashed rgba(0, 242, 254, 0.9);
+            box-sizing: border-box;
+            pointer-events: none;
+        }
+        .selection-overlay .sel-label {
+            position: absolute;
+            top: -22px; left: 4px;
+            color: #00f2fe;
+            font-size: 12px;
+            font-weight: bold;
+            font-family: system-ui, sans-serif;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+            white-space: nowrap;
+            pointer-events: none;
+        }
+        .selection-overlay .sel-corner {
+            position: absolute;
+            width: 10px; height: 10px;
+            background: #00f2fe;
+            pointer-events: none;
+        }
+        .selection-overlay .sel-corner.tl { top: -5px; left: -5px; }
+        .selection-overlay .sel-corner.tr { top: -5px; right: -5px; }
+        .selection-overlay .sel-corner.bl { bottom: -5px; left: -5px; }
+        .selection-overlay .sel-corner.br { bottom: -5px; right: -5px; }
+
+        /* Region tooltip */
+        #regionTooltip {
+            position: fixed;
+            z-index: 99999;
+            display: none;
+            max-width: 360px;
+            background: rgba(10,17,26,0.96);
+            border: 1px solid #203044;
+            border-radius: 12px;
+            padding: 12px 14px;
+            color: #e6eef9;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            font-size: 12px;
+            line-height: 1.4;
+            pointer-events: none;
+            font-family: system-ui, sans-serif;
+        }
+
         @media (max-width: 640px) {
             .legend { display: none; }
             .coordsPanel { flex-direction: column; gap: 8px; }
@@ -162,27 +210,27 @@
 </head>
 
 <body>
-    <canvas id="c"></canvas>
+    <div id="mapDiv"></div>
 
     <!-- Instructions overlay (auto-hides after first draw) -->
     <div class="instructions" id="instrOverlay">
-        <h3>🗺️ Seletor de Coordenadas</h3>
+        <h3>&#x1F5FA;&#xFE0F; Seletor de Coordenadas</h3>
         <p>
-            <b>Clique e arraste</b> no mapa para desenhar o retângulo da região.<br>
-            Use <span class="key">Scroll</span> para zoom e <b>botão direito</b> para mover o mapa.<br>
-            Após selecionar, clique em <b>Confirmar</b>.
+            <b>Clique e arraste</b> no mapa para desenhar o ret&acirc;ngulo da regi&atilde;o.<br>
+            Use <span class="key">Scroll</span> para zoom e <b>bot&atilde;o direito</b> para mover o mapa.<br>
+            Ap&oacute;s selecionar, clique em <b>Confirmar</b>.
         </p>
     </div>
 
     <div class="topBar">
         <div class="hud">
-            <div class="kv">Zoom: <b id="hudZoom">0.080</b></div>
-            <div class="kv">Cursor: <b id="hudCursor">—</b></div>
-            <div class="kv"><b>Clique+Arraste</b> = seleção · <b>Direito+Arraste</b> = mover</div>
+            <div class="kv">Zoom: <b id="hudZoom">&mdash;</b></div>
+            <div class="kv">Cursor: <b id="hudCursor">&mdash;</b></div>
+            <div class="kv"><b>Clique+Arraste</b> = sele&ccedil;&atilde;o &middot; <b>Direito+Arraste</b> = mover</div>
         </div>
         <div class="hud">
             <button id="btnReset">Resetar vista</button>
-            <button class="resetSelBtn" id="btnClearSel">Limpar seleção</button>
+            <button class="resetSelBtn" id="btnClearSel">Limpar sele&ccedil;&atilde;o</button>
         </div>
     </div>
 
@@ -190,15 +238,15 @@
         <h3>Legenda</h3>
         <div class="legRow">
             <div class="legBox" style="background:transparent; border:2px solid rgba(0,242,254,0.8)"></div>
-            <div class="legTxt">Seleção atual</div>
+            <div class="legTxt">Sele&ccedil;&atilde;o atual</div>
         </div>
         <div class="legRow">
             <div class="legBox" style="background:transparent; border:2px solid rgba(200,130,255,0.65)"></div>
-            <div class="legTxt">Região PVE</div>
+            <div class="legTxt">Regi&atilde;o PVE</div>
         </div>
         <div class="legRow">
             <div class="legBox" style="background:transparent; border:2px solid rgba(231,76,60,0.75)"></div>
-            <div class="legTxt">Região PVP</div>
+            <div class="legTxt">Regi&atilde;o PVP &#9760;&#65039;</div>
         </div>
         <div class="legRow">
             <div class="legBox" style="background:transparent; border:2px solid rgba(80,200,120,0.65)"></div>
@@ -206,433 +254,504 @@
         </div>
     </div>
 
-    <!-- Bottom bar with coordinates + actions -->
     <div class="bottomBar">
-        <div class="coordsPanel">
-            <div>
-                <span class="coord-label">X1:</span>
-                <span class="coord-value" id="dispX1">—</span>
-            </div>
-            <div>
-                <span class="coord-label">Y1:</span>
-                <span class="coord-value" id="dispY1">—</span>
-            </div>
-            <div>
-                <span class="coord-label">X2:</span>
-                <span class="coord-value" id="dispX2">—</span>
-            </div>
-            <div>
-                <span class="coord-label">Y2:</span>
-                <span class="coord-value" id="dispY2">—</span>
-            </div>
+        <div class="coordsPanel" id="coordsPanel">
+            <div><span class="coord-label">X1:</span> <span class="coord-value" id="cx1">&mdash;</span></div>
+            <div><span class="coord-label">Y1:</span> <span class="coord-value" id="cy1">&mdash;</span></div>
+            <div><span class="coord-label">X2:</span> <span class="coord-value" id="cx2">&mdash;</span></div>
+            <div><span class="coord-label">Y2:</span> <span class="coord-value" id="cy2">&mdash;</span></div>
         </div>
-        <button class="confirmBtn" id="btnConfirm" disabled>✓ Confirmar</button>
-        <button class="cancelBtn" id="btnCancel">✕ Cancelar</button>
+        <button class="confirmBtn" id="btnConfirm" disabled>Confirmar</button>
+        <button class="cancelBtn" id="btnCancel">Cancelar</button>
     </div>
 
+    <div id="regionTooltip"></div>
+
     <script>
-        const $ = (id) => document.getElementById(id);
-        function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+    (function () {
+        'use strict';
 
-        /* ---------- URL Params (for edit mode pre-load) ---------- */
-        const params = new URLSearchParams(window.location.search);
-        const initX1 = params.get("x1") ? parseInt(params.get("x1")) : null;
-        const initY1 = params.get("y1") ? parseInt(params.get("y1")) : null;
-        const initX2 = params.get("x2") ? parseInt(params.get("x2")) : null;
-        const initY2 = params.get("y2") ? parseInt(params.get("y2")) : null;
-        const excludeId = params.get("excludeId") ? parseInt(params.get("excludeId")) : null;
+        /* ========== Constants ========== */
+        var MAP_WIDTH  = 19968;
+        var MAP_DATA_ROOT = '/pzmap/map_data/';
+        var TILE_SOURCE = MAP_DATA_ROOT + 'base_top/layer0.dzi';
+        var MOD_MAPS_LIST = MAP_DATA_ROOT + 'mod_maps/map_list.json';
+        var MOD_MAPS_ROOT = MAP_DATA_ROOT + 'mod_maps/';
+        var REGIONS_API = '/map-regions/api/regions';
+        var MIN_SEL_SIZE = 10;
 
-        /* ---------- Canvas / Camera ---------- */
-        const canvas = $("c");
-        const ctx = canvas.getContext("2d");
-        let W = 0, H = 0, dpr = 1;
-        let camX = 9000, camY = 8000;
-        let zoom = 0.08;
-        let isPanning = false, panStart = null;
+        /* ========== URL params ========== */
+        var params  = new URLSearchParams(window.location.search);
+        var initX1  = params.get('x1') !== null ? parseInt(params.get('x1')) : null;
+        var initY1  = params.get('y1') !== null ? parseInt(params.get('y1')) : null;
+        var initX2  = params.get('x2') !== null ? parseInt(params.get('x2')) : null;
+        var initY2  = params.get('y2') !== null ? parseInt(params.get('y2')) : null;
+        var excludeId = params.get('excludeId') ? parseInt(params.get('excludeId')) : null;
 
-        function resize() {
-            dpr = window.devicePixelRatio || 1;
-            W = canvas.clientWidth; H = canvas.clientHeight;
-            canvas.width = Math.floor(W * dpr); canvas.height = Math.floor(H * dpr);
-            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-            draw();
-        }
-        window.addEventListener("resize", resize);
+        /* ========== State ========== */
+        var viewer         = null;
+        var regions        = [];
+        var selection      = null;   // { x1, y1, x2, y2 } world coords
+        var selOverlayEl   = null;   // OSD overlay DOM element
+        var selLabelEl     = null;   // label inside the overlay
+        var isDrawing      = false;
+        var isPanning      = false;
+        var panStartMouse  = null;   // { x, y } screen coords
+        var panStartCenter = null;   // OSD Point (viewport center)
 
-        function worldToScreen(x, y) { return { x: (x - camX) * zoom + W / 2, y: (y - camY) * zoom + H / 2 }; }
-        function screenToWorld(x, y) { return { x: (x - W / 2) / zoom + camX, y: (y - H / 2) / zoom + camY }; }
+        /* ========== Helpers ========== */
+        function $(id) { return document.getElementById(id); }
 
-        function setZoom(newZoom, anchorScreen) {
-            const a = anchorScreen || { x: W / 2, y: H / 2 };
-            const before = screenToWorld(a.x, a.y);
-            zoom = clamp(newZoom, 0.01, 2.5);
-            const after = screenToWorld(a.x, a.y);
-            camX += (before.x - after.x);
-            camY += (before.y - after.y);
+        function pixelToViewport(px, py) {
+            return new OpenSeadragon.Point(px / MAP_WIDTH, py / MAP_WIDTH);
         }
 
-        /* ---------- Basemap ---------- */
-        let mapImg = null, mapImgReady = false;
-        const LOCK_TR = { x: 19796, y: 4 };
-        const LOCK_BL = { x: 0, y: 15899 };
-
-        (function loadMapImage() {
-            mapImg = new Image();
-            mapImg.onload = () => { mapImgReady = true; draw(); };
-            mapImg.onerror = () => { draw(); };
-            mapImg.src = "/map.jpg?cachebust=" + Date.now();
-        })();
-
-        /* ---------- Data ---------- */
-        let regions = [];
-
-        /* ---------- Selection state ---------- */
-        let selection = null; // { x1, y1, x2, y2 } in world coords
-        let isDrawing = false;
-        let drawStart = null; // world coords of drag start
-
-        // Pre-load selection from URL params (edit mode)
-        if (initX1 !== null && initY1 !== null && initX2 !== null && initY2 !== null) {
-            selection = { x1: initX1, y1: initY1, x2: initX2, y2: initY2 };
-            // Center camera on the existing selection
-            camX = (initX1 + initX2) / 2;
-            camY = (initY1 + initY2) / 2;
-            zoom = 0.15;
-            updateCoordsDisplay();
-            // Hide instructions
-            $("instrOverlay").style.opacity = "0";
+        function viewportToPixel(vp) {
+            return { x: vp.x * MAP_WIDTH, y: vp.y * MAP_WIDTH };
         }
 
-        function updateCoordsDisplay() {
-            if (selection) {
-                const sx1 = Math.min(selection.x1, selection.x2);
-                const sy1 = Math.min(selection.y1, selection.y2);
-                const sx2 = Math.max(selection.x1, selection.x2);
-                const sy2 = Math.max(selection.y1, selection.y2);
-                $("dispX1").textContent = Math.round(sx1);
-                $("dispY1").textContent = Math.round(sy1);
-                $("dispX2").textContent = Math.round(sx2);
-                $("dispY2").textContent = Math.round(sy2);
-                $("btnConfirm").disabled = false;
-            } else {
-                $("dispX1").textContent = "—";
-                $("dispY1").textContent = "—";
-                $("dispX2").textContent = "—";
-                $("dispY2").textContent = "—";
-                $("btnConfirm").disabled = true;
-            }
+        function screenToWorld(sx, sy) {
+            var vp = viewer.viewport.pointFromPixel(new OpenSeadragon.Point(sx, sy));
+            return viewportToPixel(vp);
         }
 
-        /* ---------- Region color helper ---------- */
+        function escapeHtml(s) {
+            return String(s).replace(/[&<>"]/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+            });
+        }
+
+        /* ========== Region colors ========== */
         function regionColor(rg) {
-            const cats = (rg.categories || "").toLowerCase();
-            if (cats.includes("pvp")) return { stroke: "rgba(231,76,60,0.75)", fill: "rgba(231,76,60,0.06)", label: "#e74c3c" };
-            if (rg.permanent) return { stroke: "rgba(80,200,120,0.65)", fill: "rgba(80,200,120,0.06)", label: "#50c878" };
-            return { stroke: "rgba(200,130,255,0.65)", fill: "rgba(200,130,255,0.06)", label: "#c882ff" };
+            var cats = (rg.categories || '').toLowerCase();
+            if (cats.indexOf('pvp') >= 0)
+                return { border: 'rgba(231,76,60,0.75)', fill: 'rgba(231,76,60,0.12)', label: '#e74c3c' };
+            if (rg.permanent)
+                return { border: 'rgba(80,200,120,0.65)', fill: 'rgba(80,200,120,0.12)', label: '#50c878' };
+            return { border: 'rgba(200,130,255,0.65)', fill: 'rgba(200,130,255,0.12)', label: '#c882ff' };
         }
 
-        /* ---------- Drawing ---------- */
-        function draw() {
-            ctx.clearRect(0, 0, W, H);
+        /* ========== Tooltip ========== */
+        var tooltipEl = $('regionTooltip');
 
-            // basemap
-            if (mapImgReady) {
-                const pTL = worldToScreen(LOCK_BL.x, LOCK_TR.y);
-                const pBR = worldToScreen(LOCK_TR.x, LOCK_BL.y);
-                ctx.globalAlpha = 0.9;
-                ctx.drawImage(mapImg, pTL.x, pTL.y, (pBR.x - pTL.x), (pBR.y - pTL.y));
-                ctx.globalAlpha = 1.0;
-            }
-
-            // grid
-            ctx.strokeStyle = "rgba(255,255,255,0.04)";
-            ctx.lineWidth = 1;
-            const gridSize = 300;
-            const topLeft = screenToWorld(0, 0);
-            const botRight = screenToWorld(W, H);
-            const gx0 = Math.floor(topLeft.x / gridSize) * gridSize;
-            const gy0 = Math.floor(topLeft.y / gridSize) * gridSize;
-            const gx1 = Math.ceil(botRight.x / gridSize) * gridSize;
-            const gy1 = Math.ceil(botRight.y / gridSize) * gridSize;
-
-            for (let x = gx0; x <= gx1; x += gridSize) {
-                const p1 = worldToScreen(x, topLeft.y);
-                const p2 = worldToScreen(x, botRight.y);
-                ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
-            }
-            for (let y = gy0; y <= gy1; y += gridSize) {
-                const p1 = worldToScreen(topLeft.x, y);
-                const p2 = worldToScreen(botRight.x, y);
-                ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
-            }
-
-            // existing regions (read-only)
-            for (const rg of regions) {
-                if (excludeId !== null && rg.id === excludeId) continue;
-                const rx1 = Math.min(rg.x1, rg.x2), ry1 = Math.min(rg.y1, rg.y2);
-                const rx2 = Math.max(rg.x1, rg.x2), ry2 = Math.max(rg.y1, rg.y2);
-                const tl = worldToScreen(rx1, ry1);
-                const br = worldToScreen(rx2, ry2);
-                const sw = br.x - tl.x, sh = br.y - tl.y;
-                const c = regionColor(rg);
-
-                ctx.fillStyle = c.fill;
-                ctx.fillRect(tl.x, tl.y, sw, sh);
-                ctx.strokeStyle = c.stroke;
-                ctx.setLineDash([]);
-                ctx.lineWidth = 2;
-                ctx.strokeRect(tl.x, tl.y, sw, sh);
-
-                if (sw > 50) {
-                    const cats = (rg.categories || "").toLowerCase();
-                    const isPvp = cats.includes("pvp");
-                    const label = (rg.name || rg.code) + (isPvp ? " ☠️" : "");
-                    ctx.font = sw > 120 ? "bold 13px sans-serif" : "11px sans-serif";
-                    ctx.fillStyle = c.label;
-                    ctx.fillText(label, tl.x + 5, tl.y + 16);
+        function showTooltip(rg, mx, my) {
+            var c = regionColor(rg);
+            var cats = (rg.categories || '').toLowerCase();
+            var isPvp = cats.indexOf('pvp') >= 0;
+            var propsHtml = '';
+            if (rg.properties) {
+                var keys = Object.keys(rg.properties);
+                for (var i = 0; i < keys.length; i++) {
+                    propsHtml += '<br><span style="color:#888">' + escapeHtml(keys[i]) + ':</span> ' + escapeHtml(String(rg.properties[keys[i]]));
                 }
             }
-
-            // current selection rectangle
-            if (selection) {
-                const sx1 = Math.min(selection.x1, selection.x2);
-                const sy1 = Math.min(selection.y1, selection.y2);
-                const sx2 = Math.max(selection.x1, selection.x2);
-                const sy2 = Math.max(selection.y1, selection.y2);
-                const tl = worldToScreen(sx1, sy1);
-                const br = worldToScreen(sx2, sy2);
-                const sw = br.x - tl.x, sh = br.y - tl.y;
-
-                // fill
-                ctx.fillStyle = "rgba(0, 242, 254, 0.10)";
-                ctx.fillRect(tl.x, tl.y, sw, sh);
-
-                // border (animated dash)
-                ctx.strokeStyle = "rgba(0, 242, 254, 0.9)";
-                ctx.lineWidth = 2.5;
-                ctx.setLineDash([8, 4]);
-                ctx.lineDashOffset = -(Date.now() / 50 % 12);
-                ctx.strokeRect(tl.x, tl.y, sw, sh);
-                ctx.setLineDash([]);
-
-                // corner markers
-                ctx.fillStyle = "#00f2fe";
-                const ms = 5;
-                ctx.fillRect(tl.x - ms, tl.y - ms, ms * 2, ms * 2);
-                ctx.fillRect(br.x - ms, tl.y - ms, ms * 2, ms * 2);
-                ctx.fillRect(tl.x - ms, br.y - ms, ms * 2, ms * 2);
-                ctx.fillRect(br.x - ms, br.y - ms, ms * 2, ms * 2);
-
-                // label
-                const label = `(${Math.round(sx1)}, ${Math.round(sy1)}) → (${Math.round(sx2)}, ${Math.round(sy2)})`;
-                ctx.font = "bold 12px sans-serif";
-                ctx.fillStyle = "#00f2fe";
-                ctx.fillText(label, tl.x + 5, tl.y - 8);
-            }
-
-            // HUD
-            $("hudZoom").textContent = zoom.toFixed(3);
-
-            // animate selection dash
-            if (selection || isDrawing) requestAnimationFrame(draw);
+            tooltipEl.innerHTML =
+                '<b style="font-size:14px">' + escapeHtml(rg.name || rg.code) + '</b>' +
+                (isPvp ? ' <span style="color:#e74c3c">&#9760;&#65039; PVP</span>' : '') +
+                '<br><span style="color:#888">C\u00f3digo:</span> ' + escapeHtml(rg.code || '') +
+                (rg.categories ? '<br><span style="color:#888">Categorias:</span> ' + escapeHtml(rg.categories) : '') +
+                '<br><span style="color:#888">Coordenadas:</span> (' + rg.x1 + ', ' + rg.y1 + ') \u2192 (' + rg.x2 + ', ' + rg.y2 + ')' +
+                (rg.permanent ? '<br><span style="color:#50c878"><b>\u26A1 Permanente</b></span>' : '') +
+                propsHtml;
+            tooltipEl.style.display = 'block';
+            var pad = 10;
+            var rect = tooltipEl.getBoundingClientRect();
+            var x = mx + 16, y = my + 16;
+            if (x + rect.width > window.innerWidth - pad) x = window.innerWidth - pad - rect.width;
+            if (y + rect.height > window.innerHeight - pad) y = window.innerHeight - pad - rect.height;
+            tooltipEl.style.left = Math.max(pad, x) + 'px';
+            tooltipEl.style.top  = Math.max(pad, y) + 'px';
         }
 
-        /* ---------- Mouse events ---------- */
-        canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+        function hideTooltip() { tooltipEl.style.display = 'none'; }
 
-        canvas.addEventListener("mousedown", (e) => {
-            const r = canvas.getBoundingClientRect();
-            const sx = e.clientX - r.left, sy = e.clientY - r.top;
+        /* ========== Regions (read-only overlays) ========== */
+        var regionOverlays = [];
 
-            if (e.button === 2) {
-                // Right-click: pan
-                isPanning = true;
-                panStart = { sx, sy, camX, camY };
-                canvas.classList.add("panning");
-            } else if (e.button === 0) {
-                // Left-click: start drawing selection
-                const world = screenToWorld(sx, sy);
-                isDrawing = true;
-                drawStart = world;
-                selection = { x1: world.x, y1: world.y, x2: world.x, y2: world.y };
-                $("instrOverlay").style.opacity = "0";
-                updateCoordsDisplay();
-                draw();
+        function renderRegions() {
+            for (var i = 0; i < regions.length; i++) {
+                var rg = regions[i];
+                if (excludeId !== null && rg.id === excludeId) continue;
+                var c = regionColor(rg);
+                var x1 = Math.min(rg.x1, rg.x2), y1 = Math.min(rg.y1, rg.y2);
+                var x2 = Math.max(rg.x1, rg.x2), y2 = Math.max(rg.y1, rg.y2);
+
+                var el = document.createElement('div');
+                el.style.cssText =
+                    'background:' + c.fill + ';border:2px solid ' + c.border +
+                    ';box-sizing:border-box;pointer-events:auto;cursor:pointer;transition:background 0.15s;';
+
+                // Label
+                var cats = (rg.categories || '').toLowerCase();
+                var isPvp = cats.indexOf('pvp') >= 0;
+                var lbl = document.createElement('div');
+                lbl.textContent = (rg.name || rg.code) + (isPvp ? ' \u2620\uFE0F' : '');
+                lbl.style.cssText =
+                    'position:absolute;top:2px;left:4px;color:' + c.label +
+                    ';font-size:11px;font-weight:bold;font-family:system-ui,sans-serif;' +
+                    'text-shadow:1px 1px 2px rgba(0,0,0,0.8);white-space:nowrap;pointer-events:none;' +
+                    'overflow:hidden;text-overflow:ellipsis;max-width:calc(100% - 8px);';
+                el.appendChild(lbl);
+
+                // Hover — use closure to capture rg and c
+                (function (rgRef, cRef, elRef) {
+                    elRef.addEventListener('mouseenter', function (e) {
+                        elRef.style.background = cRef.fill.replace(/[\d.]+\)$/, '0.25)');
+                        elRef.style.borderWidth = '3px';
+                        showTooltip(rgRef, e.clientX, e.clientY);
+                    });
+                    elRef.addEventListener('mousemove', function (e) { showTooltip(rgRef, e.clientX, e.clientY); });
+                    elRef.addEventListener('mouseleave', function () {
+                        elRef.style.background = cRef.fill;
+                        elRef.style.borderWidth = '2px';
+                        hideTooltip();
+                    });
+                })(rg, c, el);
+
+                var tl = pixelToViewport(x1, y1);
+                var br = pixelToViewport(x2, y2);
+                var rect = new OpenSeadragon.Rect(tl.x, tl.y, br.x - tl.x, br.y - tl.y);
+                viewer.addOverlay({ element: el, location: rect, placement: OpenSeadragon.Placement.TOP_LEFT });
+                regionOverlays.push(el);
+            }
+        }
+
+        function loadRegions() {
+            fetch(REGIONS_API).then(function (resp) {
+                if (!resp.ok) return;
+                return resp.json();
+            }).then(function (data) {
+                if (data) {
+                    regions = data;
+                    renderRegions();
+                }
+            }).catch(function () { /* silent */ });
+        }
+
+        /* ========== Selection overlay ========== */
+        function ensureSelectionOverlay() {
+            if (selOverlayEl) return;
+            selOverlayEl = document.createElement('div');
+            selOverlayEl.className = 'selection-overlay';
+            // Corner markers
+            var corners = ['tl', 'tr', 'bl', 'br'];
+            for (var i = 0; i < corners.length; i++) {
+                var corner = document.createElement('div');
+                corner.className = 'sel-corner ' + corners[i];
+                selOverlayEl.appendChild(corner);
+            }
+            // Label
+            selLabelEl = document.createElement('div');
+            selLabelEl.className = 'sel-label';
+            selOverlayEl.appendChild(selLabelEl);
+        }
+
+        function updateSelectionOverlay() {
+            if (!selection || !viewer) return;
+            var x1 = Math.min(selection.x1, selection.x2);
+            var y1 = Math.min(selection.y1, selection.y2);
+            var x2 = Math.max(selection.x1, selection.x2);
+            var y2 = Math.max(selection.y1, selection.y2);
+
+            var tl = pixelToViewport(x1, y1);
+            var br = pixelToViewport(x2, y2);
+            var rect = new OpenSeadragon.Rect(tl.x, tl.y, br.x - tl.x, br.y - tl.y);
+
+            ensureSelectionOverlay();
+            if (!selOverlayEl._added) {
+                viewer.addOverlay({ element: selOverlayEl, location: rect, placement: OpenSeadragon.Placement.TOP_LEFT });
+                selOverlayEl._added = true;
+            } else {
+                viewer.updateOverlay(selOverlayEl, rect, OpenSeadragon.Placement.TOP_LEFT);
+            }
+
+            if (selLabelEl) {
+                selLabelEl.textContent = '(' + Math.round(x1) + ', ' + Math.round(y1) + ') \u2192 (' + Math.round(x2) + ', ' + Math.round(y2) + ')';
+            }
+        }
+
+        function clearSelection() {
+            selection = null;
+            isDrawing = false;
+            if (selOverlayEl && selOverlayEl._added) {
+                try { viewer.removeOverlay(selOverlayEl); } catch (e) { /* ignore */ }
+                selOverlayEl._added = false;
+                selOverlayEl = null;
+                selLabelEl = null;
+            }
+            updateCoordsDisplay();
+        }
+
+        /* ========== Coords display ========== */
+        function updateCoordsDisplay() {
+            if (selection) {
+                var x1 = Math.round(Math.min(selection.x1, selection.x2));
+                var y1 = Math.round(Math.min(selection.y1, selection.y2));
+                var x2 = Math.round(Math.max(selection.x1, selection.x2));
+                var y2 = Math.round(Math.max(selection.y1, selection.y2));
+                $('cx1').textContent = x1;
+                $('cy1').textContent = y1;
+                $('cx2').textContent = x2;
+                $('cy2').textContent = y2;
+                $('btnConfirm').disabled = false;
+            } else {
+                $('cx1').textContent = $('cy1').textContent = $('cx2').textContent = $('cy2').textContent = '\u2014';
+                $('btnConfirm').disabled = true;
+            }
+        }
+
+        /* ========== HUD ========== */
+        function updateHud() {
+            if (!viewer) return;
+            $('hudZoom').textContent = viewer.viewport.getZoom(true).toFixed(3);
+        }
+
+        /* ========== Init OpenSeadragon ========== */
+        viewer = OpenSeadragon({
+            element:              $('mapDiv'),
+            tileSources:          TILE_SOURCE,
+            prefixUrl:            '/pzmap/openseadragon/images/',
+            drawer:               'canvas',
+            homeFillsViewer:      true,
+            showZoomControl:      false,
+            showHomeControl:      false,
+            showFullPageControl:  false,
+            showRotationControl:  false,
+            constrainDuringPan:   true,
+            visibilityRatio:      0.5,
+            minZoomImageRatio:    0.5,
+            maxZoomPixelRatio:    32,
+            imageSmoothingEnabled: false,
+            gestureSettingsMouse: {
+                scrollToZoom:   true,
+                clickToZoom:    false,
+                dblClickToZoom: false,
+                dragToPan:      false,
+                flickEnabled:   false
+            },
+            gestureSettingsTouch: {
+                scrollToZoom:   false,
+                clickToZoom:    false,
+                dblClickToZoom: false,
+                dragToPan:      false,
+                flickEnabled:   false,
+                pinchToZoom:    true
             }
         });
 
-        canvas.addEventListener("mousemove", (e) => {
-            const r = canvas.getBoundingClientRect();
-            const sx = e.clientX - r.left, sy = e.clientY - r.top;
-            const world = screenToWorld(sx, sy);
+        viewer.addHandler('update-viewport', updateHud);
 
-            // Update cursor HUD
-            $("hudCursor").textContent = `${Math.round(world.x)}, ${Math.round(world.y)}`;
+        /* ========== Left-click selection (via OSD canvas events) ========== */
+        viewer.addHandler('canvas-press', function (event) {
+            // OSD canvas-press fires for the primary (left) button only
+            var world = screenToWorld(event.position.x, event.position.y);
+            clearSelection();
+            isDrawing = true;
+            selection = { x1: world.x, y1: world.y, x2: world.x, y2: world.y };
+            $('instrOverlay').style.opacity = '0';
+            updateSelectionOverlay();
+            updateCoordsDisplay();
+            event.preventDefaultAction = true;
+        });
 
-            if (isPanning && panStart) {
-                camX = panStart.camX - (sx - panStart.sx) / zoom;
-                camY = panStart.camY - (sy - panStart.sy) / zoom;
-                draw();
-            } else if (isDrawing && drawStart) {
+        viewer.addHandler('canvas-drag', function (event) {
+            if (isDrawing && selection) {
+                var world = screenToWorld(event.position.x, event.position.y);
                 selection.x2 = world.x;
                 selection.y2 = world.y;
+                updateSelectionOverlay();
                 updateCoordsDisplay();
-                draw();
+                event.preventDefaultAction = true;
             }
         });
 
-        canvas.addEventListener("mouseup", (e) => {
-            if (e.button === 2) {
-                isPanning = false;
-                panStart = null;
-                canvas.classList.remove("panning");
-            } else if (e.button === 0 && isDrawing) {
+        viewer.addHandler('canvas-release', function (event) {
+            if (isDrawing) {
                 isDrawing = false;
-                drawStart = null;
-                // Normalize selection
                 if (selection) {
-                    const dx = Math.abs(selection.x2 - selection.x1);
-                    const dy = Math.abs(selection.y2 - selection.y1);
-                    if (dx < 10 && dy < 10) {
-                        // Too small, discard
-                        selection = null;
+                    var dx = Math.abs(selection.x2 - selection.x1);
+                    var dy = Math.abs(selection.y2 - selection.y1);
+                    if (dx < MIN_SEL_SIZE && dy < MIN_SEL_SIZE) {
+                        clearSelection();
                     }
                 }
                 updateCoordsDisplay();
-                draw();
+                event.preventDefaultAction = true;
             }
         });
 
-        canvas.addEventListener("wheel", (e) => {
-            e.preventDefault();
-            const r = canvas.getBoundingClientRect();
-            const sx = e.clientX - r.left, sy = e.clientY - r.top;
-            const factor = Math.exp(-e.deltaY * 0.0012);
-            setZoom(zoom * factor, { x: sx, y: sy });
-            draw();
-        }, { passive: false });
+        /* ========== Right-click panning ========== */
+        // OSD's MouseTracker stops propagation on pointerdown, so we must
+        // listen in the capture phase to intercept right-click before OSD.
+        var mapDiv = $('mapDiv');
+        mapDiv.addEventListener('contextmenu', function (e) { e.preventDefault(); });
 
-        /* ---------- Touch support ---------- */
-        let lastTouches = null;
-        let touchDrawing = false;
-
-        canvas.addEventListener("touchstart", (e) => {
-            e.preventDefault();
-            const touches = Array.from(e.touches).map(t => ({ x: t.clientX, y: t.clientY }));
-
-            if (touches.length === 1) {
-                const r = canvas.getBoundingClientRect();
-                const sx = touches[0].x - r.left, sy = touches[0].y - r.top;
-                const world = screenToWorld(sx, sy);
-                // Single touch: start drawing
-                touchDrawing = true;
-                isDrawing = true;
-                drawStart = world;
-                selection = { x1: world.x, y1: world.y, x2: world.x, y2: world.y };
-                $("instrOverlay").style.opacity = "0";
-                updateCoordsDisplay();
-                draw();
-            } else if (touches.length === 2) {
-                // Two fingers: pan/zoom
-                touchDrawing = false;
-                isDrawing = false;
+        mapDiv.addEventListener('pointerdown', function (e) {
+            if (e.button === 2) {
+                isPanning = true;
+                panStartMouse = { x: e.clientX, y: e.clientY };
+                panStartCenter = viewer.viewport.getCenter(true);
+                mapDiv.classList.add('panning');
             }
-            lastTouches = touches;
-        }, { passive: false });
+        }, true); // capture phase
 
-        canvas.addEventListener("touchmove", (e) => {
-            e.preventDefault();
-            const touches = Array.from(e.touches).map(t => ({ x: t.clientX, y: t.clientY }));
-
-            if (touches.length === 1 && touchDrawing && isDrawing) {
-                const r = canvas.getBoundingClientRect();
-                const sx = touches[0].x - r.left, sy = touches[0].y - r.top;
-                const world = screenToWorld(sx, sy);
-                selection.x2 = world.x;
-                selection.y2 = world.y;
-                updateCoordsDisplay();
-                draw();
-            } else if (touches.length === 2 && lastTouches && lastTouches.length === 2) {
-                // Pinch zoom + pan
-                const prevDist = Math.hypot(lastTouches[1].x - lastTouches[0].x, lastTouches[1].y - lastTouches[0].y);
-                const curDist = Math.hypot(touches[1].x - touches[0].x, touches[1].y - touches[0].y);
-                if (prevDist > 0) {
-                    const mid = { x: (touches[0].x + touches[1].x) / 2, y: (touches[0].y + touches[1].y) / 2 };
-                    const r = canvas.getBoundingClientRect();
-                    setZoom(zoom * (curDist / prevDist), { x: mid.x - r.left, y: mid.y - r.top });
-
-                    // Pan
-                    const prevMid = { x: (lastTouches[0].x + lastTouches[1].x) / 2, y: (lastTouches[0].y + lastTouches[1].y) / 2 };
-                    camX -= (mid.x - prevMid.x) / zoom;
-                    camY -= (mid.y - prevMid.y) / zoom;
-
-                    draw();
+        document.addEventListener('pointermove', function (e) {
+            // Update cursor HUD
+            if (viewer && viewer.viewport) {
+                var rect = mapDiv.getBoundingClientRect();
+                var sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+                if (sx >= 0 && sy >= 0 && sx <= rect.width && sy <= rect.height) {
+                    var world = screenToWorld(sx, sy);
+                    $('hudCursor').textContent = Math.round(world.x) + ', ' + Math.round(world.y);
                 }
             }
-            lastTouches = touches;
-        }, { passive: false });
-
-        canvas.addEventListener("touchend", (e) => {
-            if (e.touches.length === 0) {
-                if (touchDrawing && isDrawing && selection) {
-                    const dx = Math.abs(selection.x2 - selection.x1);
-                    const dy = Math.abs(selection.y2 - selection.y1);
-                    if (dx < 10 && dy < 10) selection = null;
-                }
-                isDrawing = false;
-                touchDrawing = false;
-                drawStart = null;
-                updateCoordsDisplay();
-                draw();
+            // Right-click pan
+            if (isPanning && panStartMouse && panStartCenter) {
+                var dx = e.clientX - panStartMouse.x;
+                var dy = e.clientY - panStartMouse.y;
+                var vDelta = viewer.viewport.deltaPointsFromPixels(new OpenSeadragon.Point(dx, dy));
+                viewer.viewport.panTo(
+                    new OpenSeadragon.Point(panStartCenter.x - vDelta.x, panStartCenter.y - vDelta.y),
+                    true
+                );
             }
-            lastTouches = e.touches.length ? Array.from(e.touches).map(t => ({ x: t.clientX, y: t.clientY })) : null;
         });
 
-        /* ---------- Load existing regions ---------- */
-        async function loadRegions() {
-            try {
-                const resp = await fetch("/map-regions/api/regions");
-                if (!resp.ok) return;
-                regions = await resp.json();
-                draw();
-            } catch (e) { /* silent */ }
+        document.addEventListener('pointerup', function (e) {
+            if (e.button === 2 && isPanning) {
+                isPanning = false;
+                panStartMouse = null;
+                panStartCenter = null;
+                mapDiv.classList.remove('panning');
+            }
+        });
+
+        /* ========== Touch support ========== */
+        // Single-finger drag = selection (handled by OSD canvas-press/drag/release)
+        // Two-finger pinch   = zoom       (handled by OSD pinchToZoom)
+        // Two-finger drag    = pan        (manual handling below)
+        var touchPanning = false;
+        var lastTouchCenter = null;
+
+        mapDiv.addEventListener('touchstart', function (e) {
+            if (e.touches.length === 2) {
+                touchPanning = true;
+                var t = e.touches;
+                lastTouchCenter = {
+                    x: (t[0].clientX + t[1].clientX) / 2,
+                    y: (t[0].clientY + t[1].clientY) / 2
+                };
+            }
+        }, { passive: true });
+
+        mapDiv.addEventListener('touchmove', function (e) {
+            if (touchPanning && e.touches.length === 2 && lastTouchCenter) {
+                var t = e.touches;
+                var center = {
+                    x: (t[0].clientX + t[1].clientX) / 2,
+                    y: (t[0].clientY + t[1].clientY) / 2
+                };
+                var dx = center.x - lastTouchCenter.x;
+                var dy = center.y - lastTouchCenter.y;
+                var vDelta = viewer.viewport.deltaPointsFromPixels(new OpenSeadragon.Point(dx, dy));
+                viewer.viewport.panBy(new OpenSeadragon.Point(-vDelta.x, -vDelta.y), true);
+                lastTouchCenter = center;
+            }
+        }, { passive: true });
+
+        mapDiv.addEventListener('touchend', function (e) {
+            if (e.touches.length < 2) {
+                touchPanning = false;
+                lastTouchCenter = null;
+            }
+        }, { passive: true });
+
+        /* ========== Load mod maps (same as pzmap auto-loads them) ========== */
+        function loadModMaps() {
+            fetch(MOD_MAPS_LIST)
+                .then(function (r) { return r.json(); })
+                .catch(function () { return []; })
+                .then(function (names) {
+                    if (!names || names.length === 0) return;
+                    var baseItem = viewer.world.getItemAt(0);
+                    if (!baseItem) return;
+                    for (var i = 0; i < names.length; i++) {
+                        (function (name) {
+                            fetch(MOD_MAPS_ROOT + name + '/base_top/map_info.json')
+                                .then(function (r) { return r.json(); })
+                                .then(function (info) {
+                                    // Position mod map relative to base map origin
+                                    var pixelX = -info.x0; // base x0 is 0
+                                    var pixelY = -info.y0;
+                                    var vp = baseItem.imageToViewportCoordinates(pixelX, pixelY);
+                                    var modScale = 1 << (info.skip || 0);
+                                    var modW = info.w * modScale;
+                                    var width = modW / MAP_WIDTH;
+                                    viewer.addTiledImage({
+                                        tileSource: MOD_MAPS_ROOT + name + '/base_top/layer0.dzi',
+                                        x: vp.x,
+                                        y: vp.y,
+                                        width: width,
+                                        opacity: 1
+                                    });
+                                })
+                                .catch(function () { /* silent */ });
+                        })(names[i]);
+                    }
+                });
         }
 
-        /* ---------- UI Actions ---------- */
-        $("btnReset").onclick = () => { camX = 9000; camY = 8000; zoom = 0.08; draw(); };
-
-        $("btnClearSel").onclick = () => {
-            selection = null;
-            isDrawing = false;
-            drawStart = null;
+        /* ========== Pre-load selection from URL params ========== */
+        function preloadSelection() {
+            if (initX1 === null || initY1 === null || initX2 === null || initY2 === null) return;
+            selection = { x1: initX1, y1: initY1, x2: initX2, y2: initY2 };
+            updateSelectionOverlay();
             updateCoordsDisplay();
-            draw();
-        };
+            $('instrOverlay').style.opacity = '0';
 
-        $("btnConfirm").onclick = () => {
+            // Zoom to the selection with padding
+            var sx1 = Math.min(initX1, initX2), sy1 = Math.min(initY1, initY2);
+            var sx2 = Math.max(initX1, initX2), sy2 = Math.max(initY1, initY2);
+            var w = sx2 - sx1, h = sy2 - sy1;
+            var pad = 0.3;
+            var tl = pixelToViewport(sx1 - w * pad, sy1 - h * pad);
+            var br = pixelToViewport(sx2 + w * pad, sy2 + h * pad);
+            viewer.viewport.fitBounds(
+                new OpenSeadragon.Rect(tl.x, tl.y, br.x - tl.x, br.y - tl.y), true
+            );
+        }
+
+        /* ========== UI Actions ========== */
+        $('btnReset').onclick = function () { viewer.viewport.goHome(false); };
+
+        $('btnClearSel').onclick = function () { clearSelection(); };
+
+        $('btnConfirm').onclick = function () {
             if (!selection) return;
-            const x1 = Math.round(Math.min(selection.x1, selection.x2));
-            const y1 = Math.round(Math.min(selection.y1, selection.y2));
-            const x2 = Math.round(Math.max(selection.x1, selection.x2));
-            const y2 = Math.round(Math.max(selection.y1, selection.y2));
-
+            var x1 = Math.round(Math.min(selection.x1, selection.x2));
+            var y1 = Math.round(Math.min(selection.y1, selection.y2));
+            var x2 = Math.round(Math.max(selection.x1, selection.x2));
+            var y2 = Math.round(Math.max(selection.y1, selection.y2));
             if (window.parent !== window) {
-                window.parent.postMessage({ type: "regionCoords", x1, y1, x2, y2 }, "*");
+                window.parent.postMessage({ type: 'regionCoords', x1: x1, y1: y1, x2: x2, y2: y2 }, '*');
             }
         };
 
-        $("btnCancel").onclick = () => {
+        $('btnCancel').onclick = function () {
             if (window.parent !== window) {
-                window.parent.postMessage({ type: "closeRegionSelector" }, "*");
+                window.parent.postMessage({ type: 'closeRegionSelector' }, '*');
             } else {
                 history.back();
             }
         };
 
-        /* ---------- Init ---------- */
-        resize();
-        loadRegions();
-        updateCoordsDisplay();
+        /* ========== Init ========== */
+        viewer.addHandler('open', function () {
+            loadModMaps();
+            loadRegions();
+            preloadSelection();
+        });
+    })();
     </script>
 </body>
 

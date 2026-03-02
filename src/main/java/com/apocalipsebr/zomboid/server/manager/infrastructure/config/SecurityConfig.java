@@ -23,7 +23,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/index", "/season-guide", "/map-regions/**", "/login/**", "/auth/**", "/error","/map.jpg", "/login.png", "/UmbrellaCorp.png").permitAll()
+                .requestMatchers("/", "/index", "/season-guide", "/map-regions/**", "/pzmap/**", "/login/**", "/auth/**", "/error","/map.jpg", "/map-tiles/**", "/login.png", "/UmbrellaCorp.png").permitAll()
                 .requestMatchers("/api/system/**").permitAll() // For deployment endpoint
                 .requestMatchers("/api/zombie-kills/**").permitAll() // For game server updates
                 .requestMatchers("/donations/webhook").permitAll() // PagBank webhook callback

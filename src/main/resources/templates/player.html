@@ -532,32 +532,7 @@
 
 </main>
 
-<!-- ═══════════ Map Regions Modal ═══════════ -->
-<div id="mapModal" style="
-    display:none; position:fixed; inset:0; z-index:10000;
-    align-items:center; justify-content:center;
-    background:rgba(0,0,0,0.82);
-" onclick="if(event.target===this)this.style.display='none'">
-    <div style="
-        width:min(96vw,1600px); height:min(92vh,1000px);
-        border-radius:16px; overflow:hidden;
-        border:1px solid rgba(255,255,255,0.1);
-        box-shadow:0 20px 60px rgba(0,0,0,0.6);
-        position:relative;
-    ">
-        <iframe id="mapIframe" style="width:100%;height:100%;border:none;display:block"></iframe>
-    </div>
-</div>
-
 <script>
-/* ── Map Modal ── */
-const mapModal = document.getElementById('mapModal');
-const mapIframe = document.getElementById('mapIframe');
-new MutationObserver(() => {
-    if (mapModal.style.display === 'flex' && !mapIframe.src) mapIframe.src = '/map-regions';
-}).observe(mapModal, { attributes: true, attributeFilter: ['style'] });
-window.addEventListener('message', e => { if (e.data === 'closeMapRegions') mapModal.style.display = 'none'; });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && mapModal.style.display === 'flex') mapModal.style.display = 'none'; });
 
 /* ── Event countdown timers ── */
 document.querySelectorAll('[data-expires]').forEach(el => {

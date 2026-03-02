@@ -573,7 +573,7 @@
                    placeholder="Buscar eventos..." th:value="${search}">
             <select name="status" class="search-input" style="flex: 0.4;">
                 <option value="">Todos os Status</option>
-                <option th:each="s : ${statuses}" th:value="${s.name()}" th:text="${s.name()}"
+                <option th:each="s : ${statuses}" th:value="${s.name()}" th:text="${s.displayName}"
                         th:selected="${status == s.name()}">STATUS</option>
             </select>
             <button type="submit" class="search-btn">🔍 Buscar</button>
@@ -588,7 +588,7 @@
             <div class="card-header">
                 <div class="card-title" th:text="${event.title}">Evento</div>
                 <span class="status-badge" th:classappend="${event.status.name()}"
-                      th:text="${event.status.name()}">STATUS</span>
+                      th:text="${event.status.displayName}">STATUS</span>
             </div>
 
             <div class="card-body">
@@ -633,8 +633,9 @@
                     <span th:if="${event.status.name() == 'ACTIVE' && event.expirationDate != null}">
                         ⏳ Expira: <span class="time-value" th:text="${#temporals.format(event.expirationDate, 'dd/MM HH:mm')}">01/01 12:00</span>
                     </span>
-                    <span th:if="${event.status.name() == 'PENDING'}">
-                        ⏰ Faltam: <span class="time-value" th:text="${event.remainingAmount}">0</span> ₳
+                    <span th:if="${event.status.name() == 'PENDING'}" class="pending-countdown"
+                          th:data-deadline="${#temporals.format(event.createdAt.plusDays(7), 'yyyy-MM-dd''T''HH:mm:ss')}">
+                        ⏰ <span class="time-value countdown-text">Calculando...</span>
                     </span>
                     <span th:if="${event.status.name() == 'EXPIRED'}">
                         ✅ Expirado
@@ -738,6 +739,14 @@
         <div id="detailBody">
             <p style="color: #aaa; text-align: center;">Carregando...</p>
         </div>
+    </div>
+</div>
+
+<!-- ==================== REGION VIEWER OVERLAY ==================== -->
+<div id="regionViewerOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:10000; align-items:center; justify-content:center;">
+    <div style="position:relative; width:90%; height:90%; max-width:1200px; border-radius:12px; overflow:hidden; border:1px solid rgba(255,152,0,0.3);">
+        <button onclick="closeRegionViewer()" style="position:absolute; top:10px; right:10px; z-index:10001; background:rgba(0,0,0,0.7); border:1px solid rgba(255,255,255,0.3); color:white; width:36px; height:36px; border-radius:50%; cursor:pointer; font-size:1.2rem; display:flex; align-items:center; justify-content:center;">×</button>
+        <iframe id="regionViewerIframe" style="width:100%; height:100%; border:none;" src="about:blank"></iframe>
     </div>
 </div>
 
@@ -871,7 +880,7 @@
                 }
 
                 let html = '<div class="contribute-info">';
-                html += '<div class="contribute-info-row"><span class="contribute-info-label">Status:</span><span class="status-badge ' + data.status + '">' + data.status + '</span></div>';
+                html += '<div class="contribute-info-row"><span class="contribute-info-label">Status:</span><span class="status-badge ' + data.status + '">' + data.statusDisplayName + '</span></div>';
                 html += '<div class="contribute-info-row"><span class="contribute-info-label">Criado por:</span><span class="contribute-info-value">' + data.createdBy + '</span></div>';
                 html += '<div class="contribute-info-row"><span class="contribute-info-label">Financiamento:</span><span class="contribute-info-value" style="color: #ffc107;">' + data.amountCollected + ' / ' + data.totalCost + ' ₳</span></div>';
 
@@ -897,6 +906,7 @@
                     html += '<div style="text-align: center;"><span style="color: #888; font-size: 0.8rem; display: block;">X2</span><span style="color: #ffb74d; font-weight: 600; font-size: 1.1rem;">' + data.regionZone.x2 + '</span></div>';
                     html += '<div style="text-align: center;"><span style="color: #888; font-size: 0.8rem; display: block;">Y2</span><span style="color: #ffb74d; font-weight: 600; font-size: 1.1rem;">' + data.regionZone.y2 + '</span></div>';
                     html += '</div>';
+                    html += '<button onclick="openRegionViewer(' + data.regionZone.x1 + ',' + data.regionZone.y1 + ',' + data.regionZone.x2 + ',' + data.regionZone.y2 + ',\'' + (data.regionZone.name || data.title || 'Região').replace(/'/g, "\\'") + '\')" style="margin-top: 12px; width: 100%; padding: 10px; background: rgba(255, 152, 0, 0.15); border: 1px solid rgba(255, 152, 0, 0.5); color: #ffb74d; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.3s ease;">🗺️ Ver no Mapa</button>';
                     html += '</div>';
                 }
 
@@ -940,6 +950,79 @@
     function hideAlert(id) {
         document.getElementById(id).style.display = 'none';
     }
+
+    // ==================== REGION VIEWER ====================
+    function openRegionViewer(x1, y1, x2, y2, name) {
+        const overlay = document.getElementById('regionViewerOverlay');
+        const iframe = document.getElementById('regionViewerIframe');
+        // Load pzmap directly with region query params for auto-zoom and highlight
+        let url = '/pzmap/pzmap.html';
+        if (x1 && y1 && x2 && y2) {
+            url += '?region_x1=' + encodeURIComponent(x1)
+                 + '&region_y1=' + encodeURIComponent(y1)
+                 + '&region_x2=' + encodeURIComponent(x2)
+                 + '&region_y2=' + encodeURIComponent(y2);
+            if (name) {
+                url += '&region_name=' + encodeURIComponent(name);
+            }
+        }
+        iframe.src = url;
+        overlay.style.display = 'flex';
+    }
+
+    function closeRegionViewer() {
+        const overlay = document.getElementById('regionViewerOverlay');
+        const iframe = document.getElementById('regionViewerIframe');
+        overlay.style.display = 'none';
+        iframe.src = 'about:blank';
+    }
+
+    window.addEventListener('message', function(e) {
+        if (e.data === 'closeRegionViewer') {
+            closeRegionViewer();
+        }
+    });
+
+    document.getElementById('regionViewerOverlay').addEventListener('click', function(e) {
+        if (e.target === this) closeRegionViewer();
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && document.getElementById('regionViewerOverlay').style.display === 'flex') {
+            closeRegionViewer();
+        }
+    });
+
+    // ==================== PENDING COUNTDOWN ====================
+    function updateCountdowns() {
+        document.querySelectorAll('.pending-countdown').forEach(el => {
+            const deadline = new Date(el.dataset.deadline);
+            const now = new Date();
+            const diff = deadline - now;
+            const textEl = el.querySelector('.countdown-text');
+            if (diff <= 0) {
+                textEl.textContent = 'Expirado';
+                textEl.style.color = '#f44336';
+                return;
+            }
+            const days = Math.floor(diff / 86400000);
+            const hours = Math.floor((diff % 86400000) / 3600000);
+            const minutes = Math.floor((diff % 3600000) / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+            let parts = [];
+            if (days > 0) parts.push(days + 'd');
+            if (hours > 0 || days > 0) parts.push(hours + 'h');
+            parts.push(minutes + 'm');
+            parts.push(seconds + 's');
+            textEl.textContent = parts.join(' ');
+            // Color based on urgency
+            if (diff < 86400000) { textEl.style.color = '#f44336'; } // < 1 day
+            else if (diff < 259200000) { textEl.style.color = '#ff9800'; } // < 3 days
+            else { textEl.style.color = '#4caf50'; }
+        });
+    }
+    updateCountdowns();
+    setInterval(updateCountdowns, 1000);
 
     // Close modals on overlay click
     document.querySelectorAll('.modal-overlay').forEach(modal => {

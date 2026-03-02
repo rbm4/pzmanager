@@ -3,7 +3,7 @@ package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 import com.apocalipsebr.zomboid.server.manager.application.constants.EventPropertySuggestion;
 import com.apocalipsebr.zomboid.server.manager.application.service.GameEventService;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.GameEvent;
-import com.apocalipsebr.zomboid.server.manager.domain.entity.app.GameEvent.EventStatus;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.EventStatus;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.GameEventProperty;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
 
@@ -77,13 +77,22 @@ public class GameEventWebController {
         // Filter sandbox suggestions based on current sandbox values (maxValue validation)
         GameEventService.FilteredSandboxSuggestions filtered = gameEventService.getFilteredSandboxSuggestions();
 
+        // Group sandbox suggestions by category for collapsible sections
+        java.util.Map<String, java.util.List<EventPropertySuggestion>> sandboxByCategory = new java.util.LinkedHashMap<>();
+        for (EventPropertySuggestion s : filtered.suggestions()) {
+            String cat = s.getCategory() != null ? s.getCategory() : "Outros";
+            sandboxByCategory.computeIfAbsent(cat, k -> new java.util.ArrayList<>()).add(s);
+        }
+
         model.addAttribute("sandboxSuggestions", filtered.suggestions());
+        model.addAttribute("sandboxByCategory", sandboxByCategory);
         model.addAttribute("disabledTiersMap", filtered.disabledTiersMap());
         model.addAttribute("regionSuggestions", EventPropertySuggestion.getRegionSuggestions());
         model.addAttribute("percentageTiers", EventPropertySuggestion.PERCENTAGE_TIERS);
         model.addAttribute("percentageCostMultipliers", EventPropertySuggestion.PERCENTAGE_COST_MULTIPLIERS);
         model.addAttribute("userBalance", gameEventService.getUserBalance(user));
         model.addAttribute("weeklyEventsRemaining", gameEventService.getWeeklyEventsRemaining(user));
+        model.addAttribute("regionAreaFactor", gameEventService.getRegionAreaFactor());
 
         return "event-create";
     }
@@ -207,6 +216,7 @@ public class GameEventWebController {
                 data.put("title", event.getTitle());
                 data.put("description", event.getDescription());
                 data.put("status", event.getStatus().name());
+                data.put("statusDisplayName", event.getStatus().getDisplayName());
                 data.put("totalCost", event.getTotalCost());
                 data.put("amountCollected", event.getAmountCollected());
                 data.put("remaining", event.getRemainingAmount());

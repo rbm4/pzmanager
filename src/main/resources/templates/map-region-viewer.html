@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Visualizar Região - Apocalipse [BR]</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; background: #000; overflow: hidden; }
+        iframe { display: block; width: 100%; height: 100%; border: none; }
+
+        .overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            pointer-events: none;
+            padding: 25px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .overlay > * { pointer-events: auto; }
+
+        .regionInfo {
+            background: rgba(10, 17, 26, 0.92);
+            border: 1px solid #203044;
+            border-radius: 16px;
+            padding: 10px 14px;
+            max-width: 320px;
+        }
+        .regionInfo h3 { margin: 0 0 4px 0; font-size: 14px; color: #ffb74d; font-family: system-ui, sans-serif; }
+        .regionInfo .coords { color: #9fb1c6; font-size: 12px; font-family: system-ui, sans-serif; }
+
+        .closeBtn {
+            background: rgba(231,76,60,0.15);
+            color: #f0a0a0;
+            border: 1px solid rgba(231,76,60,0.45);
+            border-radius: 12px;
+            padding: 6px 14px;
+            cursor: pointer;
+            font-size: 13px;
+            font-family: system-ui, sans-serif;
+        }
+        .closeBtn:hover { border-color: #e74c3c; color: #fff; }
+    </style>
+</head>
+
+<body>
+    <iframe id="mapFrame" allowfullscreen></iframe>
+
+    <div class="overlay">
+        <div class="regionInfo" id="regionInfo" style="display:none;">
+            <h3 id="regionName"></h3>
+            <div class="coords" id="regionCoords"></div>
+        </div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const x1 = params.get('x1') || '';
+        const y1 = params.get('y1') || '';
+        const x2 = params.get('x2') || '';
+        const y2 = params.get('y2') || '';
+        const name = params.get('name') || 'Região';
+
+        // Build the pzmap URL with region query params for auto-zoom and highlight
+        let pzmapUrl = '/pzmap/pzmap.html';
+        if (x1 && y1 && x2 && y2) {
+            pzmapUrl += '?region_x1=' + encodeURIComponent(x1)
+                + '&region_y1=' + encodeURIComponent(y1)
+                + '&region_x2=' + encodeURIComponent(x2)
+                + '&region_y2=' + encodeURIComponent(y2)
+                + '&region_name=' + encodeURIComponent(name);
+        }
+        document.getElementById('mapFrame').src = pzmapUrl;
+
+        // Show region info panel
+        if (x1 || y1 || x2 || y2) {
+            const rx1 = Math.min(parseInt(x1)||0, parseInt(x2)||0);
+            const ry1 = Math.min(parseInt(y1)||0, parseInt(y2)||0);
+            const rx2 = Math.max(parseInt(x1)||0, parseInt(x2)||0);
+            const ry2 = Math.max(parseInt(y1)||0, parseInt(y2)||0);
+            document.getElementById('regionInfo').style.display = 'block';
+            document.getElementById('regionName').textContent = name;
+            document.getElementById('regionCoords').textContent = '(' + rx1 + ', ' + ry1 + ') → (' + rx2 + ', ' + ry2 + ')';
+        }
+
+        document.getElementById('btnClose').onclick = () => {
+            if (window.parent !== window) {
+                window.parent.postMessage('closeRegionViewer', '*');
+            } else {
+                history.back();
+            }
+        };
+    </script>
+</body>
+
+</html>

@@ -7,6 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import com.apocalipsebr.zomboid.server.manager.application.constants.EventPropertySuggestion;
+
 import java.util.*;
 
 /**
@@ -26,6 +28,11 @@ public class MapRegionsController {
     @GetMapping
     public String mapRegionsPage() {
         return "map-regions";
+    }
+
+    @GetMapping("/viewer")
+    public String mapRegionViewerPage() {
+        return "map-region-viewer";
     }
 
     @GetMapping("/api/regions")
@@ -53,20 +60,25 @@ public class MapRegionsController {
                 for (var prop : r.getCustomProperties()) {
                     String val = prop.getValue();
                     if (val == null || val.isBlank()) continue;
+
+                    // Resolve display name from enum; fall back to raw property key
+                    EventPropertySuggestion suggestion = EventPropertySuggestion.fromPropertyKey(prop.getName());
+                    String displayKey = suggestion != null ? suggestion.getDisplayName() : prop.getName();
+
                     try {
                         double numVal = Double.parseDouble(val);
                         if (numVal > 0) {
                             // Use int if it's a whole number, otherwise double
                             if (numVal == Math.floor(numVal) && !Double.isInfinite(numVal)) {
-                                activeProps.put(prop.getName(), (int) numVal);
+                                activeProps.put(displayKey, (int) numVal);
                             } else {
-                                activeProps.put(prop.getName(), numVal);
+                                activeProps.put(displayKey, numVal);
                             }
                         }
                     } catch (NumberFormatException e) {
                         // Non-numeric values (e.g. "true") — include as-is if not "0"/"false"
                         if (!"0".equals(val) && !"false".equalsIgnoreCase(val)) {
-                            activeProps.put(prop.getName(), val);
+                            activeProps.put(displayKey, val);
                         }
                     }
                 }

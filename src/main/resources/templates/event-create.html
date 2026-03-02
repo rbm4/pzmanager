@@ -134,6 +134,61 @@
             gap: 15px;
         }
 
+        /* ==================== CATEGORY COLLAPSE ==================== */
+
+        .category-group {
+            margin-bottom: 12px;
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            background: rgba(206, 147, 216, 0.08);
+            border: 1px solid rgba(206, 147, 216, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .category-header:hover {
+            background: rgba(206, 147, 216, 0.15);
+            border-color: rgba(206, 147, 216, 0.4);
+        }
+
+        .category-header .chevron {
+            font-size: 0.8rem;
+            color: #ce93d8;
+            transition: transform 0.3s ease;
+        }
+
+        .category-header.expanded .chevron {
+            transform: rotate(90deg);
+        }
+
+        .category-header .category-label {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #ce93d8;
+        }
+
+        .category-header .category-count {
+            font-size: 0.75rem;
+            color: #888;
+            margin-left: auto;
+        }
+
+        .category-body {
+            display: none;
+            padding-top: 12px;
+        }
+
+        .category-body.expanded {
+            display: block;
+        }
+
         .property-item {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -494,6 +549,51 @@
             transform: translateY(-2px);
         }
 
+        /* ==================== MAP SELECTOR MODAL ==================== */
+
+        .map-selector-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        .map-selector-overlay.active { display: flex; }
+        .map-selector-frame {
+            width: 90vw;
+            height: 85vh;
+            border: 2px solid rgba(0, 242, 254, 0.4);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        .map-selector-frame iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .select-map-btn {
+            padding: 12px 24px;
+            background: rgba(0, 242, 254, 0.15);
+            border: 1px solid rgba(0, 242, 254, 0.5);
+            color: #00f2fe;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 12px;
+        }
+        .select-map-btn:hover {
+            background: rgba(0, 242, 254, 0.25);
+            border-color: #00f2fe;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 242, 254, 0.3);
+        }
+
         @media (max-width: 768px) {
             .container { margin-left: 0; }
             body { flex-direction: column; }
@@ -560,37 +660,46 @@
         <p style="color: #888; font-size: 0.85rem; margin-bottom: 15px;">
             Estas propriedades afetam o servidor inteiro. Selecione as que deseja incluir no evento.
         </p>
-        <div class="property-grid">
-            <div th:each="suggestion : ${sandboxSuggestions}"
-                 class="property-item sandbox"
-                 th:data-key="${suggestion.name()}"
-                 th:data-target="SANDBOX"
-                 th:data-value-type="${suggestion.valueType.name()}"
-                 th:data-base-cost="${suggestion.baseCost}"
-                 onclick="toggleProperty(this)">
-                <div class="property-header">
-                    <input type="checkbox" class="property-checkbox" onclick="event.stopPropagation();"
-                           onchange="togglePropertyFromCheckbox(this)">
-                    <span class="property-name" th:text="${suggestion.displayName}">Property</span>
-                </div>
-                <div class="property-description" th:text="${suggestion.description}">Description</div>
-                <div class="property-cost-hint">
-                    Custo base: <span th:text="${suggestion.baseCost}">0</span> ₳
-                </div>
-                <div class="property-value-select">
-                    <div th:if="${suggestion.valueType.name() == 'PERCENTAGE'}" class="tier-buttons">
-                        <th:block th:each="tier, iterStat : ${percentageTiers}">
-                            <button type="button" class="tier-btn"
-                                    th:data-tier="${tier}"
-                                    th:data-cost="${suggestion.baseCost * percentageCostMultipliers[iterStat.index]}"
-                                    onclick="event.stopPropagation(); selectTier(this)">
-                                <span th:text="${tier + '%'}">5%</span>
-                                <span class="tier-cost" th:text="${suggestion.baseCost * percentageCostMultipliers[iterStat.index] + ' ₳'}">0 ₳</span>
-                            </button>
-                        </th:block>
-                    </div>
-                    <div th:if="${suggestion.valueType.name() == 'BOOLEAN'}" style="margin-top: 5px;">
-                        <span style="color: #4caf50; font-size: 0.9rem; font-weight: 600;">✅ Ativado quando selecionado</span>
+        <div th:each="categoryEntry : ${sandboxByCategory}" class="category-group">
+            <div class="category-header" onclick="toggleCategory(this)">
+                <span class="chevron">▶</span>
+                <span class="category-label" th:text="${categoryEntry.key}">Category</span>
+                <span class="category-count" th:text="${#lists.size(categoryEntry.value) + ' propriedades'}">0 propriedades</span>
+            </div>
+            <div class="category-body">
+                <div class="property-grid">
+                    <div th:each="suggestion : ${categoryEntry.value}"
+                         class="property-item sandbox"
+                         th:data-key="${suggestion.name()}"
+                         th:data-target="SANDBOX"
+                         th:data-value-type="${suggestion.valueType.name()}"
+                         th:data-base-cost="${suggestion.baseCost}"
+                         onclick="toggleProperty(this)">
+                        <div class="property-header">
+                            <input type="checkbox" class="property-checkbox" onclick="event.stopPropagation();"
+                                   onchange="togglePropertyFromCheckbox(this)">
+                            <span class="property-name" th:text="${suggestion.displayName}">Property</span>
+                        </div>
+                        <div class="property-description" th:text="${suggestion.description}">Description</div>
+                        <div class="property-cost-hint">
+                            Custo base: <span th:text="${suggestion.baseCost}">0</span> ₳
+                        </div>
+                        <div class="property-value-select">
+                            <div th:if="${suggestion.valueType.name() == 'PERCENTAGE'}" class="tier-buttons">
+                                <th:block th:each="tier, iterStat : ${percentageTiers}">
+                                    <button type="button" class="tier-btn"
+                                            th:data-tier="${tier}"
+                                            th:data-cost="${suggestion.baseCost * percentageCostMultipliers[iterStat.index]}"
+                                            onclick="event.stopPropagation(); selectTier(this)">
+                                        <span th:text="${tier + '%'}">5%</span>
+                                        <span class="tier-cost" th:text="${suggestion.baseCost * percentageCostMultipliers[iterStat.index] + ' ₳'}">0 ₳</span>
+                                    </button>
+                                </th:block>
+                            </div>
+                            <div th:if="${suggestion.valueType.name() == 'BOOLEAN'}" style="margin-top: 5px;">
+                                <span style="color: #4caf50; font-size: 0.9rem; font-weight: 600;">✅ Ativado quando selecionado</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -665,21 +774,26 @@
             <div class="coords-grid">
                 <div>
                     <label class="coord-label">X1</label>
-                    <input type="number" id="regionX1" class="coord-input" placeholder="0">
+                    <input type="number" id="regionX1" class="coord-input" placeholder="—" readonly style="cursor: default; opacity: 0.8;">
                 </div>
                 <div>
                     <label class="coord-label">Y1</label>
-                    <input type="number" id="regionY1" class="coord-input" placeholder="0">
+                    <input type="number" id="regionY1" class="coord-input" placeholder="—" readonly style="cursor: default; opacity: 0.8;">
                 </div>
                 <div>
                     <label class="coord-label">X2</label>
-                    <input type="number" id="regionX2" class="coord-input" placeholder="0">
+                    <input type="number" id="regionX2" class="coord-input" placeholder="—" readonly style="cursor: default; opacity: 0.8;">
                 </div>
                 <div>
                     <label class="coord-label">Y2</label>
-                    <input type="number" id="regionY2" class="coord-input" placeholder="0">
+                    <input type="number" id="regionY2" class="coord-input" placeholder="—" readonly style="cursor: default; opacity: 0.8;">
                 </div>
             </div>
+            <button type="button" class="select-map-btn" onclick="openMapSelector()">
+                🗺️ Selecionar no Mapa
+            </button>
+            <span style="color: #888; font-size: 0.75rem; margin-top: 6px; display: block;">Clique para abrir o mapa e desenhar o retângulo da zona</span>
+            <div id="regionAreaInfo" style="display: none; margin-top: 10px; padding: 10px; background: rgba(255, 152, 0, 0.1); border: 1px solid rgba(255, 152, 0, 0.25); border-radius: 8px; font-size: 0.85rem; color: #ffb74d;"></div>
         </div>
     </div>
 
@@ -695,6 +809,13 @@
         <button class="btn-submit" id="submitBtn" onclick="openConfirmModal()" style="margin-top: 15px;">
             ⚡ Revisar e Confirmar
         </button>
+    </div>
+</div>
+
+<!-- ==================== MAP SELECTOR MODAL ==================== -->
+<div class="map-selector-overlay" id="mapSelectorOverlay">
+    <div class="map-selector-frame">
+        <iframe id="mapSelectorFrame" src="about:blank"></iframe>
     </div>
 </div>
 
@@ -737,6 +858,7 @@
     /*<![CDATA[*/
     const userBalance = /*[[${userBalance}]]*/ 0;
     const disabledTiersMap = /*[[${disabledTiersMap}]]*/ {};
+    const regionAreaFactor = /*[[${regionAreaFactor}]]*/ 0.0001;
 
     // Apply disabled tiers on page load
     (function applyDisabledTiers() {
@@ -757,6 +879,63 @@
             });
         });
     })();
+
+    // ==================== CATEGORY TOGGLE ====================
+
+    function toggleCategory(header) {
+        header.classList.toggle('expanded');
+        const body = header.nextElementSibling;
+        body.classList.toggle('expanded');
+    }
+
+    // ==================== REGION AREA HELPERS ====================
+
+    function getRegionArea() {
+        const x1 = parseInt(document.getElementById('regionX1').value);
+        const y1 = parseInt(document.getElementById('regionY1').value);
+        const x2 = parseInt(document.getElementById('regionX2').value);
+        const y2 = parseInt(document.getElementById('regionY2').value);
+        if (isNaN(x1) || isNaN(y1) || isNaN(x2) || isNaN(y2)) return 0;
+        return Math.abs(x2 - x1) * Math.abs(y2 - y1);
+    }
+
+    function getRegionAreaMultiplier() {
+        const area = getRegionArea();
+        return 1.0 + area * regionAreaFactor;
+    }
+
+    function updateRegionCostDisplay() {
+        const multiplier = getRegionAreaMultiplier();
+        const area = getRegionArea();
+        document.querySelectorAll('.property-item.region').forEach(item => {
+            // Update tier-cost display
+            item.querySelectorAll('.tier-btn').forEach(btn => {
+                const baseCost = parseInt(btn.getAttribute('data-cost'));
+                const adjusted = Math.ceil(baseCost * multiplier);
+                const costSpan = btn.querySelector('.tier-cost');
+                if (costSpan) costSpan.textContent = adjusted + ' ₳';
+            });
+            // Update base cost hint for BOOLEAN/TEXT
+            const valueType = item.getAttribute('data-value-type');
+            if (valueType === 'BOOLEAN' || valueType === 'TEXT') {
+                const baseCost = parseInt(item.getAttribute('data-base-cost'));
+                const adjusted = Math.ceil(baseCost * multiplier);
+                const hint = item.querySelector('.property-cost-hint span');
+                if (hint) hint.textContent = adjusted;
+            }
+        });
+        // Show area info if region is selected
+        const areaInfo = document.getElementById('regionAreaInfo');
+        if (areaInfo) {
+            if (area > 0) {
+                areaInfo.style.display = 'block';
+                areaInfo.innerHTML = '📐 Área: <strong>' + area.toLocaleString() + '</strong> cells — Multiplicador de custo: <strong>×' + multiplier.toFixed(2) + '</strong>';
+            } else {
+                areaInfo.style.display = 'none';
+            }
+        }
+        updateCostSummary();
+    }
 
     function toggleProperty(el) {
         const checkbox = el.querySelector('.property-checkbox');
@@ -856,8 +1035,19 @@
         return selected;
     }
 
+    /** Applies area factor to region property costs in the selected list (mutates in place). */
+    function applyRegionAreaFactor(selected) {
+        const multiplier = getRegionAreaMultiplier();
+        selected.forEach(p => {
+            if (p.target === 'REGION') {
+                p.cost = Math.ceil(p.cost * multiplier);
+            }
+        });
+    }
+
     function updateCostSummary() {
         const selected = getSelectedProperties();
+        applyRegionAreaFactor(selected);
         const costSummary = document.getElementById('costSummary');
         const costItems = document.getElementById('costItems');
         const costTotal = document.getElementById('costTotalValue');
@@ -901,6 +1091,7 @@
         }
 
         const selected = getSelectedProperties();
+        applyRegionAreaFactor(selected);
         if (selected.length === 0) {
             alert('Selecione pelo menos uma propriedade!');
             return;
@@ -1037,6 +1228,53 @@
     function hideModalAlert(id) {
         document.getElementById(id).style.display = 'none';
     }
+
+    // ==================== MAP SELECTOR ====================
+
+    function openMapSelector() {
+        const overlay = document.getElementById('mapSelectorOverlay');
+        const iframe = document.getElementById('mapSelectorFrame');
+        let url = '/regions/map-selector';
+        const x1 = document.getElementById('regionX1').value;
+        const y1 = document.getElementById('regionY1').value;
+        const x2 = document.getElementById('regionX2').value;
+        const y2 = document.getElementById('regionY2').value;
+        if (x1 && y1 && x2 && y2) {
+            url += '?x1=' + encodeURIComponent(x1) + '&y1=' + encodeURIComponent(y1)
+                 + '&x2=' + encodeURIComponent(x2) + '&y2=' + encodeURIComponent(y2);
+        }
+        iframe.src = url;
+        overlay.classList.add('active');
+    }
+
+    function closeMapSelector() {
+        const overlay = document.getElementById('mapSelectorOverlay');
+        const iframe = document.getElementById('mapSelectorFrame');
+        overlay.classList.remove('active');
+        iframe.src = 'about:blank';
+    }
+
+    window.addEventListener('message', function(e) {
+        if (e.data && e.data.type === 'regionCoords') {
+            document.getElementById('regionX1').value = e.data.x1;
+            document.getElementById('regionY1').value = e.data.y1;
+            document.getElementById('regionX2').value = e.data.x2;
+            document.getElementById('regionY2').value = e.data.y2;
+            closeMapSelector();
+            updateRegionCostDisplay();
+        } else if (e.data && e.data.type === 'closeRegionSelector') {
+            closeMapSelector();
+        }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeMapSelector();
+    });
+
+    // Close map selector on overlay click
+    document.getElementById('mapSelectorOverlay').addEventListener('click', function(e) {
+        if (e.target === this) closeMapSelector();
+    });
 
     // Close modal on overlay click
     document.querySelectorAll('.modal-overlay').forEach(modal => {
