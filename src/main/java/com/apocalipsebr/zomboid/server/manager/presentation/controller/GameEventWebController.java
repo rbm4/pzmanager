@@ -77,13 +77,22 @@ public class GameEventWebController {
         // Filter sandbox suggestions based on current sandbox values (maxValue validation)
         GameEventService.FilteredSandboxSuggestions filtered = gameEventService.getFilteredSandboxSuggestions();
 
+        // Group sandbox suggestions by category for collapsible sections
+        java.util.Map<String, java.util.List<EventPropertySuggestion>> sandboxByCategory = new java.util.LinkedHashMap<>();
+        for (EventPropertySuggestion s : filtered.suggestions()) {
+            String cat = s.getCategory() != null ? s.getCategory() : "Outros";
+            sandboxByCategory.computeIfAbsent(cat, k -> new java.util.ArrayList<>()).add(s);
+        }
+
         model.addAttribute("sandboxSuggestions", filtered.suggestions());
+        model.addAttribute("sandboxByCategory", sandboxByCategory);
         model.addAttribute("disabledTiersMap", filtered.disabledTiersMap());
         model.addAttribute("regionSuggestions", EventPropertySuggestion.getRegionSuggestions());
         model.addAttribute("percentageTiers", EventPropertySuggestion.PERCENTAGE_TIERS);
         model.addAttribute("percentageCostMultipliers", EventPropertySuggestion.PERCENTAGE_COST_MULTIPLIERS);
         model.addAttribute("userBalance", gameEventService.getUserBalance(user));
         model.addAttribute("weeklyEventsRemaining", gameEventService.getWeeklyEventsRemaining(user));
+        model.addAttribute("regionAreaFactor", gameEventService.getRegionAreaFactor());
 
         return "event-create";
     }

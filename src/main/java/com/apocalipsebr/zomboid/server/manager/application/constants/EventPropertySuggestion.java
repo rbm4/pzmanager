@@ -522,10 +522,18 @@ public enum EventPropertySuggestion {
             return 1.0;
         }
         if (target == PropertyTarget.SANDBOX) {
-            return (baseValue != null ? baseValue : 1.0) * percentageTier / 100.0;
+            return roundCeil2((baseValue != null ? baseValue : 1.0) * percentageTier / 100.0);
         } else {
             return percentageTier;
         }
+    }
+
+    /**
+     * Rounds a value UP (ceiling) to 2 decimal places.
+     * E.g. 0.799999 → 0.80, 1.001 → 1.01.
+     */
+    private static double roundCeil2(double value) {
+        return Math.ceil(value * 100.0) / 100.0;
     }
 
     /**

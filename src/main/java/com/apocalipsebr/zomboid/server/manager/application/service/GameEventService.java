@@ -8,6 +8,7 @@ import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Character;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.EventStatus;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.*;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -35,6 +36,13 @@ public class GameEventService {
     private final CharacterService characterService;
     private final TransactionLogService transactionLogService;
     private final TransactionLogRepository transactionLogRepository;
+
+    @Value("${game.event.region-area-factor:0.0001}")
+    private double regionAreaFactor;
+
+    public double getRegionAreaFactor() {
+        return regionAreaFactor;
+    }
 
     public GameEventService(GameEventRepository gameEventRepository,
                             GameEventPropertyRepository gameEventPropertyRepository,
@@ -259,7 +267,7 @@ public class GameEventService {
                 try {
                     double currentValue = getCurrentSandboxValue(suggestion);
                     double deltaNum = parseDouble(delta, 0);
-                    if (currentValue + deltaNum > suggestion.getMaxValue()) {
+                    if (roundCeil2(currentValue + deltaNum) > suggestion.getMaxValue()) {
                         return new CreateEventResult(false,
                             suggestion.getDisplayName() + " excederia o valor máximo permitido ("
                             + suggestion.getMaxValue() + "). Valor atual: " + currentValue, null);
@@ -268,6 +276,13 @@ public class GameEventService {
                     return new CreateEventResult(false,
                         "Configuração de sandbox não encontrada para: " + suggestion.getDisplayName(), null);
                 }
+            }
+
+            // Apply region area factor for REGION properties
+            if (suggestion.getTarget() == PropertyTarget.REGION
+                    && regionX1 != null && regionX2 != null && regionY1 != null && regionY2 != null) {
+                long area = (long) Math.abs(regionX2 - regionX1) * Math.abs(regionY2 - regionY1);
+                cost = (int) Math.ceil(cost * (1.0 + area * regionAreaFactor));
             }
 
             GameEventProperty prop = new GameEventProperty();
@@ -444,7 +459,7 @@ public class GameEventService {
                 String effectiveValue = setting.getEffectiveValue();
                 double currentVal = parseDouble(effectiveValue, suggestion.getBaseValue() != null ? suggestion.getBaseValue() : 0);
                 double delta = parseDouble(prop.getCalculatedDelta(), 0);
-                double newVal = Math.ceil((currentVal + delta) * 100) / 100;
+                double newVal = roundCeil2(currentVal + delta);
 
                 setting.setAppliedValue(String.valueOf(newVal));
                 setting.setOverwriteAtStartup(true);
@@ -547,7 +562,7 @@ public class GameEventService {
                 String effectiveValue = setting.getEffectiveValue();
                 double currentVal = parseDouble(effectiveValue, suggestion.getBaseValue() != null ? suggestion.getBaseValue() : 0);
                 double delta = parseDouble(prop.getCalculatedDelta(), 0);
-                double newVal = currentVal - delta;
+                double newVal = roundCeil2(currentVal - delta);
 
                 setting.setAppliedValue(String.valueOf(newVal));
                 setting.setUpdatedAt(LocalDateTime.now());
@@ -768,7 +783,7 @@ public class GameEventService {
 
             for (int tier : EventPropertySuggestion.PERCENTAGE_TIERS) {
                 double delta = s.calculateDelta(tier);
-                if (currentValue + delta > s.getMaxValue()) {
+                if (roundCeil2(currentValue + delta) > s.getMaxValue()) {
                     disabledTiers.add(String.valueOf(tier));
                 } else {
                     anyValid = true;
@@ -820,5 +835,14 @@ public class GameEventService {
         } catch (NumberFormatException e) {
             return defaultValue;
         }
+    }
+
+    /**
+     * Rounds a value UP (ceiling) to 2 decimal places.
+     * Ensures consistency when filling sandbox properties at startup.
+     * E.g. 0.799999 → 0.80, 1.001 → 1.01.
+     */
+    private static double roundCeil2(double value) {
+        return Math.ceil(value * 100.0) / 100.0;
     }
 }
