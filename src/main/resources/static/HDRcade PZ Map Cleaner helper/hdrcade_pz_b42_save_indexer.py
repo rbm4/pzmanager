@@ -22,7 +22,8 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Any, Optional
 
 BIN_TILE_SIZE = 8  # folder/file indices correspond to world tiles / 8
-TOWN_RE = re.compile(r".+, KY$")
+# Matches town strings like "Muldraugh, KY", "Raven Creek, RC", etc.
+TOWN_RE = re.compile(r".+, [A-Za-z]{2,}$")
 
 def read_u16(b: bytes, i: int) -> Optional[int]:
     if i+2 > len(b): return None
@@ -44,7 +45,8 @@ def read_utf(b: bytes, i: int) -> Optional[Tuple[str,int]]:
 def is_reasonable_name(s: str) -> bool:
     if not (1 <= len(s) <= 40): return False
     if any(ord(c) < 32 for c in s): return False
-    if not re.fullmatch(r"[A-Za-z0-9_\-\.\s]{1,40}", s): return False
+    # \w with re.UNICODE supports accented/international characters
+    if not re.fullmatch(r"[\w\-\.\s]{1,40}", s, re.UNICODE): return False
     return s.strip() != ""
 
 def scan_utf_strings(b: bytes, start: int, end: int, max_len: int = 120) -> List[Tuple[int,str]]:
@@ -125,7 +127,7 @@ def extract_safehouses_from_map_meta(meta_path: Path, warnings: List[str]) -> Li
                 break
 
         if not town:
-            continue
+            pass  # Keep safehouse even without a recognized town
 
         name = ""
         if town_pos is not None:
