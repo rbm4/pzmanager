@@ -24,7 +24,8 @@ public class MapCleanerService {
 
     private static final Logger log = LoggerFactory.getLogger(MapCleanerService.class);
     private static final int BIN_TILE_SIZE = 8;
-    private static final Pattern TOWN_RE = Pattern.compile(".+, KY$");
+    // Matches town strings like "Muldraugh, KY", "Raven Creek, RC", "Bedford Falls, BF", etc.
+    private static final Pattern TOWN_RE = Pattern.compile(".+, [A-Za-z]{2,}$");
 
     @Value("${server.map.folder:}")
     private String mapFolderPath;
@@ -298,14 +299,17 @@ public class MapCleanerService {
                 }
             }
 
-            if (town.isEmpty()) continue;
+            if (town.isEmpty()) {
+                log.debug("Safehouse candidate at offset {} (owner={}, x={}, y={}, w={}, h={}) has no recognized town — keeping with empty town.",
+                        c.offset(), c.owner(), c.x(), c.y(), c.w(), c.h());
+            }
 
             // Capture effectively-final copies for use below
             final int fTownPos = townPos;
             final String fTown = town;
             final String fOwner = c.owner();
 
-            // Find name
+            // Find name (only when a town was found as positional anchor)
             String name = "";
             if (fTownPos >= 0) {
                 // Check strings before town
@@ -381,7 +385,8 @@ public class MapCleanerService {
         for (char c : s.toCharArray()) {
             if (c < 32) return false;
         }
-        return s.matches("[A-Za-z0-9_\\-\\.\\s]{1,40}") && !s.trim().isEmpty();
+        // \p{L} supports Unicode letters (accented chars, Cyrillic, etc.)
+        return s.matches("[\\p{L}\\p{N}_\\-\\.\\s]{1,40}") && !s.trim().isEmpty();
     }
 
     private List<StringAt> scanUTFStrings(byte[] data, int start, int end, int maxLen) {
