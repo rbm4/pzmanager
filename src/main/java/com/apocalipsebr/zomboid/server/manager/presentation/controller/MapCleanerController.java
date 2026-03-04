@@ -107,6 +107,7 @@ public class MapCleanerController {
         response.put("success", result.success());
         response.put("deletedCount", result.deletedCount());
         response.put("requestedCount", result.requestedCount());
+        response.put("protectedCount", result.protectedCount());
         response.put("message", result.message());
 
         return ResponseEntity.ok(response);
