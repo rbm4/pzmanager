@@ -24,6 +24,11 @@ public class MapCleanerService {
 
     private static final Logger log = LoggerFactory.getLogger(MapCleanerService.class);
     private static final int BIN_TILE_SIZE = 8;
+    /**
+     * Server-side minimum margin (in tiles) around each safehouse that is always protected.
+     * This ensures bins adjacent to safehouses are never deleted, even if the client sends them.
+     */
+    private static final int SERVER_SAFEHOUSE_MARGIN = 16;
     // Matches town strings like "Muldraugh, KY", "Raven Creek, RC", "Bedford Falls, BF", etc.
     private static final Pattern TOWN_RE = Pattern.compile(".+, [A-Za-z]{2,}$");
 
@@ -71,20 +76,32 @@ public class MapCleanerService {
     /**
      * Deletes the specified .bin files from the map folder.
      * Input: list of "bx/by" keys (folder/file).
-     * Returns a result with count of deleted files and any errors.
+     * Server-side safehouse protection: bins overlapping any safehouse (plus margin) are refused.
+     * Returns a result with count of deleted files, protected skips, and any errors.
      */
     public DeleteResult deleteBins(List<String> binKeys) {
         if (mapFolderPath == null || mapFolderPath.isBlank()) {
-            return new DeleteResult(false, 0, 0, "server.map.folder is not configured.");
+            return new DeleteResult(false, 0, 0, 0, "server.map.folder is not configured.");
         }
 
         Path mapDir = Paths.get(mapFolderPath);
         if (!Files.exists(mapDir) || !Files.isDirectory(mapDir)) {
-            return new DeleteResult(false, 0, 0, "Map folder does not exist: " + mapFolderPath);
+            return new DeleteResult(false, 0, 0, 0, "Map folder does not exist: " + mapFolderPath);
         }
+
+        // Build server-side safehouse protection set
+        Path saveRoot = mapDir.getParent();
+        Path metaPath = saveRoot != null ? saveRoot.resolve("map_meta.bin") : mapDir.resolve("../map_meta.bin").normalize();
+        List<String> metaWarnings = new ArrayList<>();
+        List<SafehouseInfo> safehouses = extractSafehousesFromMapMeta(metaPath, metaWarnings);
+        Set<String> protectedBins = buildProtectedBinKeys(safehouses, SERVER_SAFEHOUSE_MARGIN);
+
+        log.info("Server-side safehouse protection: {} safehouses, {} protected bins (margin={})",
+                safehouses.size(), protectedBins.size(), SERVER_SAFEHOUSE_MARGIN);
 
         int deleted = 0;
         int notFound = 0;
+        int protectedSkips = 0;
         List<String> errors = new ArrayList<>();
 
         for (String key : binKeys) {
@@ -97,6 +114,14 @@ public class MapCleanerService {
             try {
                 int bx = Integer.parseInt(parts[0]);
                 int by = Integer.parseInt(parts[1]);
+
+                // Server-side safehouse protection: refuse to delete protected bins
+                if (protectedBins.contains(key)) {
+                    protectedSkips++;
+                    log.debug("Safehouse-protected bin skipped: {}", key);
+                    continue;
+                }
+
                 Path binFile = mapDir.resolve(String.valueOf(bx)).resolve(by + ".bin");
 
                 // Security: ensure the path stays within the map folder
@@ -121,15 +146,43 @@ public class MapCleanerService {
         // Clean up empty folders
         cleanEmptyFolders(mapDir);
 
-        String message = String.format("Deleted %d files (%d not found, %d errors).", deleted, notFound, errors.size());
+        String message = String.format("Deleted %d files (%d not found, %d safehouse-protected, %d errors).",
+                deleted, notFound, protectedSkips, errors.size());
         if (!errors.isEmpty()) {
             message += " Errors: " + String.join("; ", errors.subList(0, Math.min(10, errors.size())));
         }
 
-        log.info("Map cleaner delete: {} files deleted, {} not found, {} errors out of {} requested",
-                deleted, notFound, errors.size(), binKeys.size());
+        log.info("Map cleaner delete: {} files deleted, {} not found, {} safehouse-protected, {} errors out of {} requested",
+                deleted, notFound, protectedSkips, errors.size(), binKeys.size());
 
-        return new DeleteResult(errors.isEmpty(), deleted, binKeys.size(), message);
+        return new DeleteResult(errors.isEmpty(), deleted, binKeys.size(), protectedSkips, message);
+    }
+
+    /**
+     * Builds a set of "bx/by" bin keys that are protected by safehouses.
+     * Each safehouse is expanded by the given margin (in tiles) on all sides.
+     */
+    private Set<String> buildProtectedBinKeys(List<SafehouseInfo> safehouses, int marginTiles) {
+        Set<String> protectedKeys = new HashSet<>();
+        for (SafehouseInfo sh : safehouses) {
+            // Convert safehouse tile coords to bin coords, rounding outward
+            int x1 = Math.floorDiv(sh.x() - marginTiles, BIN_TILE_SIZE);
+            int y1 = Math.floorDiv(sh.y() - marginTiles, BIN_TILE_SIZE);
+            int x2 = ceilDiv(sh.x() + sh.w() + marginTiles, BIN_TILE_SIZE);
+            int y2 = ceilDiv(sh.y() + sh.h() + marginTiles, BIN_TILE_SIZE);
+
+            for (int bx = x1; bx <= x2; bx++) {
+                for (int by = y1; by <= y2; by++) {
+                    protectedKeys.add(bx + "/" + by);
+                }
+            }
+        }
+        return protectedKeys;
+    }
+
+    /** Integer ceiling division (works correctly for negative dividends). */
+    private static int ceilDiv(int a, int b) {
+        return Math.floorDiv(a + b - 1, b);
     }
 
     /**
@@ -260,7 +313,7 @@ public class MapCleanerService {
             candidates.add(new SafehouseCandidate(i, x, y, w, h, t1.value(), t2.nextPos()));
         }
 
-        if (candidates.isEmpty()) {
+            if (candidates.isEmpty()) {
             warnings.add("No safehouse signature blocks found in map_meta.bin.");
             return Collections.emptyList();
         }
@@ -440,7 +493,7 @@ public class MapCleanerService {
                                 List<String> members) {
     }
 
-    public record DeleteResult(boolean success, int deletedCount, int requestedCount, String message) {
+    public record DeleteResult(boolean success, int deletedCount, int requestedCount, int protectedCount, String message) {
     }
 
     private record ScanResult(Map<String, List<int[]>> binsByX, int totalBins) {

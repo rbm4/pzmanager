@@ -478,12 +478,12 @@ It does NOT scan your filesystem in the browser.">
                     <input type="checkbox" id="chkAutoProtectSH" checked="">
                 </div>
                 <div class="row">
-                    <label class="tip" data-tip="Optional buffer around each safehouse, in tiles.
+                    <label class="tip" data-tip="Buffer around each safehouse, in tiles.
 
 Example: 100 means a 100-tile border around safehouse rectangles is also protected and blocked from delete.
 
-Default is 0 (neutral).">Safehouse padding (tiles)</label>
-                    <input id="shPad" type="number" value="0" min="0" step="1" style="width:120px">
+Default is 16 (2 bins / ~2 chunks of buffer).">Safehouse padding (tiles)</label>
+                    <input id="shPad" type="number" value="16" min="0" step="1" style="width:120px">
                 </div>
                 <div class="hint">
                     Safehouse core = green dashed outline
@@ -774,10 +774,12 @@ Default is 0 (neutral).">Safehouse padding (tiles)</label>
             safehousePad = Math.max(0, Number($("shPad").value || 0) | 0);
 
             for (const sh of safehouses) {
+                // Round outward: floor for left/top edges, ceil for right/bottom edges
+                // This ensures full bin coverage around the safehouse + padding
                 const x1 = Math.floor((sh.x - safehousePad) / binTileSize);
                 const y1 = Math.floor((sh.y - safehousePad) / binTileSize);
-                const x2 = Math.floor((sh.x + sh.w + safehousePad) / binTileSize);
-                const y2 = Math.floor((sh.y + sh.h + safehousePad) / binTileSize);
+                const x2 = Math.ceil((sh.x + sh.w + safehousePad) / binTileSize);
+                const y2 = Math.ceil((sh.y + sh.h + safehousePad) / binTileSize);
 
                 for (let bx = x1; bx <= x2; bx++) {
                     for (let by = y1; by <= y2; by++) {
