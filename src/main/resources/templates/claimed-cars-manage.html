@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Veículos Registrados - Admin</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff; min-height: 100vh; display: flex;
+        }
+        .container { margin-left: 280px; flex: 1; padding: 30px; overflow-y: auto; }
+
+        .page-header {
+            background: rgba(255,255,255,0.05); padding: 20px 30px; border-radius: 10px;
+            margin-bottom: 25px; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .page-header h1 {
+            background: linear-gradient(45deg, #ff9800, #ffb74d);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; font-size: 2rem;
+        }
+        .btn-map-all {
+            background: rgba(79,172,254,0.2); border: 1px solid #4facfe; color: #4facfe;
+            padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 0.9rem;
+            font-weight: 600; transition: all 0.3s; text-decoration: none;
+        }
+        .btn-map-all:hover { background: rgba(79,172,254,0.4); transform: translateY(-2px); }
+
+        /* ── Stats Row ── */
+        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .stat-card {
+            background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1); text-align: center;
+        }
+        .stat-card .stat-number { font-size: 2rem; font-weight: 700; margin-bottom: 5px; }
+        .stat-card .stat-label { color: #aaa; font-size: 0.85rem; }
+        .stat-total .stat-number { color: #ff9800; }
+        .stat-active .stat-number { color: #4facfe; }
+        .stat-migrated .stat-number { color: #4caf50; }
+
+        /* ── Table ── */
+        .table-container {
+            background: rgba(255,255,255,0.05); border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1); overflow: hidden;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        thead th {
+            padding: 14px 16px; text-align: left; background: rgba(0,0,0,0.3);
+            color: #ff9800; font-weight: 600; font-size: 0.85rem; white-space: nowrap;
+            border-bottom: 2px solid rgba(255,152,0,0.25);
+        }
+        tbody td {
+            padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.88rem; color: #ddd; vertical-align: middle;
+        }
+        tbody tr:hover td { background: rgba(255,255,255,0.03); }
+
+        .badge { padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+        .badge-active { background: rgba(79,172,254,0.2); color: #4facfe; border: 1px solid rgba(79,172,254,0.4); }
+        .badge-migrated { background: rgba(76,175,80,0.2); color: #4caf50; border: 1px solid rgba(76,175,80,0.4); }
+
+        .linked { color: #4caf50; }
+        .unlinked { color: #ff6b6b; }
+
+        .table-empty { text-align: center; padding: 40px; color: #666; }
+
+        .hash-cell { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* ── Map Modal ── */
+        .map-modal-overlay {
+            display: none; position: fixed; inset: 0; z-index: 11000;
+            align-items: center; justify-content: center; background: rgba(0,0,0,0.88);
+        }
+        .map-modal-overlay.active { display: flex; }
+        .map-frame-wrapper {
+            width: min(96vw, 1600px); height: min(92vh, 1000px);
+            border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6); position: relative;
+        }
+        .map-frame-wrapper iframe { width: 100%; height: 100%; border: none; display: block; }
+        .map-close-bar { position: absolute; top: 8px; right: 12px; z-index: 100; }
+        .map-close-btn {
+            background: rgba(231,76,60,0.15); color: #f0a0a0;
+            border: 1px solid rgba(231,76,60,0.45); border-radius: 12px;
+            padding: 6px 14px; cursor: pointer; font-size: 13px;
+        }
+        .map-close-btn:hover { border-color: #e74c3c; color: #fff; }
+
+        @media (max-width: 768px) {
+            .container { margin-left: 0; }
+            body { flex-direction: column; }
+            .stats-row { grid-template-columns: 1fr; }
+            table { font-size: 0.8rem; }
+            thead th, tbody td { padding: 8px 10px; }
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{header-component :: header}"></div>
+<div th:replace="~{sidebar-component :: sidebar}"></div>
+
+<main class="container">
+    <div class="page-header">
+        <h1>🚗 Veículos Registrados</h1>
+        <button class="btn-map-all" th:if="${totalCars > 0}" onclick="openMapAll()">🗺️ Ver todos no mapa</button>
+    </div>
+
+    <div class="stats-row">
+        <div class="stat-card stat-total">
+            <div class="stat-number" th:text="${totalCars}">0</div>
+            <div class="stat-label">Total de Veículos</div>
+        </div>
+        <div class="stat-card stat-active">
+            <div class="stat-number" th:text="${unmigratedCount}">0</div>
+            <div class="stat-label">Ativos</div>
+        </div>
+        <div class="stat-card stat-migrated">
+            <div class="stat-number" th:text="${migratedCount}">0</div>
+            <div class="stat-label">Migrados</div>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Veículo</th>
+                    <th>Script</th>
+                    <th>Dono</th>
+                    <th>Steam ID</th>
+                    <th>Usuário</th>
+                    <th>Posição</th>
+                    <th>Itens</th>
+                    <th>Status</th>
+                    <th>Hash</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="car : ${claimedCars}">
+                    <td th:text="${car.id}">1</td>
+                    <td th:text="${car.vehicleName ?: '-'}">Vehicle</td>
+                    <td th:text="${car.scriptName ?: '-'}">Base.Car</td>
+                    <td th:text="${car.ownerName ?: '-'}">Owner</td>
+                    <td th:text="${car.ownerSteamId ?: '-'}">76561198...</td>
+                    <td>
+                        <span th:if="${car.user != null}" class="linked"
+                              th:text="'✅ ' + ${car.user.username}">✅ linked</span>
+                        <span th:if="${car.user == null}" class="unlinked">❌ Não vinculado</span>
+                    </td>
+                    <td>
+                        <span th:if="${car.x != null}"
+                              th:text="${T(java.lang.Math).round(car.x) + ', ' + T(java.lang.Math).round(car.y)}">0, 0</span>
+                        <span th:if="${car.x == null}">N/A</span>
+                    </td>
+                    <td th:text="${car.items.size()}">0</td>
+                    <td>
+                        <span class="badge" th:classappend="${car.migrated ? 'badge-migrated' : 'badge-active'}"
+                              th:text="${car.migrated ? 'Migrado' : 'Ativo'}">Status</span>
+                    </td>
+                    <td class="hash-cell" th:text="${car.vehicleHash}" th:title="${car.vehicleHash}">hash</td>
+                </tr>
+                <tr th:if="${claimedCars.isEmpty()}">
+                    <td colspan="10" class="table-empty">Nenhum veículo registrado encontrado.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<!-- ── Map Modal ── -->
+<div class="map-modal-overlay" id="vehicleMapModal" onclick="if(event.target===this) closeVehicleMap()">
+    <div class="map-frame-wrapper">
+        <iframe id="vehicleMapIframe"></iframe>
+        <div class="map-close-bar">
+            <button class="map-close-btn" onclick="closeVehicleMap()">✕ Fechar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openMapAll() {
+        document.getElementById('vehicleMapIframe').src = '/pzmap/pzmap.html?vehicle_user=all';
+        document.getElementById('vehicleMapModal').classList.add('active');
+    }
+    function closeVehicleMap() {
+        document.getElementById('vehicleMapModal').classList.remove('active');
+        document.getElementById('vehicleMapIframe').src = '';
+    }
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && document.getElementById('vehicleMapModal').classList.contains('active')) {
+            closeVehicleMap();
+        }
+    });
+</script>
+</body>
+</html>

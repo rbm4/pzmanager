@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meus Veículos - Apocalipse [BR]</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff; min-height: 100vh; display: flex;
+        }
+        .main-content { margin-left: 280px; flex: 1; padding: 30px; overflow-y: auto; }
+
+        .page-header {
+            background: rgba(255,255,255,0.05); padding: 20px 30px; border-radius: 10px;
+            margin-bottom: 30px; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .page-header h1 {
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; font-size: 2rem;
+        }
+        .btn-map-all {
+            background: rgba(79,172,254,0.2); border: 1px solid #4facfe; color: #4facfe;
+            padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 0.95rem;
+            font-weight: 600; transition: all 0.3s ease; text-decoration: none;
+        }
+        .btn-map-all:hover { background: rgba(79,172,254,0.4); transform: translateY(-2px); }
+
+        /* ── Car Cards ── */
+        .cars-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px;
+        }
+        .car-card {
+            background: rgba(255,255,255,0.05); padding: 24px; border-radius: 15px;
+            backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease; cursor: pointer; display: flex; flex-direction: column; gap: 14px;
+        }
+        .car-card:hover { transform: translateY(-5px); border-color: #4facfe; box-shadow: 0 10px 30px rgba(79,172,254,0.3); }
+        .car-card.migrated { border-color: rgba(76,175,80,0.3); opacity: 0.75; }
+        .car-card.migrated:hover { border-color: #4caf50; }
+
+        .car-header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .car-name { font-size: 1.35rem; font-weight: 600; color: #4facfe; margin-bottom: 4px; }
+        .car-card.migrated .car-name { color: #4caf50; }
+        .car-script { color: #aaa; font-size: 0.85rem; font-style: italic; }
+
+        .badge { padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; white-space: nowrap; }
+        .badge-active { background: rgba(79,172,254,0.2); border: 1px solid #4facfe; color: #4facfe; }
+        .badge-migrated { background: rgba(76,175,80,0.2); border: 1px solid #4caf50; color: #4caf50; }
+
+        .car-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .stat-box { background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); }
+        .stat-label { color: #aaa; font-size: 0.8rem; margin-bottom: 4px; display: block; }
+        .stat-val { font-size: 1.1rem; font-weight: 600; color: #fff; }
+
+        .car-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); }
+        .btn-details {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #ccc;
+            padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; transition: all 0.3s;
+        }
+        .btn-details:hover { background: rgba(255,255,255,0.2); color: #fff; }
+        .btn-map-car {
+            background: rgba(255,152,0,0.15); border: 1px solid rgba(255,152,0,0.5); color: #ffb74d;
+            padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; transition: all 0.3s;
+        }
+        .btn-map-car:hover { background: rgba(255,152,0,0.3); }
+
+        .no-cars {
+            grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: #aaa;
+            background: rgba(255,255,255,0.05); border-radius: 15px; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .no-cars h2 { font-size: 1.5rem; margin-bottom: 10px; color: #666; }
+
+        /* ── Detail Modal ── */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0; z-index: 10000;
+            align-items: center; justify-content: center; background: rgba(0,0,0,0.82);
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-box {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 1px solid rgba(79,172,254,0.25); border-radius: 16px;
+            padding: 0; width: min(94vw, 800px); max-height: 90vh; overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6); display: flex; flex-direction: column;
+        }
+        .modal-header {
+            padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .modal-header h2 { color: #4facfe; font-size: 1.4rem; }
+        .modal-close {
+            background: rgba(231,76,60,0.15); color: #f0a0a0; border: 1px solid rgba(231,76,60,0.45);
+            border-radius: 8px; padding: 6px 14px; cursor: pointer; font-size: 13px; transition: all 0.2s;
+        }
+        .modal-close:hover { border-color: #e74c3c; color: #fff; }
+        .modal-body { padding: 24px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 20px; }
+
+        .detail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
+        .detail-item { background: rgba(0,0,0,0.25); padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06); }
+        .detail-label { color: #888; font-size: 0.8rem; margin-bottom: 4px; }
+        .detail-value { font-size: 1rem; font-weight: 600; }
+
+        .items-section h3 { color: #ffb74d; margin-bottom: 12px; font-size: 1.1rem; }
+        .items-table { width: 100%; border-collapse: collapse; }
+        .items-table th {
+            text-align: left; padding: 10px 12px; background: rgba(0,0,0,0.3);
+            color: #4facfe; font-size: 0.85rem; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .items-table td {
+            padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.9rem; color: #ddd;
+        }
+        .items-table tr:hover td { background: rgba(255,255,255,0.03); }
+        .no-items { text-align: center; padding: 20px; color: #666; }
+
+        .modal-footer { padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; gap: 10px; justify-content: flex-end; }
+
+        /* ── Map Modal ── */
+        .map-modal-overlay {
+            display: none; position: fixed; inset: 0; z-index: 11000;
+            align-items: center; justify-content: center; background: rgba(0,0,0,0.88);
+        }
+        .map-modal-overlay.active { display: flex; }
+        .map-frame-wrapper {
+            width: min(96vw, 1600px); height: min(92vh, 1000px);
+            border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6); position: relative;
+        }
+        .map-frame-wrapper iframe { width: 100%; height: 100%; border: none; display: block; }
+        .map-close-bar {
+            position: absolute; top: 8px; right: 12px; z-index: 100;
+        }
+        .map-close-btn {
+            background: rgba(231,76,60,0.15); color: #f0a0a0;
+            border: 1px solid rgba(231,76,60,0.45); border-radius: 12px;
+            padding: 6px 14px; cursor: pointer; font-size: 13px; font-family: system-ui, sans-serif;
+        }
+        .map-close-btn:hover { border-color: #e74c3c; color: #fff; }
+
+        @media (max-width: 768px) {
+            .main-content { margin-left: 0; }
+            body { flex-direction: column; }
+            .cars-grid { grid-template-columns: 1fr; }
+            .car-stats { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{header-component :: header}"></div>
+<div th:replace="~{sidebar-component :: sidebar}"></div>
+
+<main class="main-content">
+    <div class="page-header">
+        <h1>🚗 Meus Veículos</h1>
+        <button class="btn-map-all" th:if="${!claimedCars.isEmpty()}"
+                onclick="openMapAll()">🗺️ Ver todos no mapa</button>
+    </div>
+
+    <div class="cars-grid">
+        <!-- Car Cards -->
+        <div th:each="car : ${claimedCars}"
+             class="car-card"
+             th:classappend="${car.migrated ? 'migrated' : ''}"
+             th:attr="onclick='openDetailModal(' + ${car.id} + ')'">
+
+            <div class="car-header">
+                <div>
+                    <div class="car-name" th:text="${car.vehicleName != null ? car.vehicleName : 'Veículo desconhecido'}">Vehicle Name</div>
+                    <div class="car-script" th:text="${car.scriptName}">Base.CarNormal</div>
+                </div>
+                <span class="badge" th:classappend="${car.migrated ? 'badge-migrated' : 'badge-active'}"
+                      th:text="${car.migrated ? '✅ Migrado' : '🔑 Ativo'}">Status</span>
+            </div>
+
+            <div class="car-stats">
+                <div class="stat-box">
+                    <span class="stat-label">📍 Posição</span>
+                    <div class="stat-val">
+                        <span th:if="${car.x != null}" th:text="${T(java.lang.Math).round(car.x) + ', ' + T(java.lang.Math).round(car.y)}">0, 0</span>
+                        <span th:if="${car.x == null}">N/A</span>
+                    </div>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">📦 Itens</span>
+                    <div class="stat-val" th:text="${car.items.size()}">0</div>
+                </div>
+            </div>
+
+            <div class="car-footer">
+                <button class="btn-details" onclick="event.stopPropagation();"
+                        th:attr="onclick='event.stopPropagation(); openDetailModal(' + ${car.id} + ')'">
+                    📋 Detalhes
+                </button>
+                <button class="btn-map-car" onclick="event.stopPropagation();"
+                        th:attr="onclick='event.stopPropagation(); openMapForCar(' + ${car.id} + ')'">
+                    🗺️ No Mapa
+                </button>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="no-cars" th:if="${claimedCars.isEmpty()}">
+            <h2>🚫 Nenhum Veículo Registrado</h2>
+            <p>Seus veículos aparecerão aqui quando forem registrados pelo sistema de claim no servidor.</p>
+        </div>
+    </div>
+</main>
+
+<!-- ── Detail Modal ── -->
+<div class="modal-overlay" id="detailModal" onclick="if(event.target===this) closeDetailModal()">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2 id="modalTitle">🚗 Detalhes do Veículo</h2>
+            <button class="modal-close" onclick="closeDetailModal()">✕ Fechar</button>
+        </div>
+        <div class="modal-body">
+            <div class="detail-grid" id="modalDetails"></div>
+            <div class="items-section">
+                <h3>📦 Itens no Veículo</h3>
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Quantidade</th>
+                            <th>Container</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modalItemsBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-map-car" id="modalMapBtn" onclick="openMapFromModal()">🗺️ Ver no Mapa</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Map Modal ── -->
+<div class="map-modal-overlay" id="vehicleMapModal" onclick="if(event.target===this) closeVehicleMap()">
+    <div class="map-frame-wrapper">
+        <iframe id="vehicleMapIframe"></iframe>
+        <div class="map-close-bar">
+            <button class="map-close-btn" onclick="closeVehicleMap()">✕ Fechar</button>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    // Serialize cars + items from Thymeleaf into JS
+    const carsData = [];
+    /*[# th:each="car : ${claimedCars}"]*/
+    carsData.push({
+        id: /*[[${car.id}]]*/ 0,
+        vehicleHash: /*[[${car.vehicleHash}]]*/ '',
+        vehicleName: /*[[${car.vehicleName}]]*/ '',
+        scriptName: /*[[${car.scriptName}]]*/ '',
+        ownerName: /*[[${car.ownerName}]]*/ '',
+        x: /*[[${car.x}]]*/ null,
+        y: /*[[${car.y}]]*/ null,
+        migrated: /*[[${car.migrated}]]*/ false,
+        items: [
+            /*[# th:each="item : ${car.items}"]*/
+            {
+                fullType: /*[[${item.fullType}]]*/ '',
+                count: /*[[${item.count}]]*/ 1,
+                container: /*[[${item.container}]]*/ ''
+            },
+            /*[/]*/
+        ]
+    });
+    /*[/]*/
+
+    const userId = /*[[${user.id}]]*/ 0;
+    let currentModalCarId = null;
+
+    function openDetailModal(carId) {
+        const car = carsData.find(c => c.id === carId);
+        if (!car) return;
+        currentModalCarId = carId;
+
+        document.getElementById('modalTitle').textContent = '🚗 ' + (car.vehicleName || 'Veículo');
+
+        const details = document.getElementById('modalDetails');
+        details.innerHTML = `
+            <div class="detail-item"><div class="detail-label">Hash</div><div class="detail-value">${esc(car.vehicleHash)}</div></div>
+            <div class="detail-item"><div class="detail-label">Script</div><div class="detail-value">${esc(car.scriptName)}</div></div>
+            <div class="detail-item"><div class="detail-label">Dono</div><div class="detail-value">${esc(car.ownerName)}</div></div>
+            <div class="detail-item"><div class="detail-label">Posição</div><div class="detail-value">${car.x != null ? Math.round(car.x) + ', ' + Math.round(car.y) : 'N/A'}</div></div>
+            <div class="detail-item"><div class="detail-label">Status</div><div class="detail-value">${car.migrated ? '✅ Migrado' : '🔑 Ativo'}</div></div>
+            <div class="detail-item"><div class="detail-label">Total de Itens</div><div class="detail-value">${car.items.length}</div></div>
+        `;
+
+        const tbody = document.getElementById('modalItemsBody');
+        if (car.items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" class="no-items">Nenhum item encontrado</td></tr>';
+        } else {
+            tbody.innerHTML = car.items.map(item => `
+                <tr>
+                    <td>${esc(item.fullType)}</td>
+                    <td>${item.count}</td>
+                    <td>${esc(item.container || '-')}</td>
+                </tr>
+            `).join('');
+        }
+
+        document.getElementById('detailModal').classList.add('active');
+    }
+
+    function closeDetailModal() {
+        document.getElementById('detailModal').classList.remove('active');
+        currentModalCarId = null;
+    }
+
+    function openMapForCar(carId) {
+        const mapUrl = '/pzmap/pzmap.html?vehicle_user=' + userId + '&vehicle_id=' + carId;
+        document.getElementById('vehicleMapIframe').src = mapUrl;
+        document.getElementById('vehicleMapModal').classList.add('active');
+    }
+
+    function openMapAll() {
+        const mapUrl = '/pzmap/pzmap.html?vehicle_user=' + userId;
+        document.getElementById('vehicleMapIframe').src = mapUrl;
+        document.getElementById('vehicleMapModal').classList.add('active');
+    }
+
+    function openMapFromModal() {
+        if (currentModalCarId) {
+            closeDetailModal();
+            openMapForCar(currentModalCarId);
+        }
+    }
+
+    function closeVehicleMap() {
+        document.getElementById('vehicleMapModal').classList.remove('active');
+        document.getElementById('vehicleMapIframe').src = '';
+    }
+
+    function esc(s) {
+        if (s == null) return '';
+        const d = document.createElement('div');
+        d.textContent = String(s);
+        return d.innerHTML;
+    }
+
+    // Close modals on Escape
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+            if (document.getElementById('vehicleMapModal').classList.contains('active')) {
+                closeVehicleMap();
+            } else if (document.getElementById('detailModal').classList.contains('active')) {
+                closeDetailModal();
+            }
+        }
+    });
+    /*]]>*/
+</script>
+</body>
+</html>

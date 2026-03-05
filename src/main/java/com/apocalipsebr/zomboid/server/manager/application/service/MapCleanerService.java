@@ -1,5 +1,8 @@
 package com.apocalipsebr.zomboid.server.manager.application.service;
 
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.ClaimedCar;
+import com.apocalipsebr.zomboid.server.manager.domain.repository.app.ClaimedCarRepository;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,11 +32,22 @@ public class MapCleanerService {
      * This ensures bins adjacent to safehouses are never deleted, even if the client sends them.
      */
     private static final int SERVER_SAFEHOUSE_MARGIN = 16;
+    /**
+     * Server-side minimum margin (in tiles) around each claimed car that is always protected.
+     * Cars are single points, so the margin defines the full protected radius.
+     */
+    private static final int SERVER_CAR_MARGIN = 8;
     // Matches town strings like "Muldraugh, KY", "Raven Creek, RC", "Bedford Falls, BF", etc.
     private static final Pattern TOWN_RE = Pattern.compile(".+, [A-Za-z]{2,}$");
 
     @Value("${server.map.folder:}")
     private String mapFolderPath;
+
+    private final ClaimedCarRepository claimedCarRepository;
+
+    public MapCleanerService(ClaimedCarRepository claimedCarRepository) {
+        this.claimedCarRepository = claimedCarRepository;
+    }
 
     // --- Public API ---
 
@@ -81,12 +95,12 @@ public class MapCleanerService {
      */
     public DeleteResult deleteBins(List<String> binKeys) {
         if (mapFolderPath == null || mapFolderPath.isBlank()) {
-            return new DeleteResult(false, 0, 0, 0, "server.map.folder is not configured.");
+            return new DeleteResult(false, 0, 0, 0, 0, "server.map.folder is not configured.");
         }
 
         Path mapDir = Paths.get(mapFolderPath);
         if (!Files.exists(mapDir) || !Files.isDirectory(mapDir)) {
-            return new DeleteResult(false, 0, 0, 0, "Map folder does not exist: " + mapFolderPath);
+            return new DeleteResult(false, 0, 0, 0, 0, "Map folder does not exist: " + mapFolderPath);
         }
 
         // Build server-side safehouse protection set
@@ -94,14 +108,22 @@ public class MapCleanerService {
         Path metaPath = saveRoot != null ? saveRoot.resolve("map_meta.bin") : mapDir.resolve("../map_meta.bin").normalize();
         List<String> metaWarnings = new ArrayList<>();
         List<SafehouseInfo> safehouses = extractSafehousesFromMapMeta(metaPath, metaWarnings);
-        Set<String> protectedBins = buildProtectedBinKeys(safehouses, SERVER_SAFEHOUSE_MARGIN);
+        Set<String> safehouseProtectedBins = buildProtectedBinKeys(safehouses, SERVER_SAFEHOUSE_MARGIN);
 
         log.info("Server-side safehouse protection: {} safehouses, {} protected bins (margin={})",
-                safehouses.size(), protectedBins.size(), SERVER_SAFEHOUSE_MARGIN);
+                safehouses.size(), safehouseProtectedBins.size(), SERVER_SAFEHOUSE_MARGIN);
+
+        // Build server-side claimed car protection set
+        List<ClaimedCar> claimedCars = claimedCarRepository.findByXNotNullAndYNotNull();
+        Set<String> carProtectedBins = buildProtectedCarBinKeys(claimedCars, SERVER_CAR_MARGIN);
+
+        log.info("Server-side car protection: {} claimed cars, {} protected bins (margin={})",
+                claimedCars.size(), carProtectedBins.size(), SERVER_CAR_MARGIN);
 
         int deleted = 0;
         int notFound = 0;
-        int protectedSkips = 0;
+        int safehouseProtectedSkips = 0;
+        int carProtectedSkips = 0;
         List<String> errors = new ArrayList<>();
 
         for (String key : binKeys) {
@@ -116,9 +138,16 @@ public class MapCleanerService {
                 int by = Integer.parseInt(parts[1]);
 
                 // Server-side safehouse protection: refuse to delete protected bins
-                if (protectedBins.contains(key)) {
-                    protectedSkips++;
+                if (safehouseProtectedBins.contains(key)) {
+                    safehouseProtectedSkips++;
                     log.debug("Safehouse-protected bin skipped: {}", key);
+                    continue;
+                }
+
+                // Server-side claimed car protection: refuse to delete protected bins
+                if (carProtectedBins.contains(key)) {
+                    carProtectedSkips++;
+                    log.debug("Car-protected bin skipped: {}", key);
                     continue;
                 }
 
@@ -146,16 +175,16 @@ public class MapCleanerService {
         // Clean up empty folders
         cleanEmptyFolders(mapDir);
 
-        String message = String.format("Deleted %d files (%d not found, %d safehouse-protected, %d errors).",
-                deleted, notFound, protectedSkips, errors.size());
+        String message = String.format("Deleted %d files (%d not found, %d safehouse-protected, %d car-protected, %d errors).",
+                deleted, notFound, safehouseProtectedSkips, carProtectedSkips, errors.size());
         if (!errors.isEmpty()) {
             message += " Errors: " + String.join("; ", errors.subList(0, Math.min(10, errors.size())));
         }
 
-        log.info("Map cleaner delete: {} files deleted, {} not found, {} safehouse-protected, {} errors out of {} requested",
-                deleted, notFound, protectedSkips, errors.size(), binKeys.size());
+        log.info("Map cleaner delete: {} deleted, {} not found, {} safehouse-protected, {} car-protected, {} errors out of {} requested",
+                deleted, notFound, safehouseProtectedSkips, carProtectedSkips, errors.size(), binKeys.size());
 
-        return new DeleteResult(errors.isEmpty(), deleted, binKeys.size(), protectedSkips, message);
+        return new DeleteResult(errors.isEmpty(), deleted, binKeys.size(), safehouseProtectedSkips, carProtectedSkips, message);
     }
 
     /**
@@ -170,6 +199,32 @@ public class MapCleanerService {
             int y1 = Math.floorDiv(sh.y() - marginTiles, BIN_TILE_SIZE);
             int x2 = ceilDiv(sh.x() + sh.w() + marginTiles, BIN_TILE_SIZE);
             int y2 = ceilDiv(sh.y() + sh.h() + marginTiles, BIN_TILE_SIZE);
+
+            for (int bx = x1; bx <= x2; bx++) {
+                for (int by = y1; by <= y2; by++) {
+                    protectedKeys.add(bx + "/" + by);
+                }
+            }
+        }
+        return protectedKeys;
+    }
+
+    /**
+     * Builds a set of "bx/by" bin keys that are protected by claimed cars.
+     * Each car is a single point expanded by the given margin (in tiles) on all sides.
+     */
+    private Set<String> buildProtectedCarBinKeys(List<ClaimedCar> cars, int marginTiles) {
+        Set<String> protectedKeys = new HashSet<>();
+        for (ClaimedCar car : cars) {
+            if (car.getX() == null || car.getY() == null) continue;
+            int tileX = (int) Math.floor(car.getX());
+            int tileY = (int) Math.floor(car.getY());
+
+            // Car is a point (w=0, h=0), so margin expands from the point in all directions
+            int x1 = Math.floorDiv(tileX - marginTiles, BIN_TILE_SIZE);
+            int y1 = Math.floorDiv(tileY - marginTiles, BIN_TILE_SIZE);
+            int x2 = ceilDiv(tileX + marginTiles, BIN_TILE_SIZE);
+            int y2 = ceilDiv(tileY + marginTiles, BIN_TILE_SIZE);
 
             for (int bx = x1; bx <= x2; bx++) {
                 for (int by = y1; by <= y2; by++) {
@@ -493,7 +548,8 @@ public class MapCleanerService {
                                 List<String> members) {
     }
 
-    public record DeleteResult(boolean success, int deletedCount, int requestedCount, int protectedCount, String message) {
+    public record DeleteResult(boolean success, int deletedCount, int requestedCount, int protectedCount,
+                                int carProtectedCount, String message) {
     }
 
     private record ScanResult(Map<String, List<int[]>> binsByX, int totalBins) {

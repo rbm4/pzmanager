@@ -21,7 +21,7 @@ public interface GarageCarRepository extends JpaRepository<GarageCar, Long> {
     
     List<GarageCar> findByNameContainingIgnoreCaseOrModelContainingIgnoreCase(String name, String model);
     
-    @Query("SELECT c FROM Car c WHERE " +
+    @Query("SELECT c FROM GarageCar c WHERE " +
            "(:search IS NULL OR :search = '' OR LOWER(c.name) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(c.model) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
            "(:availableOnly = false OR c.available = true)")
     Page<GarageCar> searchCars(@Param("search") String search, @Param("availableOnly") Boolean availableOnly, Pageable pageable);
