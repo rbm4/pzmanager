@@ -1,9 +1,9 @@
 package com.apocalipsebr.zomboid.server.manager.application.service;
 
-import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Car;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.GarageCar;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Character;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
-import com.apocalipsebr.zomboid.server.manager.domain.repository.app.CarRepository;
+import com.apocalipsebr.zomboid.server.manager.domain.repository.app.GarageCarRepository;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.CharacterRepository;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.UserRepository;
 import com.apocalipsebr.zomboid.server.manager.application.service.TransactionLogService;
@@ -22,17 +22,17 @@ import java.util.Optional;
 import java.util.logging.Logger;
 
 @Service
-public class CarService {
+public class GarageCarService {
     
-    private static final Logger logger = Logger.getLogger(CarService.class.getName());
+    private static final Logger logger = Logger.getLogger(GarageCarService.class.getName());
     
-    private final CarRepository carRepository;
+    private final GarageCarRepository carRepository;
     private final CharacterRepository characterRepository;
     private final UserRepository userRepository;
     private final ServerCommandService serverCommandService;
     private final TransactionLogService transactionLogService;
 
-    public CarService(CarRepository carRepository, 
+    public GarageCarService(GarageCarRepository carRepository, 
                      CharacterRepository characterRepository,
                      UserRepository userRepository,
                      ServerCommandService serverCommandService,
@@ -45,16 +45,16 @@ public class CarService {
     }
 
     @Transactional
-    public Car createCar(Car car) {
+    public GarageCar createCar(GarageCar car) {
         logger.info("Creating new car: " + car.getName());
         return carRepository.save(car);
     }
 
-    public List<Car> getAllCars() {
+    public List<GarageCar> getAllCars() {
         return carRepository.findAllByOrderByNameAsc();
     }
 
-    public Page<Car> getAllCarsPaginated(String search, Boolean availableOnly, Pageable pageable) {
+    public Page<GarageCar> getAllCarsPaginated(String search, Boolean availableOnly, Pageable pageable) {
         logger.info("Getting paginated cars - search: " + search + ", availableOnly: " + availableOnly);
         
         if (availableOnly == null) {
@@ -64,19 +64,19 @@ public class CarService {
         return carRepository.searchCars(search, availableOnly, pageable);
     }
 
-    public Optional<Car> getCarById(Long id) {
+    public Optional<GarageCar> getCarById(Long id) {
         return carRepository.findById(id);
     }
 
-    public List<Car> getAvailableCars() {
+    public List<GarageCar> getAvailableCars() {
         return carRepository.findByAvailableTrue();
     }
 
     @Transactional
-    public Car updateCar(Long id, Car updatedCar) {
+    public GarageCar updateCar(Long id, GarageCar updatedCar) {
         logger.info("Updating car with id: " + id);
         
-        Car car = carRepository.findById(id)
+        GarageCar car = carRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Car not found with id: " + id));
         
         car.setName(updatedCar.getName());
@@ -100,10 +100,10 @@ public class CarService {
     }
 
     @Transactional
-    public Car toggleAvailability(Long id) {
+    public GarageCar toggleAvailability(Long id) {
         logger.info("Toggling availability for car with id: " + id);
         
-        Car car = carRepository.findById(id)
+        GarageCar car = carRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Car not found with id: " + id));
         
         car.setAvailable(!car.getAvailable());
@@ -165,7 +165,7 @@ public class CarService {
             }
             
             // Get the car being purchased
-            Car car = carRepository.findById(carId)
+            GarageCar car = carRepository.findById(carId)
                 .orElseThrow(() -> new IllegalArgumentException("Car not found"));
             
             // Get the target character

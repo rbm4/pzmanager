@@ -415,6 +415,31 @@ Default is 16 (2 bins / ~2 chunks of buffer). The server also enforces its own m
             </div>
 
             <div class="sec">
+                <h2>4c) Claimed Cars</h2>
+                <div class="row">
+                    <label class="tip"
+                        data-tip="Show claimed car positions as yellow dots on the map. Hover to see vehicle details.">Show
+                        claimed cars</label>
+                    <input type="checkbox" id="chkShowCars" checked="">
+                    <label class="tip" data-tip="Auto-exclude claimed car areas from deletion (recommended).">Auto-protect</label>
+                    <input type="checkbox" id="chkAutoProtectCars" checked="">
+                </div>
+                <div class="row">
+                    <label class="tip" data-tip="Buffer around each claimed car, in tiles.
+
+Example: 8 means an 8-tile border around each car position is protected.
+
+Default is 8 (1 bin / ~1 chunk of buffer). The server also enforces its own minimum margin independently.">Car padding (tiles)</label>
+                    <input id="carPad" type="number" value="8" min="0" step="1" style="width:120px">
+                </div>
+                <div class="hint">
+                    Car position = yellow/gold dot
+                    Car padding = lighter yellow dashed outline (only if padding &gt; 0)
+                </div>
+                <div id="carStats" class="ok"></div>
+            </div>
+
+            <div class="sec">
                 <h2>5) Delete &amp; Export</h2>
                 <div class="row">
                     <label class="tip"
@@ -462,6 +487,7 @@ Default is 16 (2 bins / ~2 chunks of buffer). The server also enforces its own m
                 </div>
                 <div class="row">
                     <div class="kv">Safehouses: <b id="statSh">0</b></div>
+                    <div class="kv">Claimed cars: <b id="statCars">0</b></div>
                 </div>
             </div>
         </div>
@@ -510,7 +536,15 @@ Default is 16 (2 bins / ~2 chunks of buffer). The server also enforces its own m
                     <div class="legBox" style="background:rgba(200,130,255,0.10); border:2px solid rgba(200,130,255,0.65)"></div>
                     <div class="legTxt">Region boundary</div>
                 </div>
-                <div class="tiny">Tip: Hover safehouse or region to see details.</div>
+                <div class="legRow tip" data-tip="Claimed car position (yellow dot).">
+                    <div class="legBox" style="background:rgba(255,200,50,0.85); border-radius:50%"></div>
+                    <div class="legTxt">Claimed car position</div>
+                </div>
+                <div class="legRow tip" data-tip="Claimed car padding outline (only if padding &gt; 0).">
+                    <div class="legBox" style="background:transparent; border:2px dashed rgba(255,200,50,0.40)"></div>
+                    <div class="legTxt">Car padding outline</div>
+                </div>
+                <div class="tiny">Tip: Hover safehouse, region or car to see details.</div>
             </div>
         </div>
     </div>
@@ -639,6 +673,11 @@ Default is 16 (2 bins / ~2 chunks of buffer). The server also enforces its own m
         let regions = [];
         let hoveredRegion = null;
 
+        let claimedCars = [];
+        let carPadVal = 8;
+        let protectedCarBins = new Set();
+        let hoveredCar = null;
+
         function cellKey(cx, cy) { return cx + "," + cy; }
         function binKey(bx, by) { return bx + "/" + by; }
 
@@ -730,6 +769,30 @@ Default is 16 (2 bins / ~2 chunks of buffer). The server also enforces its own m
             recomputeZoneCells();
         }
 
+        /* ---------- claimed cars ---------- */
+        function buildProtectedCarBins() {
+            protectedCarBins.clear();
+            carPadVal = Math.max(0, Number($("carPad").value || 0) | 0);
+
+            for (const car of claimedCars) {
+                if (car.x == null || car.y == null) continue;
+                // Car is a point (no width/height), margin expands from point in all directions
+                const x1 = Math.floor((car.x - carPadVal) / binTileSize);
+                const y1 = Math.floor((car.y - carPadVal) / binTileSize);
+                const x2 = Math.ceil((car.x + carPadVal) / binTileSize);
+                const y2 = Math.ceil((car.y + carPadVal) / binTileSize);
+
+                for (let bx = x1; bx <= x2; bx++) {
+                    for (let by = y1; by <= y2; by++) {
+                        protectedCarBins.add(binKey(bx, by));
+                    }
+                }
+            }
+            $("carStats").textContent = claimedCars.length ? `Claimed cars: ${claimedCars.length} (protected bins ≈ ${protectedCarBins.size})` : "";
+            $("statCars").textContent = claimedCars.length;
+            recomputeZoneCells();
+        }
+
         /* ---------- inverse selection + delete ---------- */
         let deleteComputed = false;
 
@@ -746,10 +809,12 @@ Default is 16 (2 bins / ~2 chunks of buffer). The server also enforces its own m
             clearDelete();
 
             const autoProtect = $("chkAutoProtectSH").checked;
+            const autoProtectCars = $("chkAutoProtectCars").checked;
             const xs = Array.from(binsByX.keys()).sort((a, b) => a - b);
             let xi = 0;
             const batchMs = 18;
             let protectedSkips = 0;
+            let carProtectedSkips = 0;
 
             function addDeleteCell(bx, by, count) {
                 const tx = bx * binTileSize, ty = by * binTileSize;
@@ -784,6 +849,10 @@ Default is 16 (2 bins / ~2 chunks of buffer). The server also enforces its own m
                                         protectedSkips++;
                                         continue;
                                     }
+                                    if (autoProtectCars && protectedCarBins.has(k)) {
+                                        carProtectedSkips++;
+                                        continue;
+                                    }
                                     deleteBins.add(k);
                                     added++;
                                 }
@@ -803,7 +872,8 @@ Default is 16 (2 bins / ~2 chunks of buffer). The server also enforces its own m
                 } else {
                     deleteComputed = true;
                     const msg = `Deletable bins: ${deleteBins.size}.` +
-                        (protectedSkips > 0 ? ` (${protectedSkips} safehouse-protected bins excluded)` : "");
+                        (protectedSkips > 0 ? ` (${protectedSkips} safehouse-protected bins excluded)` : "") +
+                        (carProtectedSkips > 0 ? ` (${carProtectedSkips} car-protected bins excluded)` : "");
                     $("exportWarn").textContent = msg;
                     log(`Compute complete. ${msg}`);
                     draw();
@@ -834,6 +904,7 @@ Default is 16 (2 bins / ~2 chunks of buffer). The server also enforces its own m
             let totalDeleted = 0;
             let totalErrors = 0;
             let totalProtected = 0;
+            let totalCarProtected = 0;
 
             $("deleteProgress").style.display = "block";
             $("deleteResult").textContent = "";
@@ -863,6 +934,7 @@ Default is 16 (2 bins / ~2 chunks of buffer). The server also enforces its own m
                     const result = await response.json();
                     totalDeleted += result.deletedCount || 0;
                     totalProtected += result.protectedCount || 0;
+                    totalCarProtected += result.carProtectedCount || 0;
 
                     if (!result.success) {
                         log(`WARN: batch had issues: ${result.message}`);
@@ -878,6 +950,7 @@ Default is 16 (2 bins / ~2 chunks of buffer). The server also enforces its own m
 
             const msg = `✅ Done! Deleted ${totalDeleted.toLocaleString()} files on the server.` +
                 (totalProtected > 0 ? ` (${totalProtected} safehouse-protected bins skipped by server)` : "") +
+                (totalCarProtected > 0 ? ` (${totalCarProtected} car-protected bins skipped by server)` : "") +
                 (totalErrors > 0 ? ` (${totalErrors} errors)` : "");
             $("deleteResult").textContent = msg;
             $("deleteResult").className = totalErrors > 0 ? "warn" : "ok";
@@ -1211,6 +1284,55 @@ Default is 16 (2 bins / ~2 chunks of buffer). The server also enforces its own m
                 }
             }
 
+            // claimed cars
+            hoveredCar = null;
+            if ($("chkShowCars").checked && claimedCars.length) {
+                const pad = carPadVal | 0;
+                if (lastMouseWorld) {
+                    for (const car of claimedCars) {
+                        if (car.x == null || car.y == null) continue;
+                        const inside = (lastMouseWorld.x >= car.x - pad && lastMouseWorld.x <= car.x + pad &&
+                            lastMouseWorld.y >= car.y - pad && lastMouseWorld.y <= car.y + pad);
+                        if (inside) { hoveredCar = car; break; }
+                    }
+                }
+
+                for (const car of claimedCars) {
+                    if (car.x == null || car.y == null) continue;
+                    const sp = worldToScreen(car.x, car.y);
+
+                    // Padding outline (rectangle, consistent with safehouse style)
+                    if (pad > 0) {
+                        ctx.strokeStyle = "rgba(255,200,50,0.40)";
+                        ctx.setLineDash([6, 4]);
+                        ctx.lineWidth = 1.5;
+                        const pTL = worldToScreen(car.x - pad, car.y - pad);
+                        const pBR = worldToScreen(car.x + pad, car.y + pad);
+                        ctx.strokeRect(pTL.x, pTL.y, pBR.x - pTL.x, pBR.y - pTL.y);
+                    }
+
+                    // Car dot
+                    const dotRadius = Math.max(3, Math.min(6, 2 / zoom));
+                    ctx.beginPath();
+                    ctx.arc(sp.x, sp.y, dotRadius, 0, Math.PI * 2);
+                    ctx.fillStyle = hoveredCar === car ? "rgba(255,220,80,1.0)" : "rgba(255,200,50,0.85)";
+                    ctx.fill();
+                    ctx.strokeStyle = "rgba(180,140,30,0.9)";
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([]);
+                    ctx.stroke();
+
+                    // Highlight on hover
+                    if (hoveredCar === car && pad > 0) {
+                        ctx.fillStyle = "rgba(255,200,50,0.08)";
+                        const pTL = worldToScreen(car.x - pad, car.y - pad);
+                        const pBR = worldToScreen(car.x + pad, car.y + pad);
+                        ctx.fillRect(pTL.x, pTL.y, pBR.x - pTL.x, pBR.y - pTL.y);
+                    }
+                }
+                ctx.setLineDash([]);
+            }
+
             $("hudZoom").textContent = zoom.toFixed(3);
             $("hudCenter").textContent = `${Math.round(camX)},${Math.round(camY)}`;
             $("hudGrid").textContent = String(gridSize);
@@ -1273,6 +1395,13 @@ Code: ${escapeHtml(rg.code || "")}<br>
 ${rg.categories ? ("Categories: " + escapeHtml(rg.categories) + "<br>") : ""}
 Coords: (${rg.x1}, ${rg.y1}) → (${rg.x2}, ${rg.y2})
 ${rg.permanent ? "<br><b>Permanent</b>" : ""}`;
+                    showTooltipAt(sx + 16, sy + 16, tip);
+                } else if (hoveredCar) {
+                    const car = hoveredCar;
+                    const tip = `<b>Claimed Car</b><br>
+Vehicle: <b>${escapeHtml(car.vehicleName || car.scriptName || "Unknown")}</b><br>
+Owner: <b>${escapeHtml(car.ownerName || "")}</b><br>
+Position: (${Math.round(car.x)}, ${Math.round(car.y)})`;
                     showTooltipAt(sx + 16, sy + 16, tip);
                 } else {
                     hideTooltipIfNotPinned();
@@ -1370,8 +1499,9 @@ ${rg.permanent ? "<br><b>Permanent</b>" : ""}`;
             $("fastStats").textContent = "Scanning server map folder...";
             log("Scanning server map folder...");
 
-            // Load regions in parallel with map index
+            // Load regions and claimed cars in parallel with map index
             const regionsPromise = fetch(`${API_BASE}/regions`).then(r => r.ok ? r.json() : []).catch(() => []);
+            const carsPromise = fetch(`${API_BASE}/claimed-cars`).then(r => r.ok ? r.json() : []).catch(() => []);
 
             try {
                 const response = await fetch(`${API_BASE}/index`);
@@ -1396,6 +1526,11 @@ ${rg.permanent ? "<br><b>Permanent</b>" : ""}`;
             regions = await regionsPromise;
             $("regionStats").textContent = regions.length ? `Regions: ${regions.length}` : "";
             log(`Regions loaded: ${regions.length}`);
+
+            // Ingest claimed cars
+            claimedCars = await carsPromise;
+            buildProtectedCarBins();
+            log(`Claimed cars loaded: ${claimedCars.length}`);
             draw();
         }
 
@@ -1528,8 +1663,11 @@ ${rg.permanent ? "<br><b>Permanent</b>" : ""}`;
 
         $("chkShowSH").onchange = () => draw();
         $("chkShowRegions").onchange = () => draw();
+        $("chkShowCars").onchange = () => draw();
         $("chkAutoProtectSH").onchange = () => { clearDelete(); draw(); };
+        $("chkAutoProtectCars").onchange = () => { clearDelete(); draw(); };
         $("shPad").addEventListener("input", () => { buildProtectedBins(); clearDelete(); draw(); });
+        $("carPad").addEventListener("input", () => { buildProtectedCarBins(); clearDelete(); draw(); });
 
         $("btnInverse").onclick = () => computeDeleteBins();
         $("btnClearDelete").onclick = () => { clearDelete(); $("exportWarn").textContent = ""; $("deleteResult").textContent = ""; draw(); log("Cleared DELETE."); };

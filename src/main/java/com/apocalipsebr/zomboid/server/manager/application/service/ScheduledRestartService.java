@@ -19,6 +19,7 @@ public class ScheduledRestartService {
     private static final Logger logger = Logger.getLogger(ScheduledRestartService.class.getName());
 
     private final ServerRestartService serverRestartService;
+    private final SoftWipeService softWipeService;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     @Value("${server.scheduled.restart.enabled:true}")
@@ -39,8 +40,10 @@ public class ScheduledRestartService {
     @Value("${server.boot.sequence.enabled:true}")
     private boolean bootSequenceEnabled;
 
-    public ScheduledRestartService(ServerRestartService serverRestartService) {
+    public ScheduledRestartService(ServerRestartService serverRestartService,
+                                    SoftWipeService softWipeService) {
         this.serverRestartService = serverRestartService;
+        this.softWipeService = softWipeService;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -53,6 +56,16 @@ public class ScheduledRestartService {
         scheduler.schedule(() -> {
             serverRestartService.bootSequence();
         }, 150, TimeUnit.SECONDS);
+    }
+
+    /**
+     * On application start, execute any pending soft-wipes that were marked
+     * for execution during the previous restart cycle (status = WIPE_AT_RESTART).
+     * Runs after a 60-second delay to allow the game server to fully boot.
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    public void executePendingSoftWipes() {
+        softWipeService.executeAllPendingWipes();
     }
 
     @EventListener(ApplicationReadyEvent.class)

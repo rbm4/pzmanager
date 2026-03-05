@@ -37,6 +37,9 @@ public class User {
     
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Character> characters = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = false)
+    private List<ClaimedCar> claimedCars = new ArrayList<>();
     
     @Column(name = "role")
     private String role = "PLAYER";
@@ -136,6 +139,14 @@ public class User {
     
     public void setCharacters(List<Character> characters) {
         this.characters = characters;
+    }
+
+    public List<ClaimedCar> getClaimedCars() {
+        return claimedCars;
+    }
+
+    public void setClaimedCars(List<ClaimedCar> claimedCars) {
+        this.claimedCars = claimedCars;
     }
     
     // Aggregate methods to calculate total kills and points from all characters

@@ -10,6 +10,7 @@ var Trimmer;
 var svg_draw; // module
 var osd_draw; // module
 var regions; // module — region overlays from Spring Boot API
+var vehicles; // module — vehicle markers from Spring Boot API
 var pmodules = [
     import("./pzmap/globals.js").then((m) => {
         g = m.g;
@@ -46,6 +47,9 @@ var pmodules = [
     }),
     import("./pzmap/regions.js").then((m) => {
         regions = m;
+    }),
+    import("./pzmap/vehicles.js").then((m) => {
+        vehicles = m;
     })
 ];
 
@@ -616,6 +620,19 @@ function updateRegionsButton() {
     }
 }
 
+// vehicle markers (from Spring Boot API)
+function toggleVehicles() {
+    if (!vehicles) return;
+    vehicles.toggle();
+    const btn = document.getElementById('vehicles_btn');
+    if (!btn) return;
+    if (vehicles.isVisible()) {
+        btn.classList.add('active');
+    } else {
+        btn.classList.remove('active');
+    }
+}
+
 // overlay maps
 function toggleOverlay(type) {
     g.overlays[type] = !g.overlays[type];
@@ -1126,6 +1143,14 @@ Promise.all(pmodules).then(() => {
                             ? decodeURIComponent(g.query_string.region_name) : null;
                         regions.highlightRegion(x1, y1, x2, y2, regionName);
                         regions.goToRegion(x1, y1, x2, y2);
+                    }
+                }
+                // Check for vehicle_user / vehicle_id query params to show vehicles
+                if (vehicles && g.query_string) {
+                    const vehicleUser = g.query_string.vehicle_user;
+                    const vehicleId = g.query_string.vehicle_id;
+                    if (vehicleUser || vehicleId) {
+                        vehicles.init({ userId: vehicleUser, vehicleId: vehicleId });
                     }
                 }
                 return Promise.resolve();

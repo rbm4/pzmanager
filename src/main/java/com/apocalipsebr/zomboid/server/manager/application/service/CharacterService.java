@@ -73,6 +73,11 @@ public class CharacterService {
         if (dto.serverName() != null) {
             character.setServerName(dto.serverName());
         }
+
+        // Update skill experience (keep highest value)
+        if (dto.skills() != null && !dto.skills().isEmpty()) {
+            character.updateSkillsKeepMax(dto.skills());
+        }
         
         character.setLastUpdate(LocalDateTime.now());
         
@@ -85,6 +90,13 @@ public class CharacterService {
     public List<Character> getUserCharacters(User user) {
         Season currentSeason = seasonService.getCurrentSeason();
         return characterRepository.findByUserAndSeasonOrderByZombieKillsDesc(user, currentSeason);
+    }
+
+    /**
+     * Returns characters for a specific season.
+     */
+    public List<Character> getUserCharactersBySeason(User user, Season season) {
+        return characterRepository.findByUserAndSeasonOrderByZombieKillsDesc(user, season);
     }
 
     /**

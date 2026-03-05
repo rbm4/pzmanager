@@ -355,6 +355,42 @@
                     <p style="color: #38ef7d; margin: 5px 0;">📅 Início: <span id="season-start"></span></p>
                 </div>
             </div>
+
+            <!-- Vehicle Migration Card -->
+            <div class="card">
+                <h2>🚗 Migração de Veículos</h2>
+                <div id="migration-alert" class="alert"></div>
+                <p style="color: #aaa; margin-bottom: 20px;">
+                    Gerencie a migração de veículos durante atualizações de engine. Preservar marca todos os veículos atuais como "Aguardando Migração" para que não sejam removidos durante o sync.
+                </p>
+                <div style="padding: 14px; border-radius: 8px; margin-bottom: 15px; background: rgba(255, 152, 0, 0.15); border: 1px solid rgba(255, 152, 0, 0.4); color: #ffb74d; font-size: 0.85rem; line-height: 1.5;">
+                    ⚠️ <strong>FLUXO DE MIGRAÇÃO</strong><br>
+                    1. <strong>Preservar</strong> — Marca todos os veículos como "Aguardando Migração" (proteção contra remoção no sync).<br>
+                    2. Atualize a engine do servidor e aguarde os jogadores re-claimarem seus veículos.<br>
+                    3. <strong>Encerrar Migração</strong> — Remove todos os veículos preservados que não foram re-claimados.
+                </div>
+                <button onclick="preserveCarsForMigration()" class="btn btn-primary" style="background: linear-gradient(45deg, #f7971e, #ffd200); color: #1a1a2e; margin-bottom: 10px;">⏳ Preservar Veículos para Migração</button>
+                <button onclick="endMigrationPeriod()" class="btn btn-danger">🗑️ Encerrar Período de Migração</button>
+                <div id="migration-result" class="stats-display">
+                    <p id="migration-result-text"></p>
+                </div>
+            </div>
+
+            <!-- Soft Wipe Execution Card -->
+            <div class="card">
+                <h2>🧹 Soft-Wipe Manual</h2>
+                <div id="softwipe-alert" class="alert"></div>
+                <p style="color: #aaa; margin-bottom: 20px;">
+                    Marca todos os soft-wipes pendentes (WAITING_RESTART) para serem executados no próximo restart do servidor.
+                </p>
+                <div style="padding: 14px; border-radius: 8px; margin-bottom: 15px; background: rgba(79, 172, 254, 0.1); border: 1px solid rgba(79, 172, 254, 0.3); color: #4facfe; font-size: 0.85rem; line-height: 1.5;">
+                    ℹ️ Normalmente isso acontece automaticamente quando um restart é iniciado. Use este botão apenas se precisar forçar a marcação manualmente.
+                </div>
+                <button onclick="markSoftWipesForRestart()" class="btn btn-primary">🧹 Marcar Soft-Wipes para Execução</button>
+                <div id="softwipe-result" class="stats-display">
+                    <p id="softwipe-result-text"></p>
+                </div>
+            </div>
         </div>
 
         <!-- Import Items Card (Full Width) -->
@@ -672,6 +708,90 @@
             } catch (error) {
                 showAlert('season-alert', 'Erro: ' + error.message, 'error');
                 document.getElementById('season-result').style.display = 'none';
+            }
+        }
+
+        async function preserveCarsForMigration() {
+            if (!confirm('⚠️ PRESERVAR VEÍCULOS?\n\nTodos os veículos registrados serão marcados como "Aguardando Migração".\nEles não serão removidos durante o sync mesmo que desapareçam do JSON.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/preserve-cars`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    showAlert('migration-alert', result.message, 'success');
+                    const statsDisplay = document.getElementById('migration-result');
+                    document.getElementById('migration-result-text').textContent =
+                        '⏳ ' + result.preservedCount + ' veículos preservados para migração.';
+                    statsDisplay.classList.add('show');
+                } else {
+                    showAlert('migration-alert', result.message || 'Falha ao preservar veículos', 'error');
+                }
+            } catch (error) {
+                showAlert('migration-alert', 'Erro: ' + error.message, 'error');
+            }
+        }
+
+        async function endMigrationPeriod() {
+            if (!confirm('⚠️ ENCERRAR MIGRAÇÃO?\n\nTodos os veículos marcados como "Aguardando Migração" serão REMOVIDOS permanentemente.\n\nApenas veículos ativos (re-claimados) permanecerão.')) {
+                return;
+            }
+
+            if (!confirm('🔴 CONFIRMAÇÃO FINAL\n\nVeículos preservados que não foram re-claimados serão deletados. Esta ação é irreversível.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/end-migration`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    showAlert('migration-alert', result.message, 'success');
+                    const statsDisplay = document.getElementById('migration-result');
+                    document.getElementById('migration-result-text').textContent =
+                        '🗑️ ' + result.deletedCount + ' veículos preservados foram removidos.';
+                    statsDisplay.classList.add('show');
+                } else {
+                    showAlert('migration-alert', result.message || 'Falha ao encerrar migração', 'error');
+                }
+            } catch (error) {
+                showAlert('migration-alert', 'Erro: ' + error.message, 'error');
+            }
+        }
+
+        async function markSoftWipesForRestart() {
+            if (!confirm('🧹 MARCAR SOFT-WIPES?\n\nTodos os soft-wipes com status WAITING_RESTART serão marcados para execução (WIPE_AT_RESTART).\n\nEles serão executados quando o servidor iniciar novamente.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/mark-softwipes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    showAlert('softwipe-alert', result.message, 'success');
+                    const statsDisplay = document.getElementById('softwipe-result');
+                    document.getElementById('softwipe-result-text').textContent = '✅ ' + result.message;
+                    statsDisplay.classList.add('show');
+                } else {
+                    showAlert('softwipe-alert', result.message || 'Falha ao marcar soft-wipes', 'error');
+                }
+            } catch (error) {
+                showAlert('softwipe-alert', 'Erro: ' + error.message, 'error');
             }
         }
     </script>

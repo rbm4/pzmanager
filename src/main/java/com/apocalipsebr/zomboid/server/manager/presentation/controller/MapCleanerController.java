@@ -3,7 +3,9 @@ package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 import com.apocalipsebr.zomboid.server.manager.application.service.MapCleanerService;
 import com.apocalipsebr.zomboid.server.manager.application.service.MapCleanerService.DeleteResult;
 import com.apocalipsebr.zomboid.server.manager.application.service.MapCleanerService.MapIndex;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.ClaimedCar;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Region;
+import com.apocalipsebr.zomboid.server.manager.domain.repository.app.ClaimedCarRepository;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.RegionRepository;
 
 import org.springframework.http.ResponseEntity;
@@ -19,10 +21,13 @@ public class MapCleanerController {
 
     private final MapCleanerService mapCleanerService;
     private final RegionRepository regionRepository;
+    private final ClaimedCarRepository claimedCarRepository;
 
-    public MapCleanerController(MapCleanerService mapCleanerService, RegionRepository regionRepository) {
+    public MapCleanerController(MapCleanerService mapCleanerService, RegionRepository regionRepository,
+                                ClaimedCarRepository claimedCarRepository) {
         this.mapCleanerService = mapCleanerService;
         this.regionRepository = regionRepository;
+        this.claimedCarRepository = claimedCarRepository;
     }
 
     /**
@@ -108,6 +113,7 @@ public class MapCleanerController {
         response.put("deletedCount", result.deletedCount());
         response.put("requestedCount", result.requestedCount());
         response.put("protectedCount", result.protectedCount());
+        response.put("carProtectedCount", result.carProtectedCount());
         response.put("message", result.message());
 
         return ResponseEntity.ok(response);
@@ -159,5 +165,29 @@ public class MapCleanerController {
     }
 
     public record DeleteRequest(List<String> bins) {
+    }
+
+    /**
+     * Returns all claimed cars with known coordinates for rendering on the map canvas.
+     */
+    @GetMapping("/api/claimed-cars")
+    @PreAuthorize("hasRole('ADMIN')")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> getClaimedCars() {
+        List<ClaimedCar> cars = claimedCarRepository.findByXNotNullAndYNotNull();
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        for (ClaimedCar car : cars) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("vehicleHash", car.getVehicleHash());
+            m.put("ownerName", car.getOwnerName());
+            m.put("vehicleName", car.getVehicleName());
+            m.put("scriptName", car.getScriptName());
+            m.put("x", car.getX());
+            m.put("y", car.getY());
+            result.add(m);
+        }
+
+        return ResponseEntity.ok(result);
     }
 }

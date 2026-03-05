@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name = "cars")
-public class Car {
+public class GarageCar {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,10 +40,10 @@ public class Car {
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT true")
     private Boolean available = true;
 
-    public Car() {
+    public GarageCar() {
     }
 
-    public Car(String name, String model, String vehicleScript, Integer value, Integer trunkSize, Integer seats, Integer doors, String description, String images) {
+    public GarageCar(String name, String model, String vehicleScript, Integer value, Integer trunkSize, Integer seats, Integer doors, String description, String images) {
         this.name = name;
         this.model = model;
         this.vehicleScript = vehicleScript;

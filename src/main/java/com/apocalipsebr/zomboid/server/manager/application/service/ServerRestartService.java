@@ -18,6 +18,7 @@ public class ServerRestartService {
 
     private final ServerCommandService commandService;
     private final DiscordNotificationService discordNotificationService;
+    private final SoftWipeService softWipeService;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private boolean restartInProgress = false;
 
@@ -25,9 +26,11 @@ public class ServerRestartService {
     private String restartPassword;
 
     public ServerRestartService(ServerCommandService commandService,
-            DiscordNotificationService discordNotificationService) {
+            DiscordNotificationService discordNotificationService,
+            SoftWipeService softWipeService) {
         this.commandService = commandService;
         this.discordNotificationService = discordNotificationService;
+        this.softWipeService = softWipeService;
     }
 
     public boolean validatePassword(String password) {
@@ -47,6 +50,13 @@ public class ServerRestartService {
 
         restartInProgress = true;
         logger.info("Server restart initiated");
+
+        // Mark pending soft-wipes for execution at restart (persisted to DB immediately)
+        try {
+            softWipeService.markWipesForRestart();
+        } catch (Exception e) {
+            logger.severe("Failed to mark soft-wipes for restart: " + e.getMessage());
+        }
 
         // Send Discord notification that restart was initiated
         discordNotificationService.sendRestartInitiated();

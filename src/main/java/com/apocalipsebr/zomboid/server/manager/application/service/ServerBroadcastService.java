@@ -32,15 +32,13 @@ public class ServerBroadcastService {
     private static final List<String> BROADCAST_MESSAGES = List.of(
             "Bem-vindo ao Apocalipse BR! Divirta-se e respeite as regras.",
             "Iniciem as pesquisas! A vacina sob patente da Umbrella corp já está em Knox County! Https://apocalipse.cloud/season-guide",
-            "Visite nosso site para conferir a loja, garagem e mais! Https://apocalipse.cloud/",
+            "Cada zumbi abatido você ganha saldo para comprar itens e carros no site! Https://apocalipse.cloud/",
             "Participe dos eventos semanais e ganhe recompensas!",
             "Lembre-se: trabalho em equipe aumenta suas chances de sobrevivência!",
-            "Abates de super-zumbis em Riverside dão saldo extra no site!",
+            "Abates de Zumbis com efeitos de zona dão saldo extra no site!",
             "Doe para manter o servidor online! Acesse a aba de doações no site.",
             "Novidades e atualizações sao anunciadas no Discord. Fique ligado!",
-            "Cada zumbi abatido você ganha saldo para comprar itens e carros no site! Https://apocalipse.cloud/",
-            "Áreas PVP são caracterizadas pela caveira ao lado do seu nome. Cuidado!",
-            "Áreas militares, grandes rodovias, estações de polícia e lojas de armas são áreas PVP!"
+            "Áreas PVP são caracterizadas pela caveira ao lado do seu nome. Cuidado!"
     );
 
     public ServerBroadcastService(ServerCommandService commandService) {

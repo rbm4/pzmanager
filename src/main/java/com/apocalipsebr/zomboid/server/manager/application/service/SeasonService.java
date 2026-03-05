@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class SeasonService {
@@ -14,6 +16,22 @@ public class SeasonService {
 
     public SeasonService(SeasonRepository seasonRepository) {
         this.seasonRepository = seasonRepository;
+    }
+
+    /**
+     * Returns all seasons ordered by start date descending (newest first).
+     */
+    public List<Season> getAllSeasons() {
+        List<Season> seasons = seasonRepository.findAll();
+        seasons.sort((a, b) -> b.getStartDate().compareTo(a.getStartDate()));
+        return seasons;
+    }
+
+    /**
+     * Returns a season by its ID.
+     */
+    public Optional<Season> getSeasonById(Long id) {
+        return seasonRepository.findById(id);
     }
 
     /**

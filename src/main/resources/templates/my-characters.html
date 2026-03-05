@@ -293,6 +293,80 @@
             box-shadow: 0 5px 15px rgba(255, 152, 0, 0.3);
         }
 
+        .btn-details {
+            background: rgba(79, 172, 254, 0.15);
+            border: 1px solid rgba(79, 172, 254, 0.4);
+            color: #4facfe;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn-details:hover {
+            background: rgba(79, 172, 254, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.3);
+        }
+
+        .card-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        /* Season filter */
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .season-filter {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .season-filter label {
+            color: #aaa;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .season-select {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            cursor: pointer;
+            min-width: 200px;
+        }
+
+        .season-select option {
+            background: #1a1a2e;
+            color: #fff;
+        }
+
+        .season-badge {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4caf50;
+            color: #4caf50;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 6px;
+        }
+
         .modal-overlay {
             display: none;
             position: fixed;
@@ -406,6 +480,98 @@
             color: #666;
         }
 
+        /* ── Skills Detail Modal ── */
+        .skills-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.82);
+        }
+        .skills-modal-overlay.active { display: flex; }
+
+        .skills-modal-box {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 1px solid rgba(79, 172, 254, 0.25);
+            border-radius: 16px;
+            padding: 0;
+            width: min(94vw, 750px);
+            max-height: 90vh;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .skills-modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .skills-modal-header h2 {
+            color: #4facfe;
+            font-size: 1.3rem;
+        }
+        .skills-modal-close {
+            background: rgba(231, 76, 60, 0.15);
+            color: #f0a0a0;
+            border: 1px solid rgba(231, 76, 60, 0.45);
+            border-radius: 8px;
+            padding: 6px 14px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .skills-modal-close:hover { border-color: #e74c3c; color: #fff; }
+
+        .skills-modal-body {
+            padding: 20px 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .skills-category {
+            margin-bottom: 20px;
+        }
+        .skills-category-title {
+            color: #ffb74d;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(255, 152, 0, 0.2);
+        }
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        .skill-item {
+            background: rgba(0, 0, 0, 0.25);
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .skill-name {
+            color: #ccc;
+            font-size: 0.85rem;
+        }
+        .skill-xp {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #4facfe;
+        }
+        .skill-xp.zero {
+            color: #555;
+        }
+
         @media (max-width: 768px) {
             .main-content {
                 margin-left: 0;
@@ -433,7 +599,18 @@
 <!-- Main Content -->
 <main class="main-content">
     <div class="header">
-        <h1>👥 Meus Personagens</h1>
+        <div class="header-row">
+            <h1>👥 Meus Personagens</h1>
+            <div class="season-filter">
+                <label for="seasonSelect">🏆 Temporada:</label>
+                <select id="seasonSelect" class="season-select" onchange="filterBySeason(this.value)">
+                    <option th:each="season : ${allSeasons}"
+                            th:value="${season.id}"
+                            th:selected="${season.id == selectedSeasonId}"
+                            th:text="${season.name + (season.active ? ' (Atual)' : '')}">Season</option>
+                </select>
+            </div>
+        </div>
     </div>
 
     <!-- Success/Error banners -->
@@ -537,11 +714,17 @@
                 </div>
             </div>
 
-            <!-- Reset Password Button -->
-            <button class="reset-password-btn" 
-                    th:attr="onclick='openResetModal(' + ${character.id} + ', \'' + ${character.playerName} + '\')'">
-                🔑 Resetar Senha do Servidor
-            </button>
+            <!-- Action Buttons -->
+            <div class="card-buttons">
+                <button class="btn-details"
+                        th:attr="onclick='openSkillsModal(' + ${character.id} + ')'">
+                    📊 Detalhes de Experiência
+                </button>
+                <button class="reset-password-btn" 
+                        th:attr="onclick='openResetModal(' + ${character.id} + ', \'' + ${character.playerName} + '\')'">
+                    🔑 Resetar Senha do Servidor
+                </button>
+            </div>
         </div>
 
         <!-- No Characters Message -->
@@ -570,7 +753,169 @@
     </div>
 </div>
 
-<script>
+<!-- Skills Detail Modal -->
+<div class="skills-modal-overlay" id="skillsModal" onclick="if(event.target===this) closeSkillsModal()">
+    <div class="skills-modal-box">
+        <div class="skills-modal-header">
+            <h2 id="skillsModalTitle">📊 Experiência do Personagem</h2>
+            <button class="skills-modal-close" onclick="closeSkillsModal()">✕ Fechar</button>
+        </div>
+        <div class="skills-modal-body" id="skillsModalBody"></div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+
+    // Serialize character skill data from Thymeleaf
+    const charactersData = [];
+    /*[# th:each="c : ${userCharacters}"]*/
+    charactersData.push({
+        id: /*[[${c.id}]]*/ 0,
+        name: /*[[${c.playerName}]]*/ '',
+        skillCooking: /*[[${c.skillCooking}]]*/ 0,
+        skillFitness: /*[[${c.skillFitness}]]*/ 0,
+        skillStrength: /*[[${c.skillStrength}]]*/ 0,
+        skillBlunt: /*[[${c.skillBlunt}]]*/ 0,
+        skillAxe: /*[[${c.skillAxe}]]*/ 0,
+        skillLightfoot: /*[[${c.skillLightfoot}]]*/ 0,
+        skillNimble: /*[[${c.skillNimble}]]*/ 0,
+        skillSprinting: /*[[${c.skillSprinting}]]*/ 0,
+        skillSneak: /*[[${c.skillSneak}]]*/ 0,
+        skillWoodwork: /*[[${c.skillWoodwork}]]*/ 0,
+        skillAiming: /*[[${c.skillAiming}]]*/ 0,
+        skillReloading: /*[[${c.skillReloading}]]*/ 0,
+        skillFarming: /*[[${c.skillFarming}]]*/ 0,
+        skillFishing: /*[[${c.skillFishing}]]*/ 0,
+        skillTrapping: /*[[${c.skillTrapping}]]*/ 0,
+        skillPlantScavenging: /*[[${c.skillPlantScavenging}]]*/ 0,
+        skillDoctor: /*[[${c.skillDoctor}]]*/ 0,
+        skillElectricity: /*[[${c.skillElectricity}]]*/ 0,
+        skillBlacksmith: /*[[${c.skillBlacksmith}]]*/ 0,
+        skillMetalWelding: /*[[${c.skillMetalWelding}]]*/ 0,
+        skillMechanics: /*[[${c.skillMechanics}]]*/ 0,
+        skillSpear: /*[[${c.skillSpear}]]*/ 0,
+        skillMaintenance: /*[[${c.skillMaintenance}]]*/ 0,
+        skillSmallBlade: /*[[${c.skillSmallBlade}]]*/ 0,
+        skillLongBlade: /*[[${c.skillLongBlade}]]*/ 0,
+        skillSmallBlunt: /*[[${c.skillSmallBlunt}]]*/ 0,
+        skillTailoring: /*[[${c.skillTailoring}]]*/ 0,
+        skillTracking: /*[[${c.skillTracking}]]*/ 0,
+        skillHusbandry: /*[[${c.skillHusbandry}]]*/ 0,
+        skillFlintKnapping: /*[[${c.skillFlintKnapping}]]*/ 0,
+        skillMasonry: /*[[${c.skillMasonry}]]*/ 0,
+        skillPottery: /*[[${c.skillPottery}]]*/ 0,
+        skillCarving: /*[[${c.skillCarving}]]*/ 0,
+        skillButchering: /*[[${c.skillButchering}]]*/ 0,
+        skillGlassmaking: /*[[${c.skillGlassmaking}]]*/ 0
+    });
+    /*[/]*/
+
+    // Skill categories for organized display
+    const skillCategories = [
+        {
+            title: '💪 Atributos Físicos',
+            skills: [
+                { key: 'skillFitness', label: 'Fitness' },
+                { key: 'skillStrength', label: 'Força' },
+                { key: 'skillSprinting', label: 'Corrida' },
+                { key: 'skillLightfoot', label: 'Pés Leves' },
+                { key: 'skillNimble', label: 'Agilidade' },
+                { key: 'skillSneak', label: 'Furtividade' }
+            ]
+        },
+        {
+            title: '⚔️ Combate',
+            skills: [
+                { key: 'skillAxe', label: 'Machado' },
+                { key: 'skillBlunt', label: 'Contundente' },
+                { key: 'skillSmallBlunt', label: 'Contundente Pequeno' },
+                { key: 'skillSmallBlade', label: 'Lâmina Pequena' },
+                { key: 'skillLongBlade', label: 'Lâmina Longa' },
+                { key: 'skillSpear', label: 'Lança' },
+                { key: 'skillMaintenance', label: 'Manutenção' }
+            ]
+        },
+        {
+            title: '🔫 Armas de Fogo',
+            skills: [
+                { key: 'skillAiming', label: 'Mira' },
+                { key: 'skillReloading', label: 'Recarga' }
+            ]
+        },
+        {
+            title: '🛠️ Ofícios',
+            skills: [
+                { key: 'skillCooking', label: 'Culinária' },
+                { key: 'skillWoodwork', label: 'Carpintaria' },
+                { key: 'skillTailoring', label: 'Costura' },
+                { key: 'skillMechanics', label: 'Mecânica' },
+                { key: 'skillElectricity', label: 'Eletricidade' },
+                { key: 'skillMetalWelding', label: 'Soldagem' },
+                { key: 'skillBlacksmith', label: 'Ferreiro' },
+                { key: 'skillMasonry', label: 'Alvenaria' },
+                { key: 'skillPottery', label: 'Cerâmica' },
+                { key: 'skillCarving', label: 'Entalhe' },
+                { key: 'skillGlassmaking', label: 'Vidraria' },
+                { key: 'skillFlintKnapping', label: 'Lascamento' }
+            ]
+        },
+        {
+            title: '🌿 Sobrevivência',
+            skills: [
+                { key: 'skillFarming', label: 'Agricultura' },
+                { key: 'skillFishing', label: 'Pesca' },
+                { key: 'skillTrapping', label: 'Armadilhas' },
+                { key: 'skillPlantScavenging', label: 'Forrageamento' },
+                { key: 'skillTracking', label: 'Rastreamento' },
+                { key: 'skillButchering', label: 'Abate' },
+                { key: 'skillHusbandry', label: 'Pecuária' },
+                { key: 'skillDoctor', label: 'Medicina' }
+            ]
+        }
+    ];
+
+    function formatXP(val) {
+        const v = val || 0;
+        if (v >= 1000000) return (v / 1000000).toFixed(1) + 'M';
+        if (v >= 1000) return (v / 1000).toFixed(1) + 'K';
+        return v.toLocaleString('pt-BR');
+    }
+
+    function openSkillsModal(characterId) {
+        const char = charactersData.find(c => c.id === characterId);
+        if (!char) return;
+
+        document.getElementById('skillsModalTitle').textContent = '📊 ' + char.name + ' — Experiência';
+
+        let html = '';
+        skillCategories.forEach(cat => {
+            html += '<div class="skills-category">';
+            html += '<div class="skills-category-title">' + cat.title + '</div>';
+            html += '<div class="skills-grid">';
+            cat.skills.forEach(s => {
+                const val = char[s.key] || 0;
+                const cls = val === 0 ? ' zero' : '';
+                html += '<div class="skill-item">';
+                html += '<span class="skill-name">' + s.label + '</span>';
+                html += '<span class="skill-xp' + cls + '">' + formatXP(val) + ' XP</span>';
+                html += '</div>';
+            });
+            html += '</div></div>';
+        });
+
+        document.getElementById('skillsModalBody').innerHTML = html;
+        document.getElementById('skillsModal').classList.add('active');
+    }
+
+    function closeSkillsModal() {
+        document.getElementById('skillsModal').classList.remove('active');
+    }
+
+    function filterBySeason(seasonId) {
+        window.location.href = '/my-characters?seasonId=' + encodeURIComponent(seasonId);
+    }
+
     function openResetModal(characterId, playerName) {
         document.getElementById('resetCharacterId').value = characterId;
         document.getElementById('resetModal').classList.add('active');
@@ -580,10 +925,22 @@
         document.getElementById('resetModal').classList.remove('active');
     }
 
-    // Close modal on overlay click
+    // Close modals on overlay click
     document.getElementById('resetModal').addEventListener('click', function(e) {
         if (e.target === this) closeResetModal();
     });
+
+    // Close modals on Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            if (document.getElementById('skillsModal').classList.contains('active')) {
+                closeSkillsModal();
+            } else if (document.getElementById('resetModal').classList.contains('active')) {
+                closeResetModal();
+            }
+        }
+    });
+    /*]]>*/
 </script>
 </body>
 </html>

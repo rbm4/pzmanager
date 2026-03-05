@@ -1,8 +1,8 @@
 package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
-import com.apocalipsebr.zomboid.server.manager.application.service.CarService;
+import com.apocalipsebr.zomboid.server.manager.application.service.GarageCarService;
 import com.apocalipsebr.zomboid.server.manager.application.service.CharacterService;
-import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Car;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.GarageCar;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Character;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
 
@@ -25,12 +25,12 @@ import java.util.Map;
 
 @Controller
 @RequestMapping("/garage")
-public class CarWebController {
+public class GarageWebController {
 
-    private final CarService carService;
+    private final GarageCarService carService;
     private final CharacterService characterService;
 
-    public CarWebController(CarService carService, CharacterService characterService) {
+    public GarageWebController(GarageCarService carService, CharacterService characterService) {
         this.carService = carService;
         this.characterService = characterService;
     }
@@ -45,7 +45,7 @@ public class CarWebController {
             Model model) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
-        Page<Car> carsPage = carService.getAllCarsPaginated(search, true, pageable);
+        Page<GarageCar> carsPage = carService.getAllCarsPaginated(search, true, pageable);
 
         model.addAttribute("cars", carsPage.getContent());
         model.addAttribute("currentPage", page);
@@ -88,7 +88,7 @@ public class CarWebController {
             Model model) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
-        Page<Car> carsPage = carService.getAllCarsPaginated(search, false, pageable);
+        Page<GarageCar> carsPage = carService.getAllCarsPaginated(search, false, pageable);
 
         model.addAttribute("cars", carsPage.getContent());
         model.addAttribute("currentPage", page);
@@ -104,14 +104,14 @@ public class CarWebController {
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/create")
     public String showCreateForm(Model model) {
-        model.addAttribute("car", new Car());
+        model.addAttribute("car", new GarageCar());
         return "car-create";
     }
 
     // Admin - Create car
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/create")
-    public String createCar(@ModelAttribute Car car, RedirectAttributes redirectAttributes) {
+    public String createCar(@ModelAttribute GarageCar car, RedirectAttributes redirectAttributes) {
         try {
             carService.createCar(car);
             redirectAttributes.addAttribute("success", "created");
@@ -140,7 +140,7 @@ public class CarWebController {
     // Admin - Update car
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{id}/edit")
-    public String updateCar(@PathVariable Long id, @ModelAttribute Car car, RedirectAttributes redirectAttributes) {
+    public String updateCar(@PathVariable Long id, @ModelAttribute GarageCar car, RedirectAttributes redirectAttributes) {
         try {
             carService.updateCar(id, car);
             redirectAttributes.addAttribute("success", "updated");

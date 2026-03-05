@@ -1,8 +1,8 @@
 package com.apocalipsebr.zomboid.server.manager.application.service;
 
-import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Car;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.GarageCar;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.ZomboidItem;
-import com.apocalipsebr.zomboid.server.manager.domain.repository.app.CarRepository;
+import com.apocalipsebr.zomboid.server.manager.domain.repository.app.GarageCarRepository;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.ZomboidItemRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,10 +15,10 @@ public class InflationService {
 
     private static final Logger logger = Logger.getLogger(InflationService.class.getName());
 
-    private final CarRepository carRepository;
+    private final GarageCarRepository carRepository;
     private final ZomboidItemRepository zomboidItemRepository;
 
-    public InflationService(CarRepository carRepository, ZomboidItemRepository zomboidItemRepository) {
+    public InflationService(GarageCarRepository carRepository, ZomboidItemRepository zomboidItemRepository) {
         this.carRepository = carRepository;
         this.zomboidItemRepository = zomboidItemRepository;
     }
@@ -32,9 +32,9 @@ public class InflationService {
         double multiplier = 1 + (percentage / 100.0);
 
         // Inflate available car prices
-        List<Car> availableCars = carRepository.findByAvailableTrue();
+        List<GarageCar> availableCars = carRepository.findByAvailableTrue();
         int carsInflated = 0;
-        for (Car car : availableCars) {
+        for (GarageCar car : availableCars) {
             if (car.getValue() != null && car.getValue() > 0) {
                 int oldValue = car.getValue();
                 int newValue = (int) Math.ceil(oldValue * multiplier);
