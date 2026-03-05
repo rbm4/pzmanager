@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Soft-Wipe - Apocalipse [BR]</title>
+    <script type="text/javascript" src="/pzmap/openseadragon/openseadragon.js"></script>
+    <style>
+        :root {
+            --bg: #0b0f14;
+            --text: #e6eef9;
+            --muted: #9fb1c6;
+            --border: #203044;
+            --accent: #00f2fe;
+            --green: #50c878;
+            --orange: #f5a623;
+            --red: #e74c3c;
+            --purple: #c882ff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            height: 100%;
+            background: var(--bg);
+            color: var(--text);
+            font: 14px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Noto Sans", "Helvetica Neue", Arial;
+            overflow: hidden;
+        }
+
+        #mapDiv { width: 100%; height: 100%; cursor: crosshair; }
+        #mapDiv.panning { cursor: grabbing; }
+
+        .topBar {
+            position: absolute;
+            left: 12px; top: 12px; right: 12px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .topBar > * { pointer-events: auto; }
+
+        .hud {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            background: rgba(10, 17, 26, 0.88);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 8px 14px;
+        }
+        .hud .kv { color: var(--muted); font-size: 12px; }
+        .hud .kv b { color: var(--text); font-weight: 600; }
+
+        button {
+            background: rgba(10, 17, 26, 0.9);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 8px 14px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        button:hover { border-color: #2f4a68; }
+
+        .bottomBar {
+            position: absolute;
+            left: 12px; bottom: 12px; right: 12px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .bottomBar > * { pointer-events: auto; }
+
+        .coordsPanel {
+            background: rgba(10, 17, 26, 0.92);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 12px 18px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .coordsPanel .coord-label {
+            color: var(--muted);
+            font-size: 12px;
+        }
+        .coordsPanel .coord-value {
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .costPanel {
+            background: rgba(10, 17, 26, 0.92);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 12px 18px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .costPanel .cost-label { color: var(--muted); font-size: 12px; }
+        .costPanel .cost-value { font-weight: 700; font-size: 14px; }
+        .costPanel .cost-value.enough { color: var(--green); }
+        .costPanel .cost-value.insufficient { color: var(--red); }
+
+        .wipeBtn {
+            background: rgba(231, 76, 60, 0.15);
+            border-color: rgba(231, 76, 60, 0.5);
+            color: #f0a0a0;
+            padding: 10px 24px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .wipeBtn:hover { border-color: #e74c3c; background: rgba(231, 76, 60, 0.25); color: #fff; }
+        .wipeBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .resetSelBtn {
+            background: rgba(255, 193, 7, 0.12);
+            border-color: rgba(255, 193, 7, 0.45);
+            color: #ffd54f;
+        }
+        .resetSelBtn:hover { border-color: #ffc107; color: #fff; }
+
+        .myWipesBtn {
+            background: rgba(200, 130, 255, 0.12);
+            border-color: rgba(200, 130, 255, 0.45);
+            color: #c882ff;
+        }
+        .myWipesBtn:hover { border-color: #c882ff; color: #fff; }
+
+        .instructions {
+            position: absolute;
+            left: 50%; top: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(10, 17, 26, 0.95);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px 32px;
+            z-index: 15;
+            text-align: center;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .instructions h3 { color: var(--red); margin-bottom: 8px; font-size: 16px; }
+        .instructions p { color: var(--muted); font-size: 13px; line-height: 1.6; }
+        .instructions .key { background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; font-family: monospace; }
+
+        .legend {
+            position: absolute;
+            right: 12px; bottom: 70px;
+            width: 230px;
+            background: rgba(10, 17, 26, 0.92);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 10px 14px;
+            z-index: 10;
+        }
+        .legend h3 { margin: 0 0 6px 0; font-size: 12px; color: #d8e6ff; }
+        .legRow { display: flex; gap: 8px; align-items: center; margin: 4px 0; }
+        .legBox { width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.2); flex: 0 0 auto; }
+        .legTxt { color: var(--muted); font-size: 11px; }
+
+        /* Selection overlay */
+        .selection-overlay {
+            background: rgba(231, 76, 60, 0.12);
+            border: 2.5px dashed rgba(231, 76, 60, 0.9);
+            box-sizing: border-box;
+            pointer-events: none;
+        }
+        .selection-overlay .sel-label {
+            position: absolute;
+            top: -22px; left: 4px;
+            color: #e74c3c;
+            font-size: 12px;
+            font-weight: bold;
+            font-family: system-ui, sans-serif;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+            white-space: nowrap;
+            pointer-events: none;
+        }
+        .selection-overlay .sel-corner {
+            position: absolute;
+            width: 10px; height: 10px;
+            background: #e74c3c;
+            pointer-events: none;
+        }
+        .selection-overlay .sel-corner.tl { top: -5px; left: -5px; }
+        .selection-overlay .sel-corner.tr { top: -5px; right: -5px; }
+        .selection-overlay .sel-corner.bl { bottom: -5px; left: -5px; }
+        .selection-overlay .sel-corner.br { bottom: -5px; right: -5px; }
+
+        /* Tooltip */
+        #mapTooltip {
+            position: fixed;
+            z-index: 99999;
+            display: none;
+            max-width: 360px;
+            background: rgba(10,17,26,0.96);
+            border: 1px solid #203044;
+            border-radius: 12px;
+            padding: 12px 14px;
+            color: #e6eef9;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            font-size: 12px;
+            line-height: 1.4;
+            pointer-events: none;
+            font-family: system-ui, sans-serif;
+        }
+
+        /* Sidebar panel */
+        .sidePanel {
+            position: absolute;
+            left: 12px; top: 56px;
+            width: 340px;
+            max-height: calc(100vh - 130px);
+            background: rgba(10, 17, 26, 0.95);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            z-index: 20;
+            overflow-y: auto;
+            display: none;
+        }
+        .sidePanel.open { display: block; }
+        .sidePanel h3 { color: var(--accent); font-size: 15px; margin-bottom: 12px; }
+        .sidePanel .close-btn {
+            position: absolute; top: 10px; right: 14px;
+            background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer;
+        }
+        .sidePanel .close-btn:hover { color: var(--text); }
+
+        .wipeCard {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+        .wipeCard .wc-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;
+        }
+        .wipeCard .wc-status {
+            font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 6px;
+        }
+        .wipeCard .wc-status.WAITING_RESTART { background: rgba(245,166,35,0.2); color: var(--orange); }
+        .wipeCard .wc-status.WIPE_AT_RESTART { background: rgba(0,242,254,0.2); color: var(--accent); }
+        .wipeCard .wc-status.COMPLETED { background: rgba(80,200,120,0.2); color: var(--green); }
+        .wipeCard .wc-status.FAILED { background: rgba(231,76,60,0.2); color: var(--red); }
+        .wipeCard .wc-status.CANCELLED { background: rgba(159,177,198,0.2); color: var(--muted); }
+        .wipeCard .wc-detail { color: var(--muted); font-size: 12px; margin: 2px 0; }
+        .wipeCard .wc-detail b { color: var(--text); }
+        .wipeCard .cancel-btn {
+            margin-top: 6px; padding: 4px 12px; font-size: 11px;
+            background: rgba(231,76,60,0.1); border-color: rgba(231,76,60,0.4); color: #f0a0a0;
+        }
+        .wipeCard .cancel-btn:hover { border-color: #e74c3c; color: #fff; }
+
+        /* Confirm modal */
+        .modalBackdrop {
+            position: fixed; inset: 0; z-index: 9999;
+            background: rgba(0,0,0,0.65);
+            display: none; align-items: center; justify-content: center;
+        }
+        .modal {
+            background: #0f1820; border: 1px solid var(--border);
+            border-radius: 16px; padding: 24px 30px;
+            max-width: 450px; width: 90%; text-align: center;
+        }
+        .modal h3 { color: var(--red); margin-bottom: 12px; }
+        .modal p { color: var(--muted); font-size: 13px; line-height: 1.5; margin-bottom: 16px; }
+        .modal .modal-actions { display: flex; gap: 12px; justify-content: center; }
+        .modal .modal-actions button { min-width: 100px; }
+        .modal .confirm-yes {
+            background: rgba(231,76,60,0.15); border-color: rgba(231,76,60,0.5);
+            color: #f0a0a0; font-weight: 600;
+        }
+        .modal .confirm-yes:hover { border-color: #e74c3c; background: rgba(231,76,60,0.3); color: #fff; }
+
+        /* Toast notification */
+        .toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 99999; padding: 12px 24px; border-radius: 12px;
+            font-size: 13px; font-weight: 600; transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        .toast.success { background: rgba(80,200,120,0.9); color: #fff; }
+        .toast.error { background: rgba(231,76,60,0.9); color: #fff; }
+
+        @media (max-width: 640px) {
+            .legend { display: none; }
+            .coordsPanel, .costPanel { flex-direction: column; gap: 8px; }
+            .sidePanel { width: calc(100vw - 24px); }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="mapDiv"></div>
+
+    <!-- Instructions overlay -->
+    <div class="instructions" id="instrOverlay">
+        <h3>&#x1F9F9; Soft-Wipe de Mapa</h3>
+        <p>
+            <b>Clique e arraste</b> para selecionar a &aacute;rea que deseja limpar.<br>
+            Use <span class="key">Scroll</span> para zoom e <b>bot&atilde;o direito</b> para mover o mapa.<br>
+            &Aacute;reas protegidas (<b style="color:#50c878">safehouses</b> e <b style="color:#f5a623">carros</b>) n&atilde;o ser&atilde;o deletadas.<br>
+            O wipe ser&aacute; executado no <b>pr&oacute;ximo restart</b> do servidor.
+        </p>
+    </div>
+
+    <div class="topBar">
+        <div class="hud">
+            <div class="kv">Zoom: <b id="hudZoom">&mdash;</b></div>
+            <div class="kv">Cursor: <b id="hudCursor">&mdash;</b></div>
+            <div class="kv">Saldo: <b id="hudBalance">&mdash;</b> &#x20B3;</div>
+        </div>
+        <div class="hud">
+            <button id="btnReset">Resetar vista</button>
+            <button class="resetSelBtn" id="btnClearSel">Limpar sele&ccedil;&atilde;o</button>
+            <button class="myWipesBtn" id="btnMyWipes">Meus Pedidos</button>
+        </div>
+    </div>
+
+    <div class="legend">
+        <h3>Legenda</h3>
+        <div class="legRow">
+            <div class="legBox" style="background:transparent; border:2px solid rgba(231,76,60,0.8)"></div>
+            <div class="legTxt">&Aacute;rea de wipe (sele&ccedil;&atilde;o)</div>
+        </div>
+        <div class="legRow">
+            <div class="legBox" style="background:rgba(80,200,120,0.3); border:2px solid rgba(80,200,120,0.65)"></div>
+            <div class="legTxt">Safehouse (protegida)</div>
+        </div>
+        <div class="legRow">
+            <div class="legBox" style="background:rgba(245,166,35,0.3); border:2px solid rgba(245,166,35,0.65)"></div>
+            <div class="legTxt">Carro reivindicado (protegido)</div>
+        </div>
+        <div class="legRow">
+            <div class="legBox" style="background:transparent; border:2px solid rgba(200,130,255,0.65)"></div>
+            <div class="legTxt">Regi&atilde;o PVE</div>
+        </div>
+        <div class="legRow">
+            <div class="legBox" style="background:transparent; border:2px solid rgba(231,76,60,0.5)"></div>
+            <div class="legTxt">Regi&atilde;o PVP &#9760;&#65039;</div>
+        </div>
+        <div class="legRow">
+            <div class="legBox" style="background:transparent; border:2px solid rgba(80,200,120,0.5)"></div>
+            <div class="legTxt">Regi&atilde;o permanente</div>
+        </div>
+    </div>
+
+    <div class="bottomBar">
+        <div class="coordsPanel" id="coordsPanel">
+            <div><span class="coord-label">X1:</span> <span class="coord-value" id="cx1">&mdash;</span></div>
+            <div><span class="coord-label">Y1:</span> <span class="coord-value" id="cy1">&mdash;</span></div>
+            <div><span class="coord-label">X2:</span> <span class="coord-value" id="cx2">&mdash;</span></div>
+            <div><span class="coord-label">Y2:</span> <span class="coord-value" id="cy2">&mdash;</span></div>
+        </div>
+        <div class="costPanel" id="costPanel" style="display:none">
+            <div><span class="cost-label">&Aacute;rea:</span> <span class="cost-value" id="cpArea">&mdash;</span></div>
+            <div><span class="cost-label">Bins:</span> <span class="cost-value" id="cpBins">&mdash;</span></div>
+            <div><span class="cost-label">Custo:</span> <span class="cost-value" id="cpCost">&mdash;</span> <span class="cost-label">&#x20B3;</span></div>
+        </div>
+        <button class="wipeBtn" id="btnWipe" disabled>&#x1F9F9; Solicitar Soft-Wipe</button>
+    </div>
+
+    <!-- My Wipes sidebar -->
+    <div class="sidePanel" id="wipesPanel">
+        <button class="close-btn" id="btnCloseWipes">&times;</button>
+        <h3>&#x1F9F9; Meus Pedidos de Soft-Wipe</h3>
+        <div id="wipesListContainer">
+            <p style="color:var(--muted); font-size:13px;">Carregando...</p>
+        </div>
+    </div>
+
+    <!-- Confirm modal -->
+    <div class="modalBackdrop" id="confirmModal">
+        <div class="modal">
+            <h3>&#x26A0;&#xFE0F; Confirmar Soft-Wipe</h3>
+            <p id="confirmText">Tem certeza?</p>
+            <div class="modal-actions">
+                <button class="confirm-yes" id="btnConfirmYes">Confirmar</button>
+                <button id="btnConfirmNo">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mapTooltip"></div>
+
+    <script>
+    (function () {
+        'use strict';
+
+        /* ========== Constants ========== */
+        var MAP_WIDTH       = 19968;
+        var MAP_DATA_ROOT   = '/pzmap/map_data/';
+        var TILE_SOURCE     = MAP_DATA_ROOT + 'base_top/layer0.dzi';
+        var MOD_MAPS_LIST   = MAP_DATA_ROOT + 'mod_maps/map_list.json';
+        var MOD_MAPS_ROOT   = MAP_DATA_ROOT + 'mod_maps/';
+        var API_BASE        = '/soft-wipe/api';
+        var MIN_SEL_SIZE    = 10;
+        var SH_PROTECTION_MARGIN  = 15; // tiles — visual overlay for safehouse protection
+        var CAR_PROTECTION_MARGIN = 8;  // tiles — visual overlay for car protection
+
+        /* ========== State ========== */
+        var viewer         = null;
+        var regions        = [];
+        var safehouses     = [];
+        var claimedCars    = [];
+        var selection      = null;
+        var selOverlayEl   = null;
+        var selLabelEl     = null;
+        var isDrawing      = false;
+        var isPanning      = false;
+        var panStartMouse  = null;
+        var panStartCenter = null;
+        var userBalance    = 0;
+        var currentPreview = null;
+
+        /* ========== Helpers ========== */
+        function $(id) { return document.getElementById(id); }
+
+        function pixelToViewport(px, py) {
+            return new OpenSeadragon.Point(px / MAP_WIDTH, py / MAP_WIDTH);
+        }
+
+        function viewportToPixel(vp) {
+            return { x: vp.x * MAP_WIDTH, y: vp.y * MAP_WIDTH };
+        }
+
+        function screenToWorld(sx, sy) {
+            var vp = viewer.viewport.pointFromPixel(new OpenSeadragon.Point(sx, sy));
+            return viewportToPixel(vp);
+        }
+
+        function escapeHtml(s) {
+            return String(s).replace(/[&<>"]/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+            });
+        }
+
+        function formatNumber(n) {
+            return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
+
+        /* ========== Toast ========== */
+        function showToast(message, type) {
+            var existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+            var el = document.createElement('div');
+            el.className = 'toast ' + (type || 'success');
+            el.textContent = message;
+            document.body.appendChild(el);
+            setTimeout(function () { el.style.opacity = '0'; }, 3000);
+            setTimeout(function () { el.remove(); }, 3500);
+        }
+
+        /* ========== Region colors ========== */
+        function regionColor(rg) {
+            var cats = (rg.categories || '').toLowerCase();
+            if (cats.indexOf('pvp') >= 0)
+                return { border: 'rgba(231,76,60,0.5)', fill: 'rgba(231,76,60,0.08)', label: '#e74c3c' };
+            if (rg.permanent)
+                return { border: 'rgba(80,200,120,0.5)', fill: 'rgba(80,200,120,0.08)', label: '#50c878' };
+            return { border: 'rgba(200,130,255,0.5)', fill: 'rgba(200,130,255,0.08)', label: '#c882ff' };
+        }
+
+        /* ========== Tooltip ========== */
+        var tooltipEl = $('mapTooltip');
+
+        function showTooltip(html, mx, my) {
+            tooltipEl.innerHTML = html;
+            tooltipEl.style.display = 'block';
+            var pad = 10;
+            var rect = tooltipEl.getBoundingClientRect();
+            var x = mx + 16, y = my + 16;
+            if (x + rect.width > window.innerWidth - pad) x = window.innerWidth - pad - rect.width;
+            if (y + rect.height > window.innerHeight - pad) y = window.innerHeight - pad - rect.height;
+            tooltipEl.style.left = Math.max(pad, x) + 'px';
+            tooltipEl.style.top  = Math.max(pad, y) + 'px';
+        }
+
+        function hideTooltip() { tooltipEl.style.display = 'none'; }
+
+        /* ========== Render regions ========== */
+        function renderRegions() {
+            for (var i = 0; i < regions.length; i++) {
+                var rg = regions[i];
+                var c = regionColor(rg);
+                var x1 = Math.min(rg.x1, rg.x2), y1 = Math.min(rg.y1, rg.y2);
+                var x2 = Math.max(rg.x1, rg.x2), y2 = Math.max(rg.y1, rg.y2);
+
+                var el = document.createElement('div');
+                el.style.cssText =
+                    'background:' + c.fill + ';border:2px solid ' + c.border +
+                    ';box-sizing:border-box;pointer-events:auto;cursor:pointer;transition:background 0.15s;';
+
+                var cats = (rg.categories || '').toLowerCase();
+                var isPvp = cats.indexOf('pvp') >= 0;
+                var lbl = document.createElement('div');
+                lbl.textContent = (rg.name || rg.code) + (isPvp ? ' \u2620\uFE0F' : '');
+                lbl.style.cssText =
+                    'position:absolute;top:2px;left:4px;color:' + c.label +
+                    ';font-size:11px;font-weight:bold;font-family:system-ui,sans-serif;' +
+                    'text-shadow:1px 1px 2px rgba(0,0,0,0.8);white-space:nowrap;pointer-events:none;' +
+                    'overflow:hidden;text-overflow:ellipsis;max-width:calc(100% - 8px);';
+                el.appendChild(lbl);
+
+                (function (rgRef, cRef, elRef) {
+                    elRef.addEventListener('mouseenter', function (e) {
+                        elRef.style.background = cRef.fill.replace(/[\d.]+\)$/, '0.2)');
+                        var tip = '<b style="font-size:14px">' + escapeHtml(rgRef.name || rgRef.code) + '</b>' +
+                            '<br><span style="color:#888">Código:</span> ' + escapeHtml(rgRef.code || '') +
+                            (rgRef.categories ? '<br><span style="color:#888">Categorias:</span> ' + escapeHtml(rgRef.categories) : '') +
+                            '<br><span style="color:#888">Coords:</span> (' + rgRef.x1 + ', ' + rgRef.y1 + ') → (' + rgRef.x2 + ', ' + rgRef.y2 + ')' +
+                            (rgRef.permanent ? '<br><span style="color:#50c878"><b>⚡ Permanente</b></span>' : '');
+                        showTooltip(tip, e.clientX, e.clientY);
+                    });
+                    elRef.addEventListener('mousemove', function (e) {
+                        var tip = '<b>' + escapeHtml(rgRef.name || rgRef.code) + '</b>';
+                        showTooltip(tip, e.clientX, e.clientY);
+                    });
+                    elRef.addEventListener('mouseleave', function () {
+                        elRef.style.background = cRef.fill;
+                        hideTooltip();
+                    });
+                })(rg, c, el);
+
+                var tl = pixelToViewport(x1, y1);
+                var br = pixelToViewport(x2, y2);
+                var rect = new OpenSeadragon.Rect(tl.x, tl.y, br.x - tl.x, br.y - tl.y);
+                viewer.addOverlay({ element: el, location: rect, placement: OpenSeadragon.Placement.TOP_LEFT });
+            }
+        }
+
+        /* ========== Render safehouses ========== */
+        function renderSafehouses() {
+            for (var i = 0; i < safehouses.length; i++) {
+                var sh = safehouses[i];
+                // Draw the safehouse rectangle with its protection margin
+                var sx1 = sh.x - SH_PROTECTION_MARGIN;
+                var sy1 = sh.y - SH_PROTECTION_MARGIN;
+                var sx2 = sh.x + sh.w + SH_PROTECTION_MARGIN;
+                var sy2 = sh.y + sh.h + SH_PROTECTION_MARGIN;
+
+                var el = document.createElement('div');
+                el.style.cssText =
+                    'background:rgba(80,200,120,0.08);border:1.5px solid rgba(80,200,120,0.4);' +
+                    'box-sizing:border-box;pointer-events:auto;cursor:pointer;';
+
+                (function (shRef, elRef) {
+                    elRef.addEventListener('mouseenter', function (e) {
+                        elRef.style.background = 'rgba(80,200,120,0.18)';
+                        var tip = '<b style="color:#50c878">🏠 Safehouse</b>' +
+                            '<br><span style="color:#888">Dono:</span> <b>' + escapeHtml(shRef.owner || '') + '</b>' +
+                            (shRef.town ? '<br><span style="color:#888">Cidade:</span> ' + escapeHtml(shRef.town) : '') +
+                            (shRef.name ? '<br><span style="color:#888">Nome:</span> ' + escapeHtml(shRef.name) : '') +
+                            '<br><span style="color:#888">Coords:</span> (' + shRef.x + ', ' + shRef.y + ') ' + shRef.w + '×' + shRef.h +
+                            '<br><span style="color:#50c878;font-size:11px">⚡ Área protegida (margem ' + SH_PROTECTION_MARGIN + ' tiles)</span>';
+                        showTooltip(tip, e.clientX, e.clientY);
+                    });
+                    elRef.addEventListener('mousemove', function (e) {
+                        showTooltip('<b style="color:#50c878">🏠 ' + escapeHtml(shRef.owner || 'Safehouse') + '</b>', e.clientX, e.clientY);
+                    });
+                    elRef.addEventListener('mouseleave', function () {
+                        elRef.style.background = 'rgba(80,200,120,0.08)';
+                        hideTooltip();
+                    });
+                })(sh, el);
+
+                var tl = pixelToViewport(sx1, sy1);
+                var br = pixelToViewport(sx2, sy2);
+                var rect = new OpenSeadragon.Rect(tl.x, tl.y, br.x - tl.x, br.y - tl.y);
+                viewer.addOverlay({ element: el, location: rect, placement: OpenSeadragon.Placement.TOP_LEFT });
+            }
+        }
+
+        /* ========== Render claimed cars ========== */
+        function renderClaimedCars() {
+            for (var i = 0; i < claimedCars.length; i++) {
+                var car = claimedCars[i];
+                if (car.x == null || car.y == null) continue;
+                var cx = Math.floor(car.x);
+                var cy = Math.floor(car.y);
+                var sx1 = cx - CAR_PROTECTION_MARGIN;
+                var sy1 = cy - CAR_PROTECTION_MARGIN;
+                var sx2 = cx + CAR_PROTECTION_MARGIN;
+                var sy2 = cy + CAR_PROTECTION_MARGIN;
+
+                console.log('[soft-wipe] Car overlay #' + i + ': owner=' + car.ownerName +
+                    ' pos=(' + car.x + ',' + car.y + ') rect=(' + sx1 + ',' + sy1 + ')→(' + sx2 + ',' + sy2 + ')');
+
+                // --- dot marker (always visible even when zoomed out) ---
+                var dot = document.createElement('div');
+                dot.style.cssText =
+                    'width:12px;height:12px;border-radius:50%;' +
+                    'background:rgba(245,166,35,0.85);border:2px solid #f5a623;' +
+                    'box-shadow:0 0 6px rgba(245,166,35,0.6);pointer-events:none;';
+                var dotVp = pixelToViewport(cx, cy);
+                viewer.addOverlay({
+                    element: dot,
+                    location: new OpenSeadragon.Point(dotVp.x, dotVp.y),
+                    placement: OpenSeadragon.Placement.CENTER
+                });
+
+                // --- protection area rectangle ---
+                var el = document.createElement('div');
+                el.style.cssText =
+                    'background:rgba(245,166,35,0.08);border:1.5px solid rgba(245,166,35,0.4);' +
+                    'box-sizing:border-box;pointer-events:auto;cursor:pointer;';
+
+                (function (carRef, elRef) {
+                    elRef.addEventListener('mouseenter', function (e) {
+                        elRef.style.background = 'rgba(245,166,35,0.18)';
+                        var tip = '<b style="color:#f5a623">🚗 Carro Reivindicado</b>' +
+                            '<br><span style="color:#888">Veículo:</span> <b>' + escapeHtml(carRef.vehicleName || 'Desconhecido') + '</b>' +
+                            '<br><span style="color:#888">Dono:</span> <b>' + escapeHtml(carRef.ownerName || '') + '</b>' +
+                            '<br><span style="color:#888">Posição:</span> (' + Math.round(carRef.x) + ', ' + Math.round(carRef.y) + ')' +
+                            '<br><span style="color:#f5a623;font-size:11px">⚡ Área protegida (margem ' + CAR_PROTECTION_MARGIN + ' tiles)</span>';
+                        showTooltip(tip, e.clientX, e.clientY);
+                    });
+                    elRef.addEventListener('mousemove', function (e) {
+                        showTooltip('<b style="color:#f5a623">🚗 ' + escapeHtml(carRef.ownerName || 'Carro') + '</b>', e.clientX, e.clientY);
+                    });
+                    elRef.addEventListener('mouseleave', function () {
+                        elRef.style.background = 'rgba(245,166,35,0.08)';
+                        hideTooltip();
+                    });
+                })(car, el);
+
+                var tl = pixelToViewport(sx1, sy1);
+                var br = pixelToViewport(sx2, sy2);
+                var rect = new OpenSeadragon.Rect(tl.x, tl.y, br.x - tl.x, br.y - tl.y);
+                viewer.addOverlay({ element: el, location: rect, placement: OpenSeadragon.Placement.TOP_LEFT });
+            }
+        }
+
+        /* ========== Selection overlay ========== */
+        function ensureSelectionOverlay() {
+            if (selOverlayEl) return;
+            selOverlayEl = document.createElement('div');
+            selOverlayEl.className = 'selection-overlay';
+            var corners = ['tl', 'tr', 'bl', 'br'];
+            for (var i = 0; i < corners.length; i++) {
+                var corner = document.createElement('div');
+                corner.className = 'sel-corner ' + corners[i];
+                selOverlayEl.appendChild(corner);
+            }
+            selLabelEl = document.createElement('div');
+            selLabelEl.className = 'sel-label';
+            selOverlayEl.appendChild(selLabelEl);
+        }
+
+        function updateSelectionOverlay() {
+            if (!selection || !viewer) return;
+            var x1 = Math.min(selection.x1, selection.x2);
+            var y1 = Math.min(selection.y1, selection.y2);
+            var x2 = Math.max(selection.x1, selection.x2);
+            var y2 = Math.max(selection.y1, selection.y2);
+
+            var tl = pixelToViewport(x1, y1);
+            var br = pixelToViewport(x2, y2);
+            var rect = new OpenSeadragon.Rect(tl.x, tl.y, br.x - tl.x, br.y - tl.y);
+
+            ensureSelectionOverlay();
+            if (!selOverlayEl._added) {
+                viewer.addOverlay({ element: selOverlayEl, location: rect, placement: OpenSeadragon.Placement.TOP_LEFT });
+                selOverlayEl._added = true;
+            } else {
+                viewer.updateOverlay(selOverlayEl, rect, OpenSeadragon.Placement.TOP_LEFT);
+            }
+
+            if (selLabelEl) {
+                selLabelEl.textContent = '(' + Math.round(x1) + ', ' + Math.round(y1) + ') → (' + Math.round(x2) + ', ' + Math.round(y2) + ')';
+            }
+        }
+
+        function clearSelection() {
+            selection = null;
+            isDrawing = false;
+            currentPreview = null;
+            if (selOverlayEl && selOverlayEl._added) {
+                try { viewer.removeOverlay(selOverlayEl); } catch (e) { /* ignore */ }
+                selOverlayEl._added = false;
+                selOverlayEl = null;
+                selLabelEl = null;
+            }
+            updateCoordsDisplay();
+            updateCostDisplay();
+        }
+
+        /* ========== Coords display ========== */
+        function updateCoordsDisplay() {
+            if (selection) {
+                var x1 = Math.round(Math.min(selection.x1, selection.x2));
+                var y1 = Math.round(Math.min(selection.y1, selection.y2));
+                var x2 = Math.round(Math.max(selection.x1, selection.x2));
+                var y2 = Math.round(Math.max(selection.y1, selection.y2));
+                $('cx1').textContent = x1;
+                $('cy1').textContent = y1;
+                $('cx2').textContent = x2;
+                $('cy2').textContent = y2;
+            } else {
+                $('cx1').textContent = $('cy1').textContent = $('cx2').textContent = $('cy2').textContent = '\u2014';
+            }
+        }
+
+        /* ========== Cost display ========== */
+        function updateCostDisplay() {
+            var panel = $('costPanel');
+            var btn = $('btnWipe');
+
+            if (!currentPreview) {
+                panel.style.display = 'none';
+                btn.disabled = true;
+                return;
+            }
+
+            panel.style.display = 'flex';
+            $('cpArea').textContent = formatNumber(currentPreview.area) + ' tiles²';
+            $('cpBins').textContent = formatNumber(currentPreview.totalBins);
+
+            var costEl = $('cpCost');
+            costEl.textContent = formatNumber(currentPreview.cost);
+
+            if (userBalance >= currentPreview.cost) {
+                costEl.className = 'cost-value enough';
+                btn.disabled = false;
+            } else {
+                costEl.className = 'cost-value insufficient';
+                btn.disabled = true;
+            }
+        }
+
+        /* ========== Fetch preview ========== */
+        var previewTimeout = null;
+
+        function fetchPreview() {
+            if (!selection) return;
+            var x1 = Math.round(Math.min(selection.x1, selection.x2));
+            var y1 = Math.round(Math.min(selection.y1, selection.y2));
+            var x2 = Math.round(Math.max(selection.x1, selection.x2));
+            var y2 = Math.round(Math.max(selection.y1, selection.y2));
+
+            if (Math.abs(x2 - x1) < MIN_SEL_SIZE || Math.abs(y2 - y1) < MIN_SEL_SIZE) {
+                currentPreview = null;
+                updateCostDisplay();
+                return;
+            }
+
+            fetch(API_BASE + '/preview?x1=' + x1 + '&y1=' + y1 + '&x2=' + x2 + '&y2=' + y2)
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    currentPreview = data;
+                    userBalance = data.balance || 0;
+                    $('hudBalance').textContent = formatNumber(userBalance);
+                    updateCostDisplay();
+                })
+                .catch(function () { /* silent */ });
+        }
+
+        function debouncedPreview() {
+            if (previewTimeout) clearTimeout(previewTimeout);
+            previewTimeout = setTimeout(fetchPreview, 300);
+        }
+
+        /* ========== HUD ========== */
+        function updateHud() {
+            if (!viewer) return;
+            $('hudZoom').textContent = viewer.viewport.getZoom(true).toFixed(3);
+        }
+
+        /* ========== Load balance ========== */
+        function loadBalance() {
+            fetch(API_BASE + '/balance')
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    userBalance = data.balance || 0;
+                    $('hudBalance').textContent = formatNumber(userBalance);
+                })
+                .catch(function () { /* silent */ });
+        }
+
+        /* ========== Load overlay data ========== */
+        function loadOverlayData() {
+            // Load regions, safehouses, and cars in parallel
+            Promise.all([
+                fetch(API_BASE + '/regions').then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; }),
+                fetch(API_BASE + '/safehouses').then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; }),
+                fetch(API_BASE + '/claimed-cars').then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; })
+            ]).then(function (results) {
+                regions = results[0] || [];
+                safehouses = results[1] || [];
+                claimedCars = results[2] || [];
+                console.log('[soft-wipe] Loaded overlays — regions:', regions.length,
+                    ', safehouses:', safehouses.length, ', claimedCars:', claimedCars.length);
+                renderRegions();
+                renderSafehouses();
+                renderClaimedCars();
+            });
+        }
+
+        /* ========== My Wipes ========== */
+        function loadMyWipes() {
+            fetch(API_BASE + '/my-wipes')
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    renderWipesList(data);
+                })
+                .catch(function () {
+                    $('wipesListContainer').innerHTML = '<p style="color:var(--red)">Erro ao carregar pedidos.</p>';
+                });
+        }
+
+        function renderWipesList(wipes) {
+            var container = $('wipesListContainer');
+            if (!wipes || wipes.length === 0) {
+                container.innerHTML = '<p style="color:var(--muted);font-size:13px;">Nenhum pedido de soft-wipe encontrado.</p>';
+                return;
+            }
+
+            var html = '';
+            for (var i = 0; i < wipes.length; i++) {
+                var w = wipes[i];
+                html += '<div class="wipeCard">';
+                html += '<div class="wc-header">';
+                html += '<span style="color:var(--muted);font-size:12px;">#' + w.id + '</span>';
+                html += '<span class="wc-status ' + w.status + '">' + escapeHtml(w.statusDisplay) + '</span>';
+                html += '</div>';
+                html += '<div class="wc-detail">Área: <b>(' + w.x1 + ', ' + w.y1 + ') → (' + w.x2 + ', ' + w.y2 + ')</b></div>';
+                html += '<div class="wc-detail">Custo: <b>' + formatNumber(w.cost) + ' ₳</b> · ' + formatNumber(w.area) + ' tiles²</div>';
+                if (w.executedAt) {
+                    html += '<div class="wc-detail">Executado: <b>' + escapeHtml(w.executedAt.replace('T', ' ').substring(0, 16)) + '</b></div>';
+                    html += '<div class="wc-detail">Bins deletados: <b>' + w.binsDeleted + '</b> · Protegidos: <b>' + w.binsProtected + '</b></div>';
+                } else {
+                    html += '<div class="wc-detail">Criado: <b>' + escapeHtml(w.createdAt.replace('T', ' ').substring(0, 16)) + '</b></div>';
+                }
+                if (w.errorMessage) {
+                    html += '<div class="wc-detail" style="color:var(--red);">Erro: ' + escapeHtml(w.errorMessage) + '</div>';
+                }
+                if (w.status === 'WAITING_RESTART') {
+                    html += '<button class="cancel-btn" onclick="cancelWipe(' + w.id + ')">Cancelar (reembolso)</button>';
+                }
+                html += '</div>';
+            }
+            container.innerHTML = html;
+        }
+
+        // Expose cancel globally for onclick
+        window.cancelWipe = function (id) {
+            if (!confirm('Cancelar este soft-wipe e receber reembolso?')) return;
+            fetch(API_BASE + '/' + id + '/cancel', { method: 'POST' })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.success) {
+                        showToast(data.message, 'success');
+                        userBalance = data.balance || userBalance;
+                        $('hudBalance').textContent = formatNumber(userBalance);
+                        updateCostDisplay();
+                    } else {
+                        showToast(data.message, 'error');
+                    }
+                    loadMyWipes();
+                })
+                .catch(function () { showToast('Erro ao cancelar', 'error'); });
+        };
+
+        /* ========== Init OpenSeadragon ========== */
+        viewer = OpenSeadragon({
+            element:              $('mapDiv'),
+            tileSources:          TILE_SOURCE,
+            prefixUrl:            '/pzmap/openseadragon/images/',
+            drawer:               'canvas',
+            homeFillsViewer:      true,
+            showZoomControl:      false,
+            showHomeControl:      false,
+            showFullPageControl:  false,
+            showRotationControl:  false,
+            constrainDuringPan:   true,
+            visibilityRatio:      0.5,
+            minZoomImageRatio:    0.5,
+            maxZoomPixelRatio:    32,
+            imageSmoothingEnabled: false,
+            gestureSettingsMouse: {
+                scrollToZoom:   true,
+                clickToZoom:    false,
+                dblClickToZoom: false,
+                dragToPan:      false,
+                flickEnabled:   false
+            },
+            gestureSettingsTouch: {
+                scrollToZoom:   false,
+                clickToZoom:    false,
+                dblClickToZoom: false,
+                dragToPan:      false,
+                flickEnabled:   false,
+                pinchToZoom:    true
+            }
+        });
+
+        viewer.addHandler('update-viewport', updateHud);
+
+        /* ========== Left-click selection ========== */
+        viewer.addHandler('canvas-press', function (event) {
+            var world = screenToWorld(event.position.x, event.position.y);
+            clearSelection();
+            isDrawing = true;
+            selection = { x1: world.x, y1: world.y, x2: world.x, y2: world.y };
+            $('instrOverlay').style.opacity = '0';
+            updateSelectionOverlay();
+            updateCoordsDisplay();
+            event.preventDefaultAction = true;
+        });
+
+        viewer.addHandler('canvas-drag', function (event) {
+            if (isDrawing && selection) {
+                var world = screenToWorld(event.position.x, event.position.y);
+                selection.x2 = world.x;
+                selection.y2 = world.y;
+                updateSelectionOverlay();
+                updateCoordsDisplay();
+                event.preventDefaultAction = true;
+            }
+        });
+
+        viewer.addHandler('canvas-release', function (event) {
+            if (isDrawing) {
+                isDrawing = false;
+                if (selection) {
+                    var dx = Math.abs(selection.x2 - selection.x1);
+                    var dy = Math.abs(selection.y2 - selection.y1);
+                    if (dx < MIN_SEL_SIZE && dy < MIN_SEL_SIZE) {
+                        clearSelection();
+                    } else {
+                        debouncedPreview();
+                    }
+                }
+                updateCoordsDisplay();
+                event.preventDefaultAction = true;
+            }
+        });
+
+        /* ========== Right-click panning ========== */
+        var mapDiv = $('mapDiv');
+        mapDiv.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+
+        mapDiv.addEventListener('pointerdown', function (e) {
+            if (e.button === 2) {
+                isPanning = true;
+                panStartMouse = { x: e.clientX, y: e.clientY };
+                panStartCenter = viewer.viewport.getCenter(true);
+                mapDiv.classList.add('panning');
+            }
+        }, true);
+
+        document.addEventListener('pointermove', function (e) {
+            if (viewer && viewer.viewport) {
+                var rect = mapDiv.getBoundingClientRect();
+                var sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+                if (sx >= 0 && sy >= 0 && sx <= rect.width && sy <= rect.height) {
+                    var world = screenToWorld(sx, sy);
+                    $('hudCursor').textContent = Math.round(world.x) + ', ' + Math.round(world.y);
+                }
+            }
+            if (isPanning && panStartMouse && panStartCenter) {
+                var dx = e.clientX - panStartMouse.x;
+                var dy = e.clientY - panStartMouse.y;
+                var vDelta = viewer.viewport.deltaPointsFromPixels(new OpenSeadragon.Point(dx, dy));
+                viewer.viewport.panTo(
+                    new OpenSeadragon.Point(panStartCenter.x - vDelta.x, panStartCenter.y - vDelta.y),
+                    true
+                );
+            }
+        });
+
+        document.addEventListener('pointerup', function (e) {
+            if (e.button === 2 && isPanning) {
+                isPanning = false;
+                panStartMouse = null;
+                panStartCenter = null;
+                mapDiv.classList.remove('panning');
+            }
+        });
+
+        /* ========== Touch support ========== */
+        var touchPanning = false;
+        var lastTouchCenter = null;
+
+        mapDiv.addEventListener('touchstart', function (e) {
+            if (e.touches.length === 2) {
+                touchPanning = true;
+                var t = e.touches;
+                lastTouchCenter = {
+                    x: (t[0].clientX + t[1].clientX) / 2,
+                    y: (t[0].clientY + t[1].clientY) / 2
+                };
+            }
+        }, { passive: true });
+
+        mapDiv.addEventListener('touchmove', function (e) {
+            if (touchPanning && e.touches.length === 2 && lastTouchCenter) {
+                var t = e.touches;
+                var center = {
+                    x: (t[0].clientX + t[1].clientX) / 2,
+                    y: (t[0].clientY + t[1].clientY) / 2
+                };
+                var dx = center.x - lastTouchCenter.x;
+                var dy = center.y - lastTouchCenter.y;
+                var vDelta = viewer.viewport.deltaPointsFromPixels(new OpenSeadragon.Point(dx, dy));
+                viewer.viewport.panBy(new OpenSeadragon.Point(-vDelta.x, -vDelta.y), true);
+                lastTouchCenter = center;
+            }
+        }, { passive: true });
+
+        mapDiv.addEventListener('touchend', function (e) {
+            if (e.touches.length < 2) {
+                touchPanning = false;
+                lastTouchCenter = null;
+            }
+        }, { passive: true });
+
+        /* ========== Load mod maps ========== */
+        function loadModMaps() {
+            fetch(MOD_MAPS_LIST)
+                .then(function (r) { return r.json(); })
+                .catch(function () { return []; })
+                .then(function (names) {
+                    if (!names || names.length === 0) return;
+                    var baseItem = viewer.world.getItemAt(0);
+                    if (!baseItem) return;
+                    for (var i = 0; i < names.length; i++) {
+                        (function (name) {
+                            fetch(MOD_MAPS_ROOT + name + '/base_top/map_info.json')
+                                .then(function (r) { return r.json(); })
+                                .then(function (info) {
+                                    var pixelX = -info.x0;
+                                    var pixelY = -info.y0;
+                                    var vp = baseItem.imageToViewportCoordinates(pixelX, pixelY);
+                                    var modScale = 1 << (info.skip || 0);
+                                    var modW = info.w * modScale;
+                                    var width = modW / MAP_WIDTH;
+                                    viewer.addTiledImage({
+                                        tileSource: MOD_MAPS_ROOT + name + '/base_top/layer0.dzi',
+                                        x: vp.x,
+                                        y: vp.y,
+                                        width: width,
+                                        opacity: 1
+                                    });
+                                })
+                                .catch(function () { /* silent */ });
+                        })(names[i]);
+                    }
+                });
+        }
+
+        /* ========== UI Actions ========== */
+        $('btnReset').onclick = function () { viewer.viewport.goHome(false); };
+        $('btnClearSel').onclick = function () { clearSelection(); };
+
+        $('btnMyWipes').onclick = function () {
+            var panel = $('wipesPanel');
+            if (panel.classList.contains('open')) {
+                panel.classList.remove('open');
+            } else {
+                panel.classList.add('open');
+                loadMyWipes();
+            }
+        };
+        $('btnCloseWipes').onclick = function () {
+            $('wipesPanel').classList.remove('open');
+        };
+
+        /* ========== Wipe confirm flow ========== */
+        $('btnWipe').onclick = function () {
+            if (!selection || !currentPreview) return;
+            var x1 = Math.round(Math.min(selection.x1, selection.x2));
+            var y1 = Math.round(Math.min(selection.y1, selection.y2));
+            var x2 = Math.round(Math.max(selection.x1, selection.x2));
+            var y2 = Math.round(Math.max(selection.y1, selection.y2));
+
+            $('confirmText').innerHTML =
+                'Você está prestes a solicitar um <b>soft-wipe</b> da área:<br>' +
+                '<b>(' + x1 + ', ' + y1 + ') → (' + x2 + ', ' + y2 + ')</b><br><br>' +
+                'Custo: <b style="color:#e74c3c">' + formatNumber(currentPreview.cost) + ' ₳</b><br>' +
+                'Área: <b>' + formatNumber(currentPreview.area) + ' tiles²</b> · ' + formatNumber(currentPreview.totalBins) + ' bins<br><br>' +
+                '<span style="color:var(--muted);font-size:12px;">O wipe será executado no próximo restart do servidor.<br>' +
+                'Áreas protegidas (safehouses, carros) não serão afetadas.</span>';
+            $('confirmModal').style.display = 'flex';
+        };
+
+        $('btnConfirmNo').onclick = function () {
+            $('confirmModal').style.display = 'none';
+        };
+
+        $('btnConfirmYes').onclick = function () {
+            $('confirmModal').style.display = 'none';
+            if (!selection) return;
+
+            var x1 = Math.round(Math.min(selection.x1, selection.x2));
+            var y1 = Math.round(Math.min(selection.y1, selection.y2));
+            var x2 = Math.round(Math.max(selection.x1, selection.x2));
+            var y2 = Math.round(Math.max(selection.y1, selection.y2));
+
+            $('btnWipe').disabled = true;
+            $('btnWipe').textContent = 'Processando...';
+
+            fetch(API_BASE + '/request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ x1: x1, y1: y1, x2: x2, y2: y2 })
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    userBalance = data.balance || 0;
+                    $('hudBalance').textContent = formatNumber(userBalance);
+                    clearSelection();
+                } else {
+                    showToast(data.message || 'Erro ao solicitar soft-wipe', 'error');
+                }
+                $('btnWipe').textContent = '🧹 Solicitar Soft-Wipe';
+                updateCostDisplay();
+            })
+            .catch(function () {
+                showToast('Erro de conexão', 'error');
+                $('btnWipe').textContent = '🧹 Solicitar Soft-Wipe';
+                $('btnWipe').disabled = false;
+            });
+        };
+
+        /* ========== Init ========== */
+        viewer.addHandler('open', function () {
+            loadModMaps();
+            loadOverlayData();
+            loadBalance();
+        });
+    })();
+    </script>
+</body>
+
+</html>

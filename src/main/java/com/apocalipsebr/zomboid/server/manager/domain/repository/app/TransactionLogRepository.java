@@ -23,4 +23,6 @@ public interface TransactionLogRepository extends JpaRepository<TransactionLog, 
     long countByCashbackTrue();
 
     java.util.List<TransactionLog> findByItemIdRefAndTransactionTypeAndCashbackFalse(String itemIdRef, String transactionType);
+
+    java.util.List<TransactionLog> findByItemIdRefAndCashbackFalse(String itemIdRef);
 }

@@ -7,6 +7,7 @@ import com.apocalipsebr.zomboid.server.manager.application.service.ServerCommand
 import com.apocalipsebr.zomboid.server.manager.application.service.ServerRestartService;
 import com.apocalipsebr.zomboid.server.manager.application.service.ScheduledRestartService;
 import com.apocalipsebr.zomboid.server.manager.application.service.ServerWipeService;
+import com.apocalipsebr.zomboid.server.manager.application.service.SoftWipeService;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Character;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.CharacterRepository;
@@ -32,6 +33,7 @@ public class ServerController {
     private final InflationService inflationService;
     private final SeasonService seasonService;
     private final ClaimedCarService claimedCarService;
+    private final SoftWipeService softWipeService;
     private final CharacterRepository characterRepository;
     private final UserRepository userRepository;
 
@@ -42,6 +44,7 @@ public class ServerController {
                           InflationService inflationService,
                           SeasonService seasonService,
                           ClaimedCarService claimedCarService,
+                          SoftWipeService softWipeService,
                           CharacterRepository characterRepository,
                           UserRepository userRepository) {
         this.serverCommandService = serverCommandService;
@@ -51,6 +54,7 @@ public class ServerController {
         this.inflationService = inflationService;
         this.seasonService = seasonService;
         this.claimedCarService = claimedCarService;
+        this.softWipeService = softWipeService;
         this.characterRepository = characterRepository;
         this.userRepository = userRepository;
     }
@@ -390,6 +394,21 @@ public class ServerController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("success", false, "message", "Erro ao encerrar migração: " + e.getMessage()));
+        }
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/mark-softwipes")
+    public ResponseEntity<Map<String, Object>> markSoftWipesForRestart() {
+        try {
+            softWipeService.markWipesForRestart();
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Soft-wipes pendentes foram marcados para execução no próximo restart."
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "Erro ao marcar soft-wipes: " + e.getMessage()));
         }
     }
 }

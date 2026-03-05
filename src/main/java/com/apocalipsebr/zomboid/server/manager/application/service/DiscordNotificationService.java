@@ -205,6 +205,56 @@ public class DiscordNotificationService {
         }
     }
 
+    public void sendSoftWipesExecuted(int count, int totalBinsDeleted, int totalBinsProtected) {
+        if (!notificationsEnabled || webhookUrl == null || webhookUrl.isEmpty()) {
+            return;
+        }
+
+        try {
+            Map<String, Object> payload = buildSoftWipesExecutedMessage(count, totalBinsDeleted, totalBinsProtected);
+            sendWebhook(payload);
+            logger.info("Discord soft-wipes executed notification sent");
+        } catch (Exception e) {
+            logger.warning("Failed to send Discord notification: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private Map<String, Object> buildSoftWipesExecutedMessage(int count, int totalBinsDeleted, int totalBinsProtected) {
+        String timestamp = ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT);
+
+        return Map.of(
+            "embeds", List.of(
+                Map.of(
+                    "title", "🧹 Soft-Wipes Executados",
+                    "description", "Os soft-wipes pendentes foram executados durante a inicialização do servidor.",
+                    "color", 15158332,
+                    "fields", List.of(
+                        Map.of(
+                            "name", "📋 Pedidos Processados",
+                            "value", String.valueOf(count),
+                            "inline", true
+                        ),
+                        Map.of(
+                            "name", "🗑️ Bins Deletados",
+                            "value", String.valueOf(totalBinsDeleted),
+                            "inline", true
+                        ),
+                        Map.of(
+                            "name", "🛡️ Bins Protegidos",
+                            "value", String.valueOf(totalBinsProtected),
+                            "inline", true
+                        )
+                    ),
+                    "timestamp", timestamp,
+                    "footer", Map.of(
+                        "text", "Apocalipse [BR] - Zomboid Server"
+                    )
+                )
+            )
+        );
+    }
+
     public boolean isEnabled() {
         return notificationsEnabled && webhookUrl != null && !webhookUrl.isEmpty();
     }

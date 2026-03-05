@@ -375,6 +375,22 @@
                     <p id="migration-result-text"></p>
                 </div>
             </div>
+
+            <!-- Soft Wipe Execution Card -->
+            <div class="card">
+                <h2>🧹 Soft-Wipe Manual</h2>
+                <div id="softwipe-alert" class="alert"></div>
+                <p style="color: #aaa; margin-bottom: 20px;">
+                    Marca todos os soft-wipes pendentes (WAITING_RESTART) para serem executados no próximo restart do servidor.
+                </p>
+                <div style="padding: 14px; border-radius: 8px; margin-bottom: 15px; background: rgba(79, 172, 254, 0.1); border: 1px solid rgba(79, 172, 254, 0.3); color: #4facfe; font-size: 0.85rem; line-height: 1.5;">
+                    ℹ️ Normalmente isso acontece automaticamente quando um restart é iniciado. Use este botão apenas se precisar forçar a marcação manualmente.
+                </div>
+                <button onclick="markSoftWipesForRestart()" class="btn btn-primary">🧹 Marcar Soft-Wipes para Execução</button>
+                <div id="softwipe-result" class="stats-display">
+                    <p id="softwipe-result-text"></p>
+                </div>
+            </div>
         </div>
 
         <!-- Import Items Card (Full Width) -->
@@ -750,6 +766,32 @@
                 }
             } catch (error) {
                 showAlert('migration-alert', 'Erro: ' + error.message, 'error');
+            }
+        }
+
+        async function markSoftWipesForRestart() {
+            if (!confirm('🧹 MARCAR SOFT-WIPES?\n\nTodos os soft-wipes com status WAITING_RESTART serão marcados para execução (WIPE_AT_RESTART).\n\nEles serão executados quando o servidor iniciar novamente.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/mark-softwipes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    showAlert('softwipe-alert', result.message, 'success');
+                    const statsDisplay = document.getElementById('softwipe-result');
+                    document.getElementById('softwipe-result-text').textContent = '✅ ' + result.message;
+                    statsDisplay.classList.add('show');
+                } else {
+                    showAlert('softwipe-alert', result.message || 'Falha ao marcar soft-wipes', 'error');
+                }
+            } catch (error) {
+                showAlert('softwipe-alert', 'Erro: ' + error.message, 'error');
             }
         }
     </script>

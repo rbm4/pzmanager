@@ -15,7 +15,6 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -343,8 +342,12 @@ public class MapCleanerService {
             return Collections.emptyList();
         }
 
-        // Scan for safehouse signature blocks: [int x][int y][int w][int h][UTF owner][long][UTF owner]
+        // Scan for safehouse signature blocks: [int x][int y][int w][int h][UTF owner][gap][UTF owner]
+        // The gap between the two owner strings may vary across PZ versions (commonly 8 bytes for a long,
+        // but some versions may use 4, 12, or 16). We try multiple gaps to be robust.
+        int[] ownerGaps = {8, 4, 12, 16, 0, 20};
         List<SafehouseCandidate> candidates = new ArrayList<>();
+        Set<Integer> foundOffsets = new HashSet<>();
 
         for (int i = 0; i < data.length - 48; i++) {
             Integer x = readI32(data, i);
@@ -353,22 +356,30 @@ public class MapCleanerService {
             Integer h = readI32(data, i + 12);
 
             if (x == null || y == null || w == null || h == null) break;
-            if (x < 0 || x > 40000 || y < 0 || y > 40000) continue;
+            if (x < 0 || x > 100000 || y < 0 || y > 100000) continue;
             if (w < 1 || w > 800 || h < 1 || h > 800) continue;
 
             StringRead t1 = readUTF(data, i + 16);
             if (t1 == null) continue;
             if (!isReasonableName(t1.value())) continue;
 
-            if (t1.nextPos() + 8 + 2 > data.length) continue;
-            StringRead t2 = readUTF(data, t1.nextPos() + 8);
-            if (t2 == null) continue;
-            if (!t1.value().equals(t2.value())) continue;
-
-            candidates.add(new SafehouseCandidate(i, x, y, w, h, t1.value(), t2.nextPos()));
+            // Try multiple gap sizes between the two owner strings
+            for (int gap : ownerGaps) {
+                if (t1.nextPos() + gap + 2 > data.length) continue;
+                StringRead t2 = readUTF(data, t1.nextPos() + gap);
+                if (t2 == null) continue;
+                if (t1.value().equals(t2.value())) {
+                    if (foundOffsets.add(i)) {
+                        candidates.add(new SafehouseCandidate(i, x, y, w, h, t1.value(), t2.nextPos()));
+                        log.debug("Safehouse candidate found at offset {} (owner={}, x={}, y={}, w={}, h={}, gap={})",
+                                i, t1.value(), x, y, w, h, gap);
+                    }
+                    break;
+                }
+            }
         }
 
-            if (candidates.isEmpty()) {
+        if (candidates.isEmpty()) {
             warnings.add("No safehouse signature blocks found in map_meta.bin.");
             return Collections.emptyList();
         }
