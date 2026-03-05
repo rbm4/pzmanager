@@ -913,7 +913,7 @@
     }
 
     function filterBySeason(seasonId) {
-        window.location.href = '/my-characters?seasonId=' + seasonId;
+        window.location.href = '/my-characters?seasonId=' + encodeURIComponent(seasonId);
     }
 
     function openResetModal(characterId, playerName) {
