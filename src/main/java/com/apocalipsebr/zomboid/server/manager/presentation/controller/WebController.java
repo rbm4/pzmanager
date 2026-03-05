@@ -2,10 +2,12 @@ package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
 import com.apocalipsebr.zomboid.server.manager.application.service.CharacterService;
 import com.apocalipsebr.zomboid.server.manager.application.service.PlayerStatsService;
+import com.apocalipsebr.zomboid.server.manager.application.service.SeasonService;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Character;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.GameEvent;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.EventStatus;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.PlayerStats;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Season;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.GameEventRepository;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.UserRepository;
@@ -25,13 +27,16 @@ public class WebController {
 
     private final PlayerStatsService playerStatsService;
     private final CharacterService characterService;
+    private final SeasonService seasonService;
     private final UserRepository userRepository;
     private final GameEventRepository gameEventRepository;
 
     public WebController(PlayerStatsService playerStatsService, CharacterService characterService,
+                         SeasonService seasonService,
                          UserRepository userRepository, GameEventRepository gameEventRepository) {
         this.playerStatsService = playerStatsService;
         this.characterService = characterService;
+        this.seasonService = seasonService;
         this.userRepository = userRepository;
         this.gameEventRepository = gameEventRepository;
     }
@@ -121,19 +126,35 @@ public class WebController {
     }
     
     @GetMapping("/my-characters")
-    public String myCharacters(HttpSession session, Model model) {
+    public String myCharacters(@RequestParam(required = false) Long seasonId,
+                               HttpSession session, Model model) {
         var user = (User) session.getAttribute("user");
         if (user == null) {
             return "redirect:/login";
         }
-        
-        // Get user's characters (current season only)
-        List<Character> userCharacters = characterService.getUserCharacters(user);
-        
+
+        // Load all seasons for the filter dropdown
+        List<Season> allSeasons = seasonService.getAllSeasons();
+        Season currentSeason = seasonService.getCurrentSeason();
+
+        // Determine which season to display
+        Season selectedSeason;
+        if (seasonId != null) {
+            selectedSeason = seasonService.getSeasonById(seasonId).orElse(currentSeason);
+        } else {
+            selectedSeason = currentSeason;
+        }
+
+        // Get user's characters for the selected season
+        List<Character> userCharacters = characterService.getUserCharactersBySeason(user, selectedSeason);
+
         model.addAttribute("username", user.getUsername());
         model.addAttribute("role", user.getRole());
         model.addAttribute("userCharacters", userCharacters);
-        
+        model.addAttribute("allSeasons", allSeasons);
+        model.addAttribute("selectedSeasonId", selectedSeason.getId());
+        model.addAttribute("currentSeasonId", currentSeason.getId());
+
         return "my-characters";
     }
 
