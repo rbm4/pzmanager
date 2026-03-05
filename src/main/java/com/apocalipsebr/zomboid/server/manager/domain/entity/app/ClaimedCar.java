@@ -37,8 +37,8 @@ public class ClaimedCar {
     @Column(name = "last_updated")
     private Long lastUpdated;
 
-    @Column(name = "migrated", nullable = false)
-    private Boolean migrated = false;
+    @Column(name = "preserved_for_migration", nullable = false)
+    private Boolean preservedForMigration = false;
 
     @Column(name = "created_at", nullable = false, updatable = false, columnDefinition = "TIMESTAMP")
     private LocalDateTime createdAt;
@@ -155,12 +155,12 @@ public class ClaimedCar {
         this.lastUpdated = lastUpdated;
     }
 
-    public Boolean getMigrated() {
-        return migrated;
+    public Boolean getPreservedForMigration() {
+        return preservedForMigration;
     }
 
-    public void setMigrated(Boolean migrated) {
-        this.migrated = migrated;
+    public void setPreservedForMigration(Boolean preservedForMigration) {
+        this.preservedForMigration = preservedForMigration;
     }
 
     public LocalDateTime getCreatedAt() {

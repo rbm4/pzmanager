@@ -18,9 +18,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -73,13 +75,26 @@ public class ClaimedCarService {
             }
 
             int syncedCount = 0;
+            Set<String> activeHashes = new HashSet<>();
             for (Map.Entry<String, JsonElement> entry : root.entrySet()) {
                 try {
                     JsonObject carJson = entry.getValue().getAsJsonObject();
+                    String hash = getStringOrNull(carJson, "vehicleHash");
+                    if (hash != null && !hash.isBlank()) {
+                        activeHashes.add(hash);
+                    }
                     syncSingleCar(carJson);
                     syncedCount++;
                 } catch (Exception e) {
                     logger.log(Level.WARNING, "Failed to sync claimed car with key: " + entry.getKey(), e);
+                }
+            }
+
+            // Delete stale cars that are no longer in the JSON and are NOT preserved for migration
+            if (!activeHashes.isEmpty()) {
+                int deleted = claimedCarRepository.deleteStaleNonPreservedCars(activeHashes);
+                if (deleted > 0) {
+                    logger.info("Deleted " + deleted + " stale non-preserved vehicles from database.");
                 }
             }
 
@@ -168,8 +183,30 @@ public class ClaimedCarService {
         return claimedCarRepository.findById(id);
     }
 
-    public List<ClaimedCar> getUnmigratedCars() {
-        return claimedCarRepository.findByMigratedFalse();
+    public List<ClaimedCar> getCarsPreservedForMigration() {
+        return claimedCarRepository.findByPreservedForMigrationTrue();
+    }
+
+    /**
+     * Admin: marks ALL current cars as preserved for migration.
+     * Preserved cars will not be deleted during sync even if absent from the JSON.
+     */
+    @Transactional
+    public int preserveAllCarsForMigration() {
+        int count = claimedCarRepository.markAllPreservedForMigration();
+        logger.info("Preserved " + count + " cars for migration.");
+        return count;
+    }
+
+    /**
+     * Admin: ends the migration period by deleting all preserved cars.
+     * Only cars that were preserved get deleted — active (non-preserved) cars remain.
+     */
+    @Transactional
+    public int endMigrationPeriod() {
+        int count = claimedCarRepository.deleteAllPreservedCars();
+        logger.info("End migration: deleted " + count + " preserved cars.");
+        return count;
     }
 
     // --- JSON helper methods ---

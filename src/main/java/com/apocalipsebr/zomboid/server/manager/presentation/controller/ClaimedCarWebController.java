@@ -94,7 +94,7 @@ public class ClaimedCarWebController {
             carData.put("ownerName", car.getOwnerName());
             carData.put("x", car.getX());
             carData.put("y", car.getY());
-            carData.put("migrated", car.getMigrated());
+            carData.put("preservedForMigration", car.getPreservedForMigration());
             carData.put("itemCount", car.getItems() != null ? car.getItems().size() : 0);
             result.add(carData);
         }
@@ -114,9 +114,9 @@ public class ClaimedCarWebController {
         model.addAttribute("claimedCars", allCars);
         model.addAttribute("totalCars", allCars.size());
 
-        long migratedCount = allCars.stream().filter(ClaimedCar::getMigrated).count();
-        model.addAttribute("migratedCount", migratedCount);
-        model.addAttribute("unmigratedCount", allCars.size() - migratedCount);
+        long preservedCount = allCars.stream().filter(ClaimedCar::getPreservedForMigration).count();
+        model.addAttribute("preservedCount", preservedCount);
+        model.addAttribute("activeCount", allCars.size() - preservedCount);
 
         return "claimed-cars-manage";
     }

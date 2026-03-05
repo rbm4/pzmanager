@@ -1,5 +1,6 @@
 package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
+import com.apocalipsebr.zomboid.server.manager.application.service.ClaimedCarService;
 import com.apocalipsebr.zomboid.server.manager.application.service.InflationService;
 import com.apocalipsebr.zomboid.server.manager.application.service.SeasonService;
 import com.apocalipsebr.zomboid.server.manager.application.service.ServerCommandService;
@@ -30,6 +31,7 @@ public class ServerController {
     private final ServerWipeService serverWipeService;
     private final InflationService inflationService;
     private final SeasonService seasonService;
+    private final ClaimedCarService claimedCarService;
     private final CharacterRepository characterRepository;
     private final UserRepository userRepository;
 
@@ -39,6 +41,7 @@ public class ServerController {
                           ServerWipeService serverWipeService,
                           InflationService inflationService,
                           SeasonService seasonService,
+                          ClaimedCarService claimedCarService,
                           CharacterRepository characterRepository,
                           UserRepository userRepository) {
         this.serverCommandService = serverCommandService;
@@ -47,6 +50,7 @@ public class ServerController {
         this.serverWipeService = serverWipeService;
         this.inflationService = inflationService;
         this.seasonService = seasonService;
+        this.claimedCarService = claimedCarService;
         this.characterRepository = characterRepository;
         this.userRepository = userRepository;
     }
@@ -354,6 +358,38 @@ public class ServerController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("success", false, "message", "Erro ao criar temporada: " + e.getMessage()));
+        }
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/preserve-cars")
+    public ResponseEntity<Map<String, Object>> preserveCarsForMigration() {
+        try {
+            int count = claimedCarService.preserveAllCarsForMigration();
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Todos os " + count + " veículos foram marcados como 'Aguardando Migração'.",
+                "preservedCount", count
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "Erro ao preservar veículos: " + e.getMessage()));
+        }
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/end-migration")
+    public ResponseEntity<Map<String, Object>> endMigrationPeriod() {
+        try {
+            int count = claimedCarService.endMigrationPeriod();
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", count + " veículos preservados foram removidos. Migração encerrada.",
+                "deletedCount", count
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "Erro ao encerrar migração: " + e.getMessage()));
         }
     }
 }

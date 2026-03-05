@@ -61,7 +61,7 @@
 
         .badge { padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
         .badge-active { background: rgba(79,172,254,0.2); color: #4facfe; border: 1px solid rgba(79,172,254,0.4); }
-        .badge-migrated { background: rgba(76,175,80,0.2); color: #4caf50; border: 1px solid rgba(76,175,80,0.4); }
+        .badge-preserved { background: rgba(255,152,0,0.2); color: #ffb74d; border: 1px solid rgba(255,152,0,0.4); }
 
         .linked { color: #4caf50; }
         .unlinked { color: #ff6b6b; }
@@ -115,12 +115,12 @@
             <div class="stat-label">Total de Veículos</div>
         </div>
         <div class="stat-card stat-active">
-            <div class="stat-number" th:text="${unmigratedCount}">0</div>
+            <div class="stat-number" th:text="${activeCount}">0</div>
             <div class="stat-label">Ativos</div>
         </div>
-        <div class="stat-card stat-migrated">
-            <div class="stat-number" th:text="${migratedCount}">0</div>
-            <div class="stat-label">Migrados</div>
+        <div class="stat-card" style="border-color: rgba(255,152,0,0.3);">
+            <div class="stat-number" style="color: #ff9800;" th:text="${preservedCount}">0</div>
+            <div class="stat-label">Aguardando Migração</div>
         </div>
     </div>
 
@@ -159,8 +159,8 @@
                     </td>
                     <td th:text="${car.items.size()}">0</td>
                     <td>
-                        <span class="badge" th:classappend="${car.migrated ? 'badge-migrated' : 'badge-active'}"
-                              th:text="${car.migrated ? 'Migrado' : 'Ativo'}">Status</span>
+                        <span class="badge" th:classappend="${car.preservedForMigration ? 'badge-preserved' : 'badge-active'}"
+                              th:text="${car.preservedForMigration ? '⏳ Aguardando Migração' : 'Ativo'}">Status</span>
                     </td>
                     <td class="hash-cell" th:text="${car.vehicleHash}" th:title="${car.vehicleHash}">hash</td>
                 </tr>

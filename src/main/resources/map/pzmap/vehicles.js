@@ -48,7 +48,7 @@ function showTooltip(v, mouseX, mouseY) {
     const isEmphasized = v.id === emphasizedId;
     tooltipEl.innerHTML = `
         <b style="font-size:14px; color:${isEmphasized ? '#ffb74d' : '#4facfe'}">${escapeHtml(v.vehicleName || v.scriptName || 'Veículo')}</b>
-        ${v.migrated ? ' <span style="color:#4caf50">✅ Migrado</span>' : ''}
+        ${v.preservedForMigration ? ' <span style="color:#ffb74d">⏳ Aguardando Migração</span>' : ''}
         <br><span style="color:#888">Hash:</span> ${escapeHtml(v.vehicleHash || '')}
         <br><span style="color:#888">Dono:</span> ${escapeHtml(v.ownerName || 'Desconhecido')}
         <br><span style="color:#888">Script:</span> ${escapeHtml(v.scriptName || '')}

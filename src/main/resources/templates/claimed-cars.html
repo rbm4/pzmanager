@@ -40,17 +40,17 @@
             transition: all 0.3s ease; cursor: pointer; display: flex; flex-direction: column; gap: 14px;
         }
         .car-card:hover { transform: translateY(-5px); border-color: #4facfe; box-shadow: 0 10px 30px rgba(79,172,254,0.3); }
-        .car-card.migrated { border-color: rgba(76,175,80,0.3); opacity: 0.75; }
-        .car-card.migrated:hover { border-color: #4caf50; }
+        .car-card.preserved { border-color: rgba(255,152,0,0.3); opacity: 0.75; }
+        .car-card.preserved:hover { border-color: #ff9800; }
 
         .car-header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .car-name { font-size: 1.35rem; font-weight: 600; color: #4facfe; margin-bottom: 4px; }
-        .car-card.migrated .car-name { color: #4caf50; }
+        .car-card.preserved .car-name { color: #ff9800; }
         .car-script { color: #aaa; font-size: 0.85rem; font-style: italic; }
 
         .badge { padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; white-space: nowrap; }
         .badge-active { background: rgba(79,172,254,0.2); border: 1px solid #4facfe; color: #4facfe; }
-        .badge-migrated { background: rgba(76,175,80,0.2); border: 1px solid #4caf50; color: #4caf50; }
+        .badge-preserved { background: rgba(255,152,0,0.2); border: 1px solid #ff9800; color: #ffb74d; }
 
         .car-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
         .stat-box { background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); }
@@ -164,7 +164,7 @@
         <!-- Car Cards -->
         <div th:each="car : ${claimedCars}"
              class="car-card"
-             th:classappend="${car.migrated ? 'migrated' : ''}"
+             th:classappend="${car.preservedForMigration ? 'preserved' : ''}"
              th:attr="onclick='openDetailModal(' + ${car.id} + ')'">
 
             <div class="car-header">
@@ -172,8 +172,8 @@
                     <div class="car-name" th:text="${car.vehicleName != null ? car.vehicleName : 'Veículo desconhecido'}">Vehicle Name</div>
                     <div class="car-script" th:text="${car.scriptName}">Base.CarNormal</div>
                 </div>
-                <span class="badge" th:classappend="${car.migrated ? 'badge-migrated' : 'badge-active'}"
-                      th:text="${car.migrated ? '✅ Migrado' : '🔑 Ativo'}">Status</span>
+                <span class="badge" th:classappend="${car.preservedForMigration ? 'badge-preserved' : 'badge-active'}"
+                      th:text="${car.preservedForMigration ? '⏳ Aguardando Migração' : '🔑 Ativo'}">Status</span>
             </div>
 
             <div class="car-stats">
@@ -263,7 +263,7 @@
         ownerName: /*[[${car.ownerName}]]*/ '',
         x: /*[[${car.x}]]*/ null,
         y: /*[[${car.y}]]*/ null,
-        migrated: /*[[${car.migrated}]]*/ false,
+        preservedForMigration: /*[[${car.preservedForMigration}]]*/ false,
         items: [
             /*[# th:each="item : ${car.items}"]*/
             {
@@ -292,7 +292,7 @@
             <div class="detail-item"><div class="detail-label">Script</div><div class="detail-value">${esc(car.scriptName)}</div></div>
             <div class="detail-item"><div class="detail-label">Dono</div><div class="detail-value">${esc(car.ownerName)}</div></div>
             <div class="detail-item"><div class="detail-label">Posição</div><div class="detail-value">${car.x != null ? Math.round(car.x) + ', ' + Math.round(car.y) : 'N/A'}</div></div>
-            <div class="detail-item"><div class="detail-label">Status</div><div class="detail-value">${car.migrated ? '✅ Migrado' : '🔑 Ativo'}</div></div>
+            <div class="detail-item"><div class="detail-label">Status</div><div class="detail-value">${car.preservedForMigration ? '⏳ Aguardando Migração' : '🔑 Ativo'}</div></div>
             <div class="detail-item"><div class="detail-label">Total de Itens</div><div class="detail-value">${car.items.length}</div></div>
         `;
 
