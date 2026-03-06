@@ -756,7 +756,7 @@ public class SandboxPropertyService {
                 String oldValue = kvMatcher.group(4);
                 String trailing = kvMatcher.group(5);
 
-                if (overwriteMap.containsKey(rawKey)) {
+                if (overwriteMap.containsKey(rawKey) || overwriteMap.containsKey(currentSection + "." + rawKey)) {
                     String newValue = overwriteMap.get(rawKey);
                     String formattedValue = formatLuaValue(newValue, oldValue);
                     outputLines.add(indent + rawKey + separator + formattedValue + trailing);
