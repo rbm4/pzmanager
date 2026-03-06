@@ -24,11 +24,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Service for managing Zomboid server settings from three configuration sources:
+ * Service for managing Zomboid server settings from three configuration
+ * sources:
  * <ul>
- *   <li><b>servertest.ini</b> — general server properties (ConfigType.SANDBOX)</li>
- *   <li><b>servertest_SandboxVars.lua</b> — sandbox gameplay variables (ConfigType.SANDBOX_VARS)</li>
- *   <li><b>servertest_spawnregions.lua</b> — spawn region definitions (ConfigType.SPAWN_REGIONS)</li>
+ * <li><b>servertest.ini</b> — general server properties
+ * (ConfigType.SANDBOX)</li>
+ * <li><b>servertest_SandboxVars.lua</b> — sandbox gameplay variables
+ * (ConfigType.SANDBOX_VARS)</li>
+ * <li><b>servertest_spawnregions.lua</b> — spawn region definitions
+ * (ConfigType.SPAWN_REGIONS)</li>
  * </ul>
  * On startup, parses all three files, syncs SandboxSetting entities,
  * and overwrites values where appliedValue + overwriteAtStartup are set.
@@ -60,10 +64,11 @@ public class SandboxPropertyService {
 
     /**
      * On application startup:
-     * 1. Parse all three configuration files (ini, SandboxVars.lua, spawnregions.lua)
+     * 1. Parse all three configuration files (ini, SandboxVars.lua,
+     * spawnregions.lua)
      * 2. Create/update SandboxSetting entries with currentValue for each
      * 3. For entries with overwriteAtStartup=true and appliedValue!=null,
-     *    write the appliedValue back to the respective file
+     * write the appliedValue back to the respective file
      */
     @EventListener(ApplicationReadyEvent.class)
     @Transactional
@@ -200,7 +205,8 @@ public class SandboxPropertyService {
         return sandboxSettingRepository.search(search, category, configType, (Boolean) null, pageable);
     }
 
-    public Page<SandboxSetting> getSettings(String search, String category, ConfigType configType, Boolean overwrite, Pageable pageable) {
+    public Page<SandboxSetting> getSettings(String search, String category, ConfigType configType, Boolean overwrite,
+            Pageable pageable) {
         return sandboxSettingRepository.search(search, category, configType, overwrite, pageable);
     }
 
@@ -323,7 +329,8 @@ public class SandboxPropertyService {
                 if (luaPath != null && Files.exists(luaPath)) {
                     applyOverwritesToSandboxVarsLua(luaPath, List.of(setting));
                     setting.setCurrentValue(newValue);
-                    logger.info("Applied setting " + setting.getSettingKey() + " = " + newValue + " to SandboxVars.lua");
+                    logger.info(
+                            "Applied setting " + setting.getSettingKey() + " = " + newValue + " to SandboxVars.lua");
                 }
             }
             case SPAWN_REGIONS -> {
@@ -331,7 +338,8 @@ public class SandboxPropertyService {
                 if (luaPath != null && Files.exists(luaPath)) {
                     applyOverwritesToSpawnRegionsLua(luaPath, List.of(setting));
                     setting.setCurrentValue(newValue);
-                    logger.info("Applied setting " + setting.getSettingKey() + " = " + newValue + " to spawnregions.lua");
+                    logger.info(
+                            "Applied setting " + setting.getSettingKey() + " = " + newValue + " to spawnregions.lua");
                 }
             }
         }
@@ -376,7 +384,8 @@ public class SandboxPropertyService {
     }
 
     /**
-     * Generic path resolver: supports absolute paths and paths relative to serverPath.
+     * Generic path resolver: supports absolute paths and paths relative to
+     * serverPath.
      */
     private Path resolvePath(String filePath) {
         if (filePath != null && !filePath.isEmpty()) {
@@ -397,8 +406,8 @@ public class SandboxPropertyService {
     /**
      * Parses the servertest.ini file into a list of entries.
      * The INI format:
-     *   # Comment (description)
-     *   Key=Value
+     * # Comment (description)
+     * Key=Value
      * Comments preceding a key-value pair are treated as the description.
      */
     private List<ParsedEntry> parseIniFile(Path iniPath) throws IOException {
@@ -442,7 +451,8 @@ public class SandboxPropertyService {
 
     /**
      * Parses the servertest_SandboxVars.lua file.
-     * Handles top-level and nested section entries (e.g., SprinterScreech.TimeMode).
+     * Handles top-level and nested section entries (e.g.,
+     * SprinterScreech.TimeMode).
      * Comments (-- ...) above a field are accumulated as the description.
      */
     private List<ParsedEntry> parseSandboxVarsLua(Path luaPath) throws IOException {
@@ -617,7 +627,8 @@ public class SandboxPropertyService {
 
     /**
      * Parses the servertest_spawnregions.lua file.
-     * Each entry is: { name = "RegionName", file = "media/maps/RegionName/spawnpoints.lua" }
+     * Each entry is: { name = "RegionName", file =
+     * "media/maps/RegionName/spawnpoints.lua" }
      * The settingKey becomes the name, and currentValue becomes the file path.
      */
     private List<ParsedEntry> parseSpawnRegionsLua(Path luaPath) throws IOException {
@@ -664,7 +675,8 @@ public class SandboxPropertyService {
     // ==================== INI FILE OVERWRITE ====================
 
     /**
-     * Applies overwrite values to the ini file by replacing matching key=value lines.
+     * Applies overwrite values to the ini file by replacing matching key=value
+     * lines.
      */
     private void applyOverwritesToIni(Path iniPath, List<SandboxSetting> overwrites) throws IOException {
         Map<String, String> overwriteMap = new HashMap<>();
@@ -675,7 +687,8 @@ public class SandboxPropertyService {
             }
         }
 
-        if (overwriteMap.isEmpty()) return;
+        if (overwriteMap.isEmpty())
+            return;
 
         Path backupPath = iniPath.resolveSibling(iniPath.getFileName() + ".backup");
         Files.copy(iniPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
@@ -705,7 +718,8 @@ public class SandboxPropertyService {
 
     /**
      * Applies overwrite values to the SandboxVars.lua file.
-     * Handles both top-level keys (e.g. Zombies) and nested keys (e.g. SprinterScreech.TimeMode).
+     * Handles both top-level keys (e.g. Zombies) and nested keys (e.g.
+     * SprinterScreech.TimeMode).
      */
     private void applyOverwritesToSandboxVarsLua(Path luaPath, List<SandboxSetting> overwrites) throws IOException {
         Map<String, String> overwriteMap = new HashMap<>();
@@ -716,7 +730,8 @@ public class SandboxPropertyService {
             }
         }
 
-        if (overwriteMap.isEmpty()) return;
+        if (overwriteMap.isEmpty())
+            return;
 
         Path backupPath = luaPath.resolveSibling(luaPath.getFileName() + ".backup");
         Files.copy(luaPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
@@ -756,8 +771,13 @@ public class SandboxPropertyService {
                 String oldValue = kvMatcher.group(4);
                 String trailing = kvMatcher.group(5);
 
-                if (overwriteMap.containsKey(rawKey) || overwriteMap.containsKey(currentSection + "." + rawKey)) {
-                    String newValue = overwriteMap.get(rawKey);
+                String discoveredKey = rawKey;
+                if (overwriteMap.containsKey(currentSection + "." + rawKey)) {
+                    discoveredKey = currentSection + "." + rawKey;
+                }
+
+                if (overwriteMap.containsKey(discoveredKey)) {
+                    String newValue = overwriteMap.get(discoveredKey);
                     String formattedValue = formatLuaValue(newValue, oldValue);
                     outputLines.add(indent + rawKey + separator + formattedValue + trailing);
                     logger.info("Overwrote SandboxVars property: " + rawKey + " = " + newValue);
@@ -773,7 +793,8 @@ public class SandboxPropertyService {
     }
 
     /**
-     * Formats a value for Lua output, preserving the original value type (string, boolean, number).
+     * Formats a value for Lua output, preserving the original value type (string,
+     * boolean, number).
      */
     private String formatLuaValue(String newValue, String oldValue) {
         String oldTrimmed = oldValue.trim();
@@ -810,7 +831,8 @@ public class SandboxPropertyService {
             }
         }
 
-        if (overwriteMap.isEmpty()) return;
+        if (overwriteMap.isEmpty())
+            return;
 
         Path backupPath = luaPath.resolveSibling(luaPath.getFileName() + ".backup");
         Files.copy(luaPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
@@ -827,7 +849,8 @@ public class SandboxPropertyService {
                 String regionName = m.group(2);
                 if (overwriteMap.containsKey(regionName)) {
                     String newFile = overwriteMap.get(regionName);
-                    String newLine = line.substring(0, m.start()) + m.group(1) + newFile + m.group(4) + line.substring(m.end());
+                    String newLine = line.substring(0, m.start()) + m.group(1) + newFile + m.group(4)
+                            + line.substring(m.end());
                     outputLines.add(newLine);
                     logger.info("Overwrote SpawnRegion: " + regionName + " -> " + newFile);
                     continue;
@@ -926,5 +949,6 @@ public class SandboxPropertyService {
     /**
      * Simple record to hold parsed entries from any config file.
      */
-    private record ParsedEntry(String key, String value, String description, String category) {}
+    private record ParsedEntry(String key, String value, String description, String category) {
+    }
 }
