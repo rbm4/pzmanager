@@ -24,13 +24,13 @@ import java.util.logging.Logger;
 public class BashCommandExecutor implements ServerCommandExecutor {
     private static final Logger logger = Logger.getLogger(BashCommandExecutor.class.getName());
 
-    @Value("${zomboid.control.file:/opt/pzserver/zomboid.control}")
-    private String controlFilePath;
-    @Override
-    public void execute(ServerCommand command){
+    @Value("${rcon.ip}")
+    private String rconIp;
+
+    @Override public void execute(ServerCommand command) {
         Rcon rcon = null;
         try {
-            rcon = new Rcon("72.62.137.60", 27015, "PzRconPaswd44@key");
+            rcon = new Rcon(rconIp, 27015, "PzRconPaswd44@key");
             rcon.command(command.getCommand());
 
             logger.info("Command: " + command.getCommand());
@@ -38,13 +38,14 @@ public class BashCommandExecutor implements ServerCommandExecutor {
             rcon.close();
         } catch (IOException | AuthenticationException e) {
             throw new ServerCommandException("Failed: " + e.getMessage(), e);
-        } 
+        }
     }
+
     @Override
     public String executeResponse(ServerCommand command) {
         Rcon rcon = null;
         try {
-            rcon = new Rcon("72.62.137.60", 27015, "PzRconPaswd44@key");
+            rcon = new Rcon(rconIp, 27015, "PzRconPaswd44@key");
 
             rcon.command(command.getCommand());
 
@@ -73,7 +74,7 @@ public class BashCommandExecutor implements ServerCommandExecutor {
         byte[] header = new byte[4 * 3];
 
         // Read the 3 ints
-        //noinspection ResultOfMethodCallIgnored
+        // noinspection ResultOfMethodCallIgnored
         in.read(header);
 
         try {
@@ -94,7 +95,7 @@ public class BashCommandExecutor implements ServerCommandExecutor {
             dis.readFully(payload);
 
             // Read the null bytes
-            //noinspection ResultOfMethodCallIgnored
+            // noinspection ResultOfMethodCallIgnored
             dis.read(new byte[2]);
 
             return new String(payload, StandardCharsets.UTF_8);
