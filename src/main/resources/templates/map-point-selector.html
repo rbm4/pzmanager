@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Seletor de Ponto - Apocalipse [BR]</title>
+    <script type="text/javascript" src="/pzmap/openseadragon/openseadragon.js"></script>
+    <style>
+        :root {
+            --bg: #0a111a;
+            --surface: #111a26;
+            --border: #1a2a3a;
+            --text: #e6eef9;
+            --muted: #6b7d96;
+            --accent: #00f2fe;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            width: 100%; height: 100%;
+            background: var(--bg);
+            font-family: system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+        }
+
+        #mapDiv { width: 100%; height: 100%; cursor: crosshair; }
+        #mapDiv.panning { cursor: grabbing; }
+
+        .topBar {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            display: flex; justify-content: space-between; align-items: flex-start;
+            padding: 10px 14px;
+            z-index: 10;
+            pointer-events: none;
+        }
+        .topBar > * { pointer-events: auto; }
+
+        .hud {
+            display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+            background: rgba(10, 17, 26, 0.92);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 8px 14px;
+            backdrop-filter: blur(8px);
+        }
+        .hud .kv { color: var(--muted); font-size: 12px; }
+        .hud .kv b { color: var(--text); font-weight: 600; }
+
+        button {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 8px;
+            padding: 6px 14px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        button:hover { border-color: #2f4a68; }
+
+        .bottomBar {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            display: flex; justify-content: center; align-items: center; gap: 16px;
+            padding: 12px 14px;
+            background: rgba(10, 17, 26, 0.94);
+            border-top: 1px solid var(--border);
+            z-index: 10;
+            pointer-events: none;
+        }
+        .bottomBar > * { pointer-events: auto; }
+
+        .coordsPanel {
+            display: flex; gap: 18px; align-items: center;
+            background: rgba(17, 26, 38, 0.9);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 8px 16px;
+        }
+        .coordsPanel .coord-label {
+            color: var(--muted);
+            font-size: 12px;
+        }
+        .coordsPanel .coord-value {
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .confirmBtn {
+            background: rgba(0, 242, 254, 0.15);
+            border-color: rgba(0, 242, 254, 0.5);
+            color: #00f2fe;
+            padding: 10px 24px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .confirmBtn:hover { border-color: #00f2fe; background: rgba(0, 242, 254, 0.25); }
+        .confirmBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .cancelBtn {
+            background: rgba(231, 76, 60, 0.12);
+            border-color: rgba(231, 76, 60, 0.45);
+            color: #f0a0a0;
+            padding: 10px 18px;
+            font-weight: 600;
+        }
+        .cancelBtn:hover { border-color: #e74c3c; color: #fff; }
+
+        .resetSelBtn {
+            background: rgba(255, 193, 7, 0.12);
+            border-color: rgba(255, 193, 7, 0.45);
+            color: #ffd54f;
+        }
+        .resetSelBtn:hover { border-color: #ffc107; color: #fff; }
+
+        .instructions {
+            position: absolute;
+            left: 50%; top: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(10, 17, 26, 0.95);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px 32px;
+            z-index: 15;
+            text-align: center;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .instructions h3 { color: var(--accent); margin-bottom: 8px; font-size: 16px; }
+        .instructions p { color: var(--muted); font-size: 13px; line-height: 1.6; }
+        .instructions .key { background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; font-family: monospace; }
+
+        .legend {
+            position: absolute;
+            right: 12px; bottom: 70px;
+            width: 220px;
+            background: rgba(10, 17, 26, 0.92);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 10px 14px;
+            z-index: 10;
+        }
+        .legend h3 { margin: 0 0 6px 0; font-size: 12px; color: #d8e6ff; }
+        .legRow { display: flex; gap: 8px; align-items: center; margin: 4px 0; }
+        .legBox { width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.2); flex: 0 0 auto; }
+        .legTxt { color: var(--muted); font-size: 11px; }
+
+        /* Point marker overlay */
+        .point-marker {
+            pointer-events: none;
+        }
+        .point-marker-inner {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px; height: 20px;
+            border: 3px solid #00f2fe;
+            border-radius: 50%;
+            background: rgba(0, 242, 254, 0.2);
+            box-shadow: 0 0 12px rgba(0, 242, 254, 0.5), inset 0 0 6px rgba(0, 242, 254, 0.3);
+            animation: pointPulse 1.5s ease-in-out infinite;
+        }
+        .point-marker-crosshair-h,
+        .point-marker-crosshair-v {
+            position: absolute;
+            background: rgba(0, 242, 254, 0.7);
+        }
+        .point-marker-crosshair-h {
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 36px; height: 2px;
+        }
+        .point-marker-crosshair-v {
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 2px; height: 36px;
+        }
+        .point-marker-label {
+            position: absolute;
+            top: -24px; left: 50%;
+            transform: translateX(-50%);
+            color: #00f2fe;
+            font-size: 12px;
+            font-weight: bold;
+            font-family: system-ui, sans-serif;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        @keyframes pointPulse {
+            0%, 100% { box-shadow: 0 0 12px rgba(0, 242, 254, 0.5), inset 0 0 6px rgba(0, 242, 254, 0.3); }
+            50%       { box-shadow: 0 0 20px rgba(0, 242, 254, 0.8), inset 0 0 10px rgba(0, 242, 254, 0.5); }
+        }
+
+        /* Region tooltip */
+        #regionTooltip {
+            position: fixed;
+            z-index: 99999;
+            display: none;
+            max-width: 360px;
+            background: rgba(10,17,26,0.96);
+            border: 1px solid #203044;
+            border-radius: 12px;
+            padding: 12px 14px;
+            color: #e6eef9;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            font-size: 12px;
+            line-height: 1.4;
+            pointer-events: none;
+            font-family: system-ui, sans-serif;
+        }
+
+        @media (max-width: 640px) {
+            .legend { display: none; }
+            .coordsPanel { flex-direction: column; gap: 8px; }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="mapDiv"></div>
+
+    <!-- Instructions overlay (auto-hides after first click) -->
+    <div class="instructions" id="instrOverlay">
+        <h3>&#x1F4CD; Seletor de Ponto</h3>
+        <p>
+            <b>Clique</b> no mapa para selecionar onde o ve&iacute;culo ir&aacute; aparecer.<br>
+            Use <span class="key">Scroll</span> para zoom e <b>bot&atilde;o direito</b> para mover o mapa.<br>
+            Ap&oacute;s selecionar, clique em <b>Confirmar</b>.
+        </p>
+    </div>
+
+    <div class="topBar">
+        <div class="hud">
+            <div class="kv">Zoom: <b id="hudZoom">&mdash;</b></div>
+            <div class="kv">Cursor: <b id="hudCursor">&mdash;</b></div>
+            <div class="kv"><b>Clique</b> = selecionar ponto &middot; <b>Direito+Arraste</b> = mover</div>
+        </div>
+        <div class="hud">
+            <button id="btnReset">Resetar vista</button>
+            <button class="resetSelBtn" id="btnClearSel">Limpar sele&ccedil;&atilde;o</button>
+        </div>
+    </div>
+
+    <div class="legend">
+        <h3>Legenda</h3>
+        <div class="legRow">
+            <div class="legBox" style="background:transparent; border:2px solid rgba(0,242,254,0.8)"></div>
+            <div class="legTxt">Ponto selecionado</div>
+        </div>
+        <div class="legRow">
+            <div class="legBox" style="background:transparent; border:2px solid rgba(200,130,255,0.65)"></div>
+            <div class="legTxt">Regi&atilde;o PVE</div>
+        </div>
+        <div class="legRow">
+            <div class="legBox" style="background:transparent; border:2px solid rgba(231,76,60,0.75)"></div>
+            <div class="legTxt">Regi&atilde;o PVP &#9760;&#65039;</div>
+        </div>
+        <div class="legRow">
+            <div class="legBox" style="background:transparent; border:2px solid rgba(80,200,120,0.65)"></div>
+            <div class="legTxt">Permanente</div>
+        </div>
+    </div>
+
+    <div class="bottomBar">
+        <div class="coordsPanel" id="coordsPanel">
+            <div><span class="coord-label">X:</span> <span class="coord-value" id="cxVal">&mdash;</span></div>
+            <div><span class="coord-label">Y:</span> <span class="coord-value" id="cyVal">&mdash;</span></div>
+        </div>
+        <button class="confirmBtn" id="btnConfirm" disabled>Confirmar</button>
+        <button class="cancelBtn" id="btnCancel">Cancelar</button>
+    </div>
+
+    <div id="regionTooltip"></div>
+
+    <script>
+    (function () {
+        'use strict';
+
+        /* ========== Constants ========== */
+        var MAP_WIDTH  = 19968;
+        var MAP_DATA_ROOT = '/pzmap/map_data/';
+        var TILE_SOURCE = MAP_DATA_ROOT + 'base_top/layer0.dzi';
+        var MOD_MAPS_LIST = MAP_DATA_ROOT + 'mod_maps/map_list.json';
+        var MOD_MAPS_ROOT = MAP_DATA_ROOT + 'mod_maps/';
+        var REGIONS_API = '/map-regions/api/regions';
+        var MARKER_SIZE = 40; // px in world units for the overlay
+
+        /* ========== State ========== */
+        var viewer         = null;
+        var regions        = [];
+        var selectedPoint  = null;   // { x, y } world coords
+        var markerEl       = null;   // OSD overlay DOM element
+        var markerLabelEl  = null;
+        var isPanning      = false;
+        var panStartMouse  = null;
+        var panStartCenter = null;
+
+        /* ========== Helpers ========== */
+        function $(id) { return document.getElementById(id); }
+
+        function pixelToViewport(px, py) {
+            return new OpenSeadragon.Point(px / MAP_WIDTH, py / MAP_WIDTH);
+        }
+
+        function viewportToPixel(vp) {
+            return { x: vp.x * MAP_WIDTH, y: vp.y * MAP_WIDTH };
+        }
+
+        function screenToWorld(sx, sy) {
+            var vp = viewer.viewport.pointFromPixel(new OpenSeadragon.Point(sx, sy));
+            return viewportToPixel(vp);
+        }
+
+        function escapeHtml(s) {
+            return String(s).replace(/[&<>"]/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+            });
+        }
+
+        /* ========== Region colors ========== */
+        function regionColor(rg) {
+            var cats = (rg.categories || '').toLowerCase();
+            if (cats.indexOf('pvp') >= 0)
+                return { border: 'rgba(231,76,60,0.75)', fill: 'rgba(231,76,60,0.12)', label: '#e74c3c' };
+            if (rg.permanent)
+                return { border: 'rgba(80,200,120,0.65)', fill: 'rgba(80,200,120,0.12)', label: '#50c878' };
+            return { border: 'rgba(200,130,255,0.65)', fill: 'rgba(200,130,255,0.12)', label: '#c882ff' };
+        }
+
+        /* ========== Tooltip ========== */
+        var tooltipEl = $('regionTooltip');
+
+        function showTooltip(rg, mx, my) {
+            var c = regionColor(rg);
+            var cats = (rg.categories || '').toLowerCase();
+            var isPvp = cats.indexOf('pvp') >= 0;
+            var propsHtml = '';
+            if (rg.properties) {
+                var keys = Object.keys(rg.properties);
+                for (var i = 0; i < keys.length; i++) {
+                    propsHtml += '<br><span style="color:#888">' + escapeHtml(keys[i]) + ':</span> ' + escapeHtml(String(rg.properties[keys[i]]));
+                }
+            }
+            tooltipEl.innerHTML =
+                '<b style="font-size:14px">' + escapeHtml(rg.name || rg.code) + '</b>' +
+                (isPvp ? ' <span style="color:#e74c3c">&#9760;&#65039; PVP</span>' : '') +
+                '<br><span style="color:#888">C\u00f3digo:</span> ' + escapeHtml(rg.code || '') +
+                (rg.categories ? '<br><span style="color:#888">Categorias:</span> ' + escapeHtml(rg.categories) : '') +
+                '<br><span style="color:#888">Coordenadas:</span> (' + rg.x1 + ', ' + rg.y1 + ') \u2192 (' + rg.x2 + ', ' + rg.y2 + ')' +
+                (rg.permanent ? '<br><span style="color:#50c878"><b>\u26A1 Permanente</b></span>' : '') +
+                propsHtml;
+            tooltipEl.style.display = 'block';
+            var pad = 10;
+            var rect = tooltipEl.getBoundingClientRect();
+            var x = mx + 16, y = my + 16;
+            if (x + rect.width > window.innerWidth - pad) x = window.innerWidth - pad - rect.width;
+            if (y + rect.height > window.innerHeight - pad) y = window.innerHeight - pad - rect.height;
+            tooltipEl.style.left = Math.max(pad, x) + 'px';
+            tooltipEl.style.top  = Math.max(pad, y) + 'px';
+        }
+
+        function hideTooltip() { tooltipEl.style.display = 'none'; }
+
+        /* ========== Regions (read-only overlays) ========== */
+        var regionOverlays = [];
+
+        function renderRegions() {
+            for (var i = 0; i < regions.length; i++) {
+                var rg = regions[i];
+                var c = regionColor(rg);
+                var x1 = Math.min(rg.x1, rg.x2), y1 = Math.min(rg.y1, rg.y2);
+                var x2 = Math.max(rg.x1, rg.x2), y2 = Math.max(rg.y1, rg.y2);
+
+                var el = document.createElement('div');
+                el.style.cssText =
+                    'background:' + c.fill + ';border:2px solid ' + c.border +
+                    ';box-sizing:border-box;pointer-events:auto;cursor:pointer;transition:background 0.15s;';
+
+                var cats = (rg.categories || '').toLowerCase();
+                var isPvp = cats.indexOf('pvp') >= 0;
+                var lbl = document.createElement('div');
+                lbl.textContent = (rg.name || rg.code) + (isPvp ? ' \u2620\uFE0F' : '');
+                lbl.style.cssText =
+                    'position:absolute;top:2px;left:4px;color:' + c.label +
+                    ';font-size:11px;font-weight:bold;font-family:system-ui,sans-serif;' +
+                    'text-shadow:1px 1px 2px rgba(0,0,0,0.8);white-space:nowrap;pointer-events:none;' +
+                    'overflow:hidden;text-overflow:ellipsis;max-width:calc(100% - 8px);';
+                el.appendChild(lbl);
+
+                (function (rgRef, cRef, elRef) {
+                    elRef.addEventListener('mouseenter', function (e) {
+                        elRef.style.background = cRef.fill.replace(/[\d.]+\)$/, '0.25)');
+                        elRef.style.borderWidth = '3px';
+                        showTooltip(rgRef, e.clientX, e.clientY);
+                    });
+                    elRef.addEventListener('mousemove', function (e) { showTooltip(rgRef, e.clientX, e.clientY); });
+                    elRef.addEventListener('mouseleave', function () {
+                        elRef.style.background = cRef.fill;
+                        elRef.style.borderWidth = '2px';
+                        hideTooltip();
+                    });
+                })(rg, c, el);
+
+                var tl = pixelToViewport(x1, y1);
+                var br = pixelToViewport(x2, y2);
+                var rect = new OpenSeadragon.Rect(tl.x, tl.y, br.x - tl.x, br.y - tl.y);
+                viewer.addOverlay({ element: el, location: rect, placement: OpenSeadragon.Placement.TOP_LEFT });
+                regionOverlays.push(el);
+            }
+        }
+
+        function loadRegions() {
+            fetch(REGIONS_API).then(function (resp) {
+                if (!resp.ok) return;
+                return resp.json();
+            }).then(function (data) {
+                if (data) {
+                    regions = data;
+                    renderRegions();
+                }
+            }).catch(function () { /* silent */ });
+        }
+
+        /* ========== Point marker overlay ========== */
+        function ensureMarker() {
+            if (markerEl) return;
+            markerEl = document.createElement('div');
+            markerEl.className = 'point-marker';
+            markerEl.style.cssText = 'width:' + MARKER_SIZE + 'px;height:' + MARKER_SIZE + 'px;position:relative;';
+
+            var crossH = document.createElement('div');
+            crossH.className = 'point-marker-crosshair-h';
+            markerEl.appendChild(crossH);
+
+            var crossV = document.createElement('div');
+            crossV.className = 'point-marker-crosshair-v';
+            markerEl.appendChild(crossV);
+
+            var inner = document.createElement('div');
+            inner.className = 'point-marker-inner';
+            markerEl.appendChild(inner);
+
+            markerLabelEl = document.createElement('div');
+            markerLabelEl.className = 'point-marker-label';
+            markerEl.appendChild(markerLabelEl);
+        }
+
+        function updateMarker() {
+            if (!selectedPoint || !viewer) return;
+            var vp = pixelToViewport(selectedPoint.x, selectedPoint.y);
+
+            ensureMarker();
+            if (!markerEl._added) {
+                viewer.addOverlay({
+                    element: markerEl,
+                    location: vp,
+                    placement: OpenSeadragon.Placement.CENTER
+                });
+                markerEl._added = true;
+            } else {
+                viewer.updateOverlay(markerEl, vp, OpenSeadragon.Placement.CENTER);
+            }
+
+            if (markerLabelEl) {
+                markerLabelEl.textContent = '(' + Math.round(selectedPoint.x) + ', ' + Math.round(selectedPoint.y) + ')';
+            }
+        }
+
+        function clearSelection() {
+            selectedPoint = null;
+            if (markerEl && markerEl._added) {
+                try { viewer.removeOverlay(markerEl); } catch (e) { /* ignore */ }
+                markerEl._added = false;
+                markerEl = null;
+                markerLabelEl = null;
+            }
+            updateCoordsDisplay();
+        }
+
+        /* ========== Coords display ========== */
+        function updateCoordsDisplay() {
+            if (selectedPoint) {
+                $('cxVal').textContent = Math.round(selectedPoint.x);
+                $('cyVal').textContent = Math.round(selectedPoint.y);
+                $('btnConfirm').disabled = false;
+            } else {
+                $('cxVal').textContent = $('cyVal').textContent = '\u2014';
+                $('btnConfirm').disabled = true;
+            }
+        }
+
+        /* ========== HUD ========== */
+        function updateHud() {
+            if (!viewer) return;
+            $('hudZoom').textContent = viewer.viewport.getZoom(true).toFixed(3);
+        }
+
+        /* ========== Init OpenSeadragon ========== */
+        viewer = OpenSeadragon({
+            element:              $('mapDiv'),
+            tileSources:          TILE_SOURCE,
+            prefixUrl:            '/pzmap/openseadragon/images/',
+            drawer:               'canvas',
+            homeFillsViewer:      true,
+            showZoomControl:      false,
+            showHomeControl:      false,
+            showFullPageControl:  false,
+            showRotationControl:  false,
+            constrainDuringPan:   true,
+            visibilityRatio:      0.5,
+            minZoomImageRatio:    0.5,
+            maxZoomPixelRatio:    32,
+            imageSmoothingEnabled: false,
+            gestureSettingsMouse: {
+                scrollToZoom:   true,
+                clickToZoom:    false,
+                dblClickToZoom: false,
+                dragToPan:      false,
+                flickEnabled:   false
+            },
+            gestureSettingsTouch: {
+                scrollToZoom:   false,
+                clickToZoom:    false,
+                dblClickToZoom: false,
+                dragToPan:      false,
+                flickEnabled:   false,
+                pinchToZoom:    true
+            }
+        });
+
+        viewer.addHandler('update-viewport', updateHud);
+
+        /* ========== Left-click point selection ========== */
+        var isDragging = false;
+
+        viewer.addHandler('canvas-press', function (event) {
+            isDragging = false;
+            event.preventDefaultAction = true;
+        });
+
+        viewer.addHandler('canvas-drag', function (event) {
+            isDragging = true;
+            event.preventDefaultAction = true;
+        });
+
+        viewer.addHandler('canvas-release', function (event) {
+            if (!isDragging) {
+                // This was a click, not a drag — place the marker
+                var world = screenToWorld(event.position.x, event.position.y);
+                clearSelection();
+                selectedPoint = { x: world.x, y: world.y };
+                $('instrOverlay').style.opacity = '0';
+                updateMarker();
+                updateCoordsDisplay();
+            }
+            isDragging = false;
+            event.preventDefaultAction = true;
+        });
+
+        /* ========== Right-click panning ========== */
+        var mapDiv = $('mapDiv');
+        mapDiv.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+
+        mapDiv.addEventListener('pointerdown', function (e) {
+            if (e.button === 2) {
+                isPanning = true;
+                panStartMouse = { x: e.clientX, y: e.clientY };
+                panStartCenter = viewer.viewport.getCenter(true);
+                mapDiv.classList.add('panning');
+            }
+        }, true);
+
+        document.addEventListener('pointermove', function (e) {
+            if (viewer && viewer.viewport) {
+                var rect = mapDiv.getBoundingClientRect();
+                var sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+                if (sx >= 0 && sy >= 0 && sx <= rect.width && sy <= rect.height) {
+                    var world = screenToWorld(sx, sy);
+                    $('hudCursor').textContent = Math.round(world.x) + ', ' + Math.round(world.y);
+                }
+            }
+            if (isPanning && panStartMouse && panStartCenter) {
+                var dx = e.clientX - panStartMouse.x;
+                var dy = e.clientY - panStartMouse.y;
+                var vDelta = viewer.viewport.deltaPointsFromPixels(new OpenSeadragon.Point(dx, dy));
+                viewer.viewport.panTo(
+                    new OpenSeadragon.Point(panStartCenter.x - vDelta.x, panStartCenter.y - vDelta.y),
+                    true
+                );
+            }
+        });
+
+        document.addEventListener('pointerup', function (e) {
+            if (e.button === 2 && isPanning) {
+                isPanning = false;
+                panStartMouse = null;
+                panStartCenter = null;
+                mapDiv.classList.remove('panning');
+            }
+        });
+
+        /* ========== Touch support ========== */
+        var touchPanning = false;
+        var lastTouchCenter = null;
+
+        mapDiv.addEventListener('touchstart', function (e) {
+            if (e.touches.length === 2) {
+                touchPanning = true;
+                var t = e.touches;
+                lastTouchCenter = {
+                    x: (t[0].clientX + t[1].clientX) / 2,
+                    y: (t[0].clientY + t[1].clientY) / 2
+                };
+            }
+        }, { passive: true });
+
+        mapDiv.addEventListener('touchmove', function (e) {
+            if (touchPanning && e.touches.length === 2 && lastTouchCenter) {
+                var t = e.touches;
+                var center = {
+                    x: (t[0].clientX + t[1].clientX) / 2,
+                    y: (t[0].clientY + t[1].clientY) / 2
+                };
+                var dx = center.x - lastTouchCenter.x;
+                var dy = center.y - lastTouchCenter.y;
+                var vDelta = viewer.viewport.deltaPointsFromPixels(new OpenSeadragon.Point(dx, dy));
+                viewer.viewport.panBy(new OpenSeadragon.Point(-vDelta.x, -vDelta.y), true);
+                lastTouchCenter = center;
+            }
+        }, { passive: true });
+
+        mapDiv.addEventListener('touchend', function (e) {
+            if (e.touches.length < 2) {
+                touchPanning = false;
+                lastTouchCenter = null;
+            }
+        }, { passive: true });
+
+        /* ========== Load mod maps ========== */
+        function loadModMaps() {
+            fetch(MOD_MAPS_LIST)
+                .then(function (r) { return r.json(); })
+                .catch(function () { return []; })
+                .then(function (names) {
+                    if (!names || names.length === 0) return;
+                    var baseItem = viewer.world.getItemAt(0);
+                    if (!baseItem) return;
+                    for (var i = 0; i < names.length; i++) {
+                        (function (name) {
+                            fetch(MOD_MAPS_ROOT + name + '/base_top/map_info.json')
+                                .then(function (r) { return r.json(); })
+                                .then(function (info) {
+                                    var pixelX = -info.x0;
+                                    var pixelY = -info.y0;
+                                    var vp = baseItem.imageToViewportCoordinates(pixelX, pixelY);
+                                    var modScale = 1 << (info.skip || 0);
+                                    var modW = info.w * modScale;
+                                    var width = modW / MAP_WIDTH;
+                                    viewer.addTiledImage({
+                                        tileSource: MOD_MAPS_ROOT + name + '/base_top/layer0.dzi',
+                                        x: vp.x,
+                                        y: vp.y,
+                                        width: width,
+                                        opacity: 1
+                                    });
+                                })
+                                .catch(function () { /* silent */ });
+                        })(names[i]);
+                    }
+                });
+        }
+
+        /* ========== UI Actions ========== */
+        $('btnReset').onclick = function () { viewer.viewport.goHome(false); };
+
+        $('btnClearSel').onclick = function () { clearSelection(); };
+
+        $('btnConfirm').onclick = function () {
+            if (!selectedPoint) return;
+            var x = Math.round(selectedPoint.x);
+            var y = Math.round(selectedPoint.y);
+            if (window.parent !== window) {
+                window.parent.postMessage({ type: 'pointCoords', x: x, y: y }, '*');
+            }
+        };
+
+        $('btnCancel').onclick = function () {
+            if (window.parent !== window) {
+                window.parent.postMessage({ type: 'closePointSelector' }, '*');
+            } else {
+                history.back();
+            }
+        };
+
+        /* ========== Init ========== */
+        viewer.addHandler('open', function () {
+            loadModMaps();
+            loadRegions();
+        });
+    })();
+    </script>
+</body>
+
+</html>

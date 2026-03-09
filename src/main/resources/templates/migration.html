@@ -102,7 +102,7 @@
 
         .car-header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .car-name { font-size: 1.3rem; font-weight: 600; color: #ff9800; }
-        .car-script { color: #aaa; font-size: 0.85rem; font-style: italic; }
+        .car-script { margin-bottom: 8px; color: #aaa; font-size: 0.85rem; font-style: italic; }
 
         .car-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 
@@ -203,7 +203,7 @@
         <h1>🔄 Migração</h1>
         <p>Migre a experiência dos seus personagens e seus veículos preservados para o novo save do servidor.
            A migração de XP será aplicada automaticamente quando seu personagem estiver online.
-           Os veículos serão gerados na última posição conhecida do seu personagem ativo.</p>
+           Para veículos, selecione no mapa o local onde deseja que o veículo apareça.</p>
     </div>
 
     <!-- ── Alert Banners ── -->
@@ -301,11 +301,7 @@
     <!-- ══════════════════════════════════════════════════════════ -->
     <div class="section-header" style="margin-top: 50px;">
         <h2>🚗 Migração de Veículos</h2>
-        <p>Veículos preservados do save anterior. Migre um veículo por vez — ele será gerado na última posição conhecida do seu personagem ativo.</p>
-    </div>
-
-    <div th:if="${!hasActiveCharacter && !preservedCars.isEmpty()}" class="alert-banner alert-info">
-        ⚠️ Você precisa ter pelo menos um personagem ativo com coordenadas no servidor para migrar veículos. Jogue pelo menos uma vez no novo save.
+        <p>Veículos preservados do save anterior. Clique em "Migrar Veículo" para abrir o mapa e escolher a posição de spawn.</p>
     </div>
 
     <div class="cars-grid">
@@ -314,8 +310,8 @@
                 <div>
                     <div class="car-name" th:text="${car.vehicleName != null ? car.vehicleName : 'Veículo desconhecido'}">Vehicle</div>
                     <div class="car-script" th:text="${car.scriptName}">Base.CarNormal</div>
+                    <span class="badge badge-pending">⏳ Aguardando</span>
                 </div>
-                <span class="badge badge-pending">⏳ Aguardando</span>
             </div>
 
             <div class="car-stats">
@@ -338,8 +334,7 @@
                     📋 Detalhes
                 </button>
                 <button class="btn-migrate"
-                        th:disabled="${!hasActiveCharacter}"
-                        th:attr="onclick='openCarMigrateConfirm(' + ${car.id} + ', \'' + ${car.vehicleName != null ? car.vehicleName : 'Veículo'} + '\')'">
+                        th:attr="onclick='openCarMapSelector(' + ${car.id} + ', \'' + ${car.vehicleName != null ? car.vehicleName : 'Veículo'} + '\')'">
                     🚗 Migrar Veículo
                 </button>
             </div>
@@ -405,14 +400,28 @@
 </div>
 
 <!-- ══════════════════════════════════════════════════════════════ -->
-<!--  CAR MIGRATION CONFIRM MODAL                                  -->
+<!--  MAP POINT SELECTOR MODAL (iframe)                            -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="mapSelectorModal">
+    <div style="width: 95vw; height: 92vh; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); position: relative;">
+        <iframe id="mapSelectorIframe" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!--  CAR MIGRATION CONFIRM MODAL (with coordinates)               -->
 <!-- ══════════════════════════════════════════════════════════════ -->
 <div class="modal-overlay" id="carConfirmModal" onclick="if(event.target===this) closeCarConfirm()">
     <div class="confirm-modal-box">
         <h3>🚗 Confirmar Migração de Veículo</h3>
         <p id="carConfirmText">Tem certeza que deseja migrar este veículo?</p>
-        <p style="color: #ff9800; font-size: 0.85rem;">⚠️ O veículo será gerado na posição do seu personagem ativo mais recente. Migre um veículo por vez para evitar colisões.</p>
+        <p style="color: #4facfe; font-size: 0.9rem; margin-bottom: 10px;">
+            📍 Coordenadas selecionadas: <strong id="carConfirmCoords">—</strong>
+        </p>
+        <p style="color: #ff9800; font-size: 0.85rem;">⚠️ O veículo será gerado nas coordenadas escolhidas. Migre um veículo por vez para evitar colisões.</p>
         <form id="carMigrateForm" method="post">
+            <input type="hidden" name="x" id="carMigrateX">
+            <input type="hidden" name="y" id="carMigrateY">
             <div class="confirm-actions">
                 <button type="button" class="btn-cancel" onclick="closeCarConfirm()">Cancelar</button>
                 <button type="submit" class="btn-confirm">Confirmar Migração</button>
@@ -625,13 +634,41 @@
     }
     function closeCharConfirm() { document.getElementById('charConfirmModal').classList.remove('active'); }
 
-    // ── Car Migration Confirm ──
-    function openCarMigrateConfirm(carId, vehicleName) {
-        document.getElementById('carConfirmText').textContent =
-            'Tem certeza que deseja migrar o veículo "' + vehicleName + '"? Ele será removido da lista e gerado no servidor.';
-        document.getElementById('carMigrateForm').action = '/migration/car/' + carId;
-        document.getElementById('carConfirmModal').classList.add('active');
+    // ── Car Migration — Map Selector Flow ──
+    var pendingCarId = null;
+    var pendingCarName = null;
+
+    function openCarMapSelector(carId, vehicleName) {
+        pendingCarId = carId;
+        pendingCarName = vehicleName;
+        document.getElementById('mapSelectorIframe').src = '/migration/map-selector';
+        document.getElementById('mapSelectorModal').classList.add('active');
     }
+
+    function closeMapSelector() {
+        document.getElementById('mapSelectorModal').classList.remove('active');
+        document.getElementById('mapSelectorIframe').src = '';
+    }
+
+    // Listen for messages from the map point selector iframe
+    window.addEventListener('message', function (event) {
+        if (event.data && event.data.type === 'pointCoords') {
+            var x = event.data.x;
+            var y = event.data.y;
+            closeMapSelector();
+            // Open confirmation modal with the selected coordinates
+            document.getElementById('carConfirmText').textContent =
+                'Tem certeza que deseja migrar o veículo "' + pendingCarName + '"? Ele será removido da lista e gerado no servidor.';
+            document.getElementById('carConfirmCoords').textContent = x + ', ' + y;
+            document.getElementById('carMigrateX').value = x;
+            document.getElementById('carMigrateY').value = y;
+            document.getElementById('carMigrateForm').action = '/migration/car/' + pendingCarId;
+            document.getElementById('carConfirmModal').classList.add('active');
+        } else if (event.data && event.data.type === 'closePointSelector') {
+            closeMapSelector();
+        }
+    });
+
     function closeCarConfirm() { document.getElementById('carConfirmModal').classList.remove('active'); }
 
     // ── Close all modals on Escape ──
@@ -641,6 +678,7 @@
             closeCarDetailModal();
             closeCharConfirm();
             closeCarConfirm();
+            closeMapSelector();
         }
     });
     /*]]>*/

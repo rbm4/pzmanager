@@ -46,7 +46,7 @@
         .car-header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .car-name { font-size: 1.35rem; font-weight: 600; color: #4facfe; margin-bottom: 4px; }
         .car-card.preserved .car-name { color: #ff9800; }
-        .car-script { color: #aaa; font-size: 0.85rem; font-style: italic; }
+        .car-script { margin-bottom: 8px; color: #aaa; font-size: 0.85rem; font-style: italic; }
 
         .badge { padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; white-space: nowrap; }
         .badge-active { background: rgba(79,172,254,0.2); border: 1px solid #4facfe; color: #4facfe; }
@@ -171,9 +171,9 @@
                 <div>
                     <div class="car-name" th:text="${car.vehicleName != null ? car.vehicleName : 'Veículo desconhecido'}">Vehicle Name</div>
                     <div class="car-script" th:text="${car.scriptName}">Base.CarNormal</div>
+                    <span class="badge" th:classappend="${car.preservedForMigration ? 'badge-preserved' : 'badge-active'}"
+                          th:text="${car.preservedForMigration ? '⏳ Aguardando Migração' : '🔑 Ativo'}">Status</span>
                 </div>
-                <span class="badge" th:classappend="${car.preservedForMigration ? 'badge-preserved' : 'badge-active'}"
-                      th:text="${car.preservedForMigration ? '⏳ Aguardando Migração' : '🔑 Ativo'}">Status</span>
             </div>
 
             <div class="car-stats">

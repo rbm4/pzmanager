@@ -192,11 +192,15 @@ public class MigrationService {
 
     /**
      * Migrate a single claimed car: write its data to the VehicleMigration.jsonl file
-     * at the player's most recently active character position, then delete the car
-     * from the database.
+     * at the user-selected map coordinates, then delete the car from the database.
+     *
+     * @param user  the authenticated user
+     * @param carId the claimed car ID
+     * @param x     world X coordinate chosen on the map
+     * @param y     world Y coordinate chosen on the map
      */
     @Transactional
-    public void migrateClaimedCar(User user, Long carId) {
+    public void migrateClaimedCar(User user, Long carId, double x, double y) {
         ClaimedCar car = claimedCarRepository.findById(carId)
                 .orElseThrow(() -> new IllegalArgumentException("Veículo não encontrado"));
 
@@ -208,19 +212,11 @@ public class MigrationService {
             throw new IllegalArgumentException("Veículo não está marcado para migração");
         }
 
-        // Find the player's most recently active character in the current season for spawn coordinates
-        List<Character> characters = characterService.getUserCharacters(user);
-        Character activeCharacter = characters.stream()
-                .filter(c -> c.getLastX() != null && c.getLastY() != null)
-                .max(Comparator.comparing(c -> c.getLastUpdate() != null ? c.getLastUpdate() : LocalDateTime.MIN))
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Nenhum personagem ativo com coordenadas encontrado. Jogue no servidor pelo menos uma vez antes de migrar veículos."));
-
-        // Build the JSON entry
+        // Build the JSON entry using user-selected coordinates
         Map<String, Object> vehicleEntry = new LinkedHashMap<>();
         vehicleEntry.put("scriptName", car.getScriptName());
-        vehicleEntry.put("x", activeCharacter.getLastX() + 0.5); // center of tile
-        vehicleEntry.put("y", activeCharacter.getLastY() + 0.37);
+        vehicleEntry.put("x", x + 0.5); // center of tile
+        vehicleEntry.put("y", y + 0.37);
 
         List<Map<String, Object>> itemsList = new ArrayList<>();
         if (car.getItems() != null) {
@@ -241,7 +237,7 @@ public class MigrationService {
         claimedCarRepository.delete(car);
 
         logger.info("Car migration completed: car id=" + carId + " scriptName=" + car.getScriptName()
-                + " spawned at (" + activeCharacter.getLastX() + ", " + activeCharacter.getLastY() + ")");
+                + " spawned at (" + x + ", " + y + ")");
     }
 
     private synchronized void writeVehicleJsonl(Map<String, Object> vehicleEntry) {

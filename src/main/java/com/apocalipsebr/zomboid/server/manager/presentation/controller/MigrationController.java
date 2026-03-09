@@ -53,15 +53,10 @@ public class MigrationController {
         // Preserved cars for this user
         List<ClaimedCar> preservedCars = migrationService.getPreservedCarsForUser(user);
 
-        // Check if user has any active character with coordinates (needed for car migration)
-        boolean hasActiveCharacter = characters.stream()
-                .anyMatch(c -> c.getLastX() != null && c.getLastY() != null);
-
         model.addAttribute("user", user);
         model.addAttribute("characters", characters);
         model.addAttribute("characterMigrations", characterMigrations);
         model.addAttribute("preservedCars", preservedCars);
-        model.addAttribute("hasActiveCharacter", hasActiveCharacter);
 
         return "migration";
     }
@@ -86,17 +81,33 @@ public class MigrationController {
     }
 
     /**
+     * Map point selector page — iframe for choosing car spawn coordinates.
+     */
+    @GetMapping("/map-selector")
+    public String mapSelectorPage(HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            return "redirect:/login";
+        }
+        return "map-point-selector";
+    }
+
+    /**
      * Migrate a single car: write JSONL and delete from database.
+     * Coordinates come from the map point selector.
      */
     @PostMapping("/car/{carId}")
-    public String migrateCar(@PathVariable Long carId, HttpSession session) {
+    public String migrateCar(@PathVariable Long carId,
+                             @RequestParam double x,
+                             @RequestParam double y,
+                             HttpSession session) {
         User user = (User) session.getAttribute("user");
         if (user == null) {
             return "redirect:/login";
         }
 
         try {
-            migrationService.migrateClaimedCar(user, carId);
+            migrationService.migrateClaimedCar(user, carId, x, y);
             return "redirect:/migration?carSuccess=true";
         } catch (Exception e) {
             logger.warning("Car migration failed: " + e.getMessage());
