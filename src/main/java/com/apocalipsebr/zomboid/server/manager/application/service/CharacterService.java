@@ -5,6 +5,7 @@ import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Season;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.CharacterRepository;
 import com.apocalipsebr.zomboid.server.manager.presentation.dto.ZombieKillsUpdateDTO;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,12 +24,14 @@ public class CharacterService {
     private final CharacterRepository characterRepository;
     private final ServerCommandService serverCommandService;
     private final SeasonService seasonService;
+    private final MigrationService migrationService;
     
     public CharacterService(CharacterRepository characterRepository, ServerCommandService serverCommandService,
-                            SeasonService seasonService) {
+                            SeasonService seasonService, @Lazy MigrationService migrationService) {
         this.characterRepository = characterRepository;
         this.serverCommandService = serverCommandService;
         this.seasonService = seasonService;
+        this.migrationService = migrationService;
     }
     
     @Transactional
@@ -81,7 +84,17 @@ public class CharacterService {
         
         character.setLastUpdate(LocalDateTime.now());
         
-        return characterRepository.saveAndFlush(character);
+        Character saved = characterRepository.saveAndFlush(character);
+
+        // Check for pending XP migration and process it on this heartbeat
+        try {
+            migrationService.processPendingMigration(saved, dto.skills());
+        } catch (Exception e) {
+            logger.log(java.util.logging.Level.WARNING,
+                    "Migration processing failed for character '" + saved.getPlayerName() + "'", e);
+        }
+
+        return saved;
     }
 
     /**

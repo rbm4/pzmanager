@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migração - Apocalipse [BR]</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff; min-height: 100vh; display: flex;
+        }
+        .main-content { margin-left: 280px; flex: 1; padding: 30px; overflow-y: auto; }
+
+        /* ── Page Header ── */
+        .page-header {
+            background: rgba(255,255,255,0.05); padding: 20px 30px; border-radius: 10px;
+            margin-bottom: 30px; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1);
+        }
+        .page-header h1 {
+            background: linear-gradient(45deg, #ff9800, #ff5722);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; font-size: 2rem;
+        }
+        .page-header p { color: #aaa; margin-top: 8px; font-size: 0.95rem; line-height: 1.5; }
+
+        /* ── Section Headers ── */
+        .section-header {
+            margin: 30px 0 20px; padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .section-header h2 {
+            font-size: 1.5rem; color: #4facfe;
+        }
+        .section-header p { color: #888; font-size: 0.9rem; margin-top: 4px; }
+
+        /* ── Alert Banners ── */
+        .alert-banner {
+            padding: 15px 20px; border-radius: 10px; margin-bottom: 20px;
+            font-size: 0.95rem; font-weight: 500;
+        }
+        .alert-success { background: rgba(76,175,80,0.15); border: 1px solid #4caf50; color: #81c784; }
+        .alert-error { background: rgba(244,67,54,0.15); border: 1px solid #f44336; color: #ef9a9a; }
+        .alert-info { background: rgba(79,172,254,0.15); border: 1px solid #4facfe; color: #90caf9; }
+
+        /* ── Character Cards ── */
+        .characters-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 20px;
+        }
+        .character-card {
+            background: rgba(255,255,255,0.05); padding: 24px; border-radius: 15px;
+            backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease; display: flex; flex-direction: column; gap: 14px;
+        }
+        .character-card:hover { transform: translateY(-3px); border-color: rgba(255,152,0,0.5); box-shadow: 0 8px 25px rgba(255,152,0,0.15); }
+        .character-card.dead { opacity: 0.6; }
+
+        .character-header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .character-name { font-size: 1.3rem; font-weight: 600; color: #ff9800; }
+        .character-profession { color: #aaa; font-size: 0.85rem; font-style: italic; }
+
+        .character-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .stat-box { background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); }
+        .stat-label { color: #aaa; font-size: 0.8rem; margin-bottom: 4px; display: block; }
+        .stat-val { font-size: 1.1rem; font-weight: 600; color: #fff; }
+
+        /* ── Migration Status Badges ── */
+        .badge { padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; white-space: nowrap; }
+        .badge-pending { background: rgba(255,193,7,0.2); border: 1px solid #ffc107; color: #ffd54f; }
+        .badge-processing { background: rgba(33,150,243,0.2); border: 1px solid #2196f3; color: #64b5f6; }
+        .badge-completed { background: rgba(76,175,80,0.2); border: 1px solid #4caf50; color: #81c784; }
+        .badge-failed { background: rgba(244,67,54,0.2); border: 1px solid #f44336; color: #ef9a9a; }
+        .badge-dead { background: rgba(158,158,158,0.2); border: 1px solid #9e9e9e; color: #bdbdbd; }
+
+        .card-actions { padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; gap: 10px; flex-wrap: wrap; }
+
+        .btn-migrate {
+            background: rgba(255,152,0,0.2); border: 1px solid #ff9800; color: #ffb74d;
+            padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 0.9rem;
+            font-weight: 600; transition: all 0.3s ease;
+        }
+        .btn-migrate:hover { background: rgba(255,152,0,0.4); transform: translateY(-2px); }
+        .btn-migrate:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+        .btn-details {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #ccc;
+            padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; transition: all 0.3s;
+        }
+        .btn-details:hover { background: rgba(255,255,255,0.2); color: #fff; }
+
+        /* ── Car Cards ── */
+        .cars-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px;
+        }
+        .car-card {
+            background: rgba(255,255,255,0.05); padding: 24px; border-radius: 15px;
+            backdrop-filter: blur(10px); border: 1px solid rgba(255,152,0,0.3);
+            transition: all 0.3s ease; display: flex; flex-direction: column; gap: 14px;
+        }
+        .car-card:hover { transform: translateY(-3px); border-color: #ff9800; box-shadow: 0 8px 25px rgba(255,152,0,0.2); }
+
+        .car-header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .car-name { font-size: 1.3rem; font-weight: 600; color: #ff9800; }
+        .car-script { color: #aaa; font-size: 0.85rem; font-style: italic; }
+
+        .car-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+
+        .car-footer { padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; gap: 10px; flex-wrap: wrap; }
+
+        /* ── Empty States ── */
+        .no-items {
+            grid-column: 1 / -1; text-align: center; padding: 40px 20px; color: #666;
+            background: rgba(255,255,255,0.03); border-radius: 15px; border: 1px solid rgba(255,255,255,0.05);
+        }
+        .no-items h3 { font-size: 1.2rem; margin-bottom: 8px; color: #888; }
+
+        /* ── Modals ── */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0; z-index: 10000;
+            align-items: center; justify-content: center; background: rgba(0,0,0,0.82);
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal-box {
+            background: #1e2a3a; border-radius: 16px; width: min(92vw, 700px);
+            max-height: 85vh; display: flex; flex-direction: column;
+            border: 1px solid rgba(255,255,255,0.1); overflow: hidden;
+        }
+        .modal-header {
+            padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .modal-header h2 { color: #ff9800; font-size: 1.3rem; }
+        .modal-close {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+            color: #ccc; padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: all 0.3s;
+        }
+        .modal-close:hover { border-color: #e74c3c; color: #fff; }
+        .modal-body { padding: 24px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 16px; }
+
+        /* Skills in modal */
+        .skills-category { margin-bottom: 8px; }
+        .skills-category-title {
+            font-size: 1rem; font-weight: 600; color: #ffb74d;
+            margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid rgba(255,152,0,0.2);
+        }
+        .skills-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+        .skill-item {
+            display: flex; justify-content: space-between; padding: 6px 10px;
+            background: rgba(0,0,0,0.2); border-radius: 6px; border: 1px solid rgba(255,255,255,0.04);
+        }
+        .skill-name { color: #ccc; font-size: 0.85rem; }
+        .skill-xp { color: #ff9800; font-weight: 600; font-size: 0.85rem; }
+        .skill-xp.zero { color: #555; }
+
+        /* Car detail modal */
+        .detail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
+        .detail-item { background: rgba(0,0,0,0.25); padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06); }
+        .detail-label { color: #888; font-size: 0.8rem; margin-bottom: 4px; }
+        .detail-value { font-size: 1rem; font-weight: 600; }
+
+        .items-section h3 { color: #ffb74d; margin-bottom: 12px; font-size: 1.1rem; }
+        .items-table { width: 100%; border-collapse: collapse; }
+        .items-table th { text-align: left; padding: 10px; color: #aaa; font-size: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .items-table td { padding: 10px; font-size: 0.9rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .items-table tr:hover td { background: rgba(255,255,255,0.03); }
+        .no-items-table { text-align: center; padding: 20px; color: #666; }
+
+        /* Confirm modal */
+        .confirm-modal-box {
+            background: #1e2a3a; border-radius: 16px; width: min(92vw, 480px);
+            padding: 30px; border: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+        .confirm-modal-box h3 { color: #ff9800; margin-bottom: 15px; font-size: 1.2rem; }
+        .confirm-modal-box p { color: #aaa; margin-bottom: 20px; line-height: 1.6; font-size: 0.95rem; }
+        .confirm-actions { display: flex; gap: 12px; justify-content: center; }
+        .btn-cancel {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+            color: #ccc; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; transition: all 0.3s;
+        }
+        .btn-cancel:hover { background: rgba(255,255,255,0.2); }
+        .btn-confirm {
+            background: rgba(255,152,0,0.3); border: 1px solid #ff9800; color: #ffb74d;
+            padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.3s;
+        }
+        .btn-confirm:hover { background: rgba(255,152,0,0.5); }
+
+        @media (max-width: 768px) {
+            .main-content { margin-left: 0; padding: 15px; }
+            .characters-grid, .cars-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{header-component :: header}"></div>
+<div th:replace="~{sidebar-component :: sidebar}"></div>
+
+<main class="main-content">
+    <!-- ── Page Header ── -->
+    <div class="page-header">
+        <h1>🔄 Migração</h1>
+        <p>Migre a experiência dos seus personagens e seus veículos preservados para o novo save do servidor.
+           A migração de XP será aplicada automaticamente quando seu personagem estiver online.
+           Os veículos serão gerados na última posição conhecida do seu personagem ativo.</p>
+    </div>
+
+    <!-- ── Alert Banners ── -->
+    <div class="alert-banner alert-success" th:if="${param.charSuccess}">
+        ✅ Migração de XP solicitada com sucesso! A experiência será aplicada no próximo heartbeat quando o personagem estiver online.
+    </div>
+    <div class="alert-banner alert-success" th:if="${param.carSuccess}">
+        ✅ Veículo migrado com sucesso! O veículo será gerado na próxima sincronização do servidor.
+    </div>
+    <div class="alert-banner alert-error" th:if="${param.error}">
+        ❌ Erro: <span th:text="${param.error}">Erro desconhecido</span>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!--  SECTION 1: CHARACTER XP MIGRATION                        -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <div class="section-header">
+        <h2>👥 Migração de Experiência</h2>
+        <p>Personagens da temporada atual. Clique em "Migrar XP" para enfileirar a migração — a experiência será concedida automaticamente quando o personagem estiver online.</p>
+    </div>
+
+    <div class="characters-grid">
+        <div th:each="character : ${characters}"
+             class="character-card"
+             th:classappend="${character.isDead ? 'dead' : ''}">
+
+            <div class="character-header">
+                <div>
+                    <div class="character-name" th:text="${character.playerName}">Character</div>
+                    <div class="character-profession" th:if="${character.profession != null}" th:text="${character.profession}">Profession</div>
+                </div>
+                <!-- Migration status badge -->
+                <span th:if="${characterMigrations.containsKey(character.id)}"
+                      class="badge"
+                      th:classappend="${characterMigrations.get(character.id).status == 'PENDING' ? 'badge-pending' :
+                                       (characterMigrations.get(character.id).status == 'PROCESSING' ? 'badge-processing' :
+                                       (characterMigrations.get(character.id).status == 'COMPLETED' ? 'badge-completed' : 'badge-failed'))}"
+                      th:text="${characterMigrations.get(character.id).status == 'PENDING' ? '⏳ Pendente' :
+                                (characterMigrations.get(character.id).status == 'PROCESSING' ? '🔄 Processando' :
+                                (characterMigrations.get(character.id).status == 'COMPLETED' ? '✅ Concluída' : '❌ Falhou'))}">
+                    Status
+                </span>
+                <span th:if="${character.isDead && !characterMigrations.containsKey(character.id)}"
+                      class="badge badge-dead">💀 Morto</span>
+            </div>
+
+            <div class="character-stats">
+                <div class="stat-box">
+                    <span class="stat-label">🧟 Abates</span>
+                    <div class="stat-val" th:text="${character.zombieKills}">0</div>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">⏱️ Horas</span>
+                    <div class="stat-val" th:text="${character.hoursSurvived != null ? character.hoursSurvived + 'h' : 'N/A'}">0h</div>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">₳ Moeda</span>
+                    <div class="stat-val" th:text="${character.currencyPoints}">0</div>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">📍 Posição</span>
+                    <div class="stat-val">
+                        <span th:if="${character.lastX != null}" th:text="${character.lastX + ', ' + character.lastY}">0, 0</span>
+                        <span th:if="${character.lastX == null}">N/A</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-actions">
+                <button class="btn-details"
+                        th:attr="onclick='openSkillsModal(' + ${character.id} + ')'">
+                    📊 Ver Experiência
+                </button>
+                <!-- Migrate button: only if no migration exists and character is alive -->
+                <button th:if="${!characterMigrations.containsKey(character.id) && !character.isDead}"
+                        class="btn-migrate"
+                        th:attr="onclick='openCharMigrateConfirm(' + ${character.id} + ', \'' + ${character.playerName} + '\')'">
+                    🔄 Migrar XP
+                </button>
+                <!-- Error details if migration failed -->
+                <span th:if="${characterMigrations.containsKey(character.id) && characterMigrations.get(character.id).status == 'FAILED'}"
+                      style="color: #ef9a9a; font-size: 0.85rem; align-self: center;"
+                      th:text="${characterMigrations.get(character.id).errorMessage}">Error</span>
+            </div>
+        </div>
+
+        <div class="no-items" th:if="${characters.empty}">
+            <h3>😔 Nenhum personagem na temporada atual</h3>
+            <p>Jogue no servidor para criar seu primeiro personagem.</p>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!--  SECTION 2: VEHICLE MIGRATION                             -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <div class="section-header" style="margin-top: 50px;">
+        <h2>🚗 Migração de Veículos</h2>
+        <p>Veículos preservados do save anterior. Migre um veículo por vez — ele será gerado na última posição conhecida do seu personagem ativo.</p>
+    </div>
+
+    <div th:if="${!hasActiveCharacter && !preservedCars.isEmpty()}" class="alert-banner alert-info">
+        ⚠️ Você precisa ter pelo menos um personagem ativo com coordenadas no servidor para migrar veículos. Jogue pelo menos uma vez no novo save.
+    </div>
+
+    <div class="cars-grid">
+        <div th:each="car : ${preservedCars}" class="car-card">
+            <div class="car-header">
+                <div>
+                    <div class="car-name" th:text="${car.vehicleName != null ? car.vehicleName : 'Veículo desconhecido'}">Vehicle</div>
+                    <div class="car-script" th:text="${car.scriptName}">Base.CarNormal</div>
+                </div>
+                <span class="badge badge-pending">⏳ Aguardando</span>
+            </div>
+
+            <div class="car-stats">
+                <div class="stat-box">
+                    <span class="stat-label">📍 Posição Original</span>
+                    <div class="stat-val">
+                        <span th:if="${car.x != null}" th:text="${T(java.lang.Math).round(car.x) + ', ' + T(java.lang.Math).round(car.y)}">0, 0</span>
+                        <span th:if="${car.x == null}">N/A</span>
+                    </div>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">📦 Itens</span>
+                    <div class="stat-val" th:text="${car.items.size()}">0</div>
+                </div>
+            </div>
+
+            <div class="car-footer">
+                <button class="btn-details" onclick="event.stopPropagation();"
+                        th:attr="onclick='event.stopPropagation(); openCarDetailModal(' + ${car.id} + ')'">
+                    📋 Detalhes
+                </button>
+                <button class="btn-migrate"
+                        th:disabled="${!hasActiveCharacter}"
+                        th:attr="onclick='openCarMigrateConfirm(' + ${car.id} + ', \'' + ${car.vehicleName != null ? car.vehicleName : 'Veículo'} + '\')'">
+                    🚗 Migrar Veículo
+                </button>
+            </div>
+        </div>
+
+        <div class="no-items" th:if="${preservedCars.empty}">
+            <h3>🚫 Nenhum veículo para migrar</h3>
+            <p>Seus veículos preservados do save anterior aparecerão aqui.</p>
+        </div>
+    </div>
+</main>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!--  SKILLS DETAIL MODAL                                          -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="skillsModal" onclick="if(event.target===this) closeSkillsModal()">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2 id="skillsModalTitle">📊 Experiência do Personagem</h2>
+            <button class="modal-close" onclick="closeSkillsModal()">✕ Fechar</button>
+        </div>
+        <div class="modal-body" id="skillsModalBody"></div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!--  CAR DETAIL MODAL                                             -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="carDetailModal" onclick="if(event.target===this) closeCarDetailModal()">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2 id="carModalTitle">🚗 Detalhes do Veículo</h2>
+            <button class="modal-close" onclick="closeCarDetailModal()">✕ Fechar</button>
+        </div>
+        <div class="modal-body">
+            <div class="detail-grid" id="carModalDetails"></div>
+            <div class="items-section">
+                <h3>📦 Itens no Veículo</h3>
+                <table class="items-table">
+                    <thead><tr><th>Item</th><th>Quantidade</th><th>Container</th></tr></thead>
+                    <tbody id="carModalItemsBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!--  CHARACTER MIGRATION CONFIRM MODAL                            -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="charConfirmModal" onclick="if(event.target===this) closeCharConfirm()">
+    <div class="confirm-modal-box">
+        <h3>🔄 Confirmar Migração de XP</h3>
+        <p id="charConfirmText">Tem certeza que deseja migrar a experiência deste personagem?</p>
+        <p style="color: #ff9800; font-size: 0.85rem;">⚠️ Esta ação é irreversível. A migração só pode ser feita uma vez por personagem.</p>
+        <form id="charMigrateForm" method="post">
+            <div class="confirm-actions">
+                <button type="button" class="btn-cancel" onclick="closeCharConfirm()">Cancelar</button>
+                <button type="submit" class="btn-confirm">Confirmar Migração</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!--  CAR MIGRATION CONFIRM MODAL                                  -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="carConfirmModal" onclick="if(event.target===this) closeCarConfirm()">
+    <div class="confirm-modal-box">
+        <h3>🚗 Confirmar Migração de Veículo</h3>
+        <p id="carConfirmText">Tem certeza que deseja migrar este veículo?</p>
+        <p style="color: #ff9800; font-size: 0.85rem;">⚠️ O veículo será gerado na posição do seu personagem ativo mais recente. Migre um veículo por vez para evitar colisões.</p>
+        <form id="carMigrateForm" method="post">
+            <div class="confirm-actions">
+                <button type="button" class="btn-cancel" onclick="closeCarConfirm()">Cancelar</button>
+                <button type="submit" class="btn-confirm">Confirmar Migração</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+
+    // ── Character skill data ──
+    const charactersData = [];
+    /*[# th:each="c : ${characters}"]*/
+    charactersData.push({
+        id: /*[[${c.id}]]*/ 0,
+        name: /*[[${c.playerName}]]*/ '',
+        skillCooking: /*[[${c.skillCooking}]]*/ 0,
+        skillFitness: /*[[${c.skillFitness}]]*/ 0,
+        skillStrength: /*[[${c.skillStrength}]]*/ 0,
+        skillBlunt: /*[[${c.skillBlunt}]]*/ 0,
+        skillAxe: /*[[${c.skillAxe}]]*/ 0,
+        skillLightfoot: /*[[${c.skillLightfoot}]]*/ 0,
+        skillNimble: /*[[${c.skillNimble}]]*/ 0,
+        skillSprinting: /*[[${c.skillSprinting}]]*/ 0,
+        skillSneak: /*[[${c.skillSneak}]]*/ 0,
+        skillWoodwork: /*[[${c.skillWoodwork}]]*/ 0,
+        skillAiming: /*[[${c.skillAiming}]]*/ 0,
+        skillReloading: /*[[${c.skillReloading}]]*/ 0,
+        skillFarming: /*[[${c.skillFarming}]]*/ 0,
+        skillFishing: /*[[${c.skillFishing}]]*/ 0,
+        skillTrapping: /*[[${c.skillTrapping}]]*/ 0,
+        skillPlantScavenging: /*[[${c.skillPlantScavenging}]]*/ 0,
+        skillDoctor: /*[[${c.skillDoctor}]]*/ 0,
+        skillElectricity: /*[[${c.skillElectricity}]]*/ 0,
+        skillBlacksmith: /*[[${c.skillBlacksmith}]]*/ 0,
+        skillMetalWelding: /*[[${c.skillMetalWelding}]]*/ 0,
+        skillMechanics: /*[[${c.skillMechanics}]]*/ 0,
+        skillSpear: /*[[${c.skillSpear}]]*/ 0,
+        skillMaintenance: /*[[${c.skillMaintenance}]]*/ 0,
+        skillSmallBlade: /*[[${c.skillSmallBlade}]]*/ 0,
+        skillLongBlade: /*[[${c.skillLongBlade}]]*/ 0,
+        skillSmallBlunt: /*[[${c.skillSmallBlunt}]]*/ 0,
+        skillTailoring: /*[[${c.skillTailoring}]]*/ 0,
+        skillTracking: /*[[${c.skillTracking}]]*/ 0,
+        skillHusbandry: /*[[${c.skillHusbandry}]]*/ 0,
+        skillFlintKnapping: /*[[${c.skillFlintKnapping}]]*/ 0,
+        skillMasonry: /*[[${c.skillMasonry}]]*/ 0,
+        skillPottery: /*[[${c.skillPottery}]]*/ 0,
+        skillCarving: /*[[${c.skillCarving}]]*/ 0,
+        skillButchering: /*[[${c.skillButchering}]]*/ 0,
+        skillGlassmaking: /*[[${c.skillGlassmaking}]]*/ 0
+    });
+    /*[/]*/
+
+    // ── Car data ──
+    const carsData = [];
+    /*[# th:each="car : ${preservedCars}"]*/
+    carsData.push({
+        id: /*[[${car.id}]]*/ 0,
+        vehicleHash: /*[[${car.vehicleHash}]]*/ '',
+        vehicleName: /*[[${car.vehicleName}]]*/ '',
+        scriptName: /*[[${car.scriptName}]]*/ '',
+        ownerName: /*[[${car.ownerName}]]*/ '',
+        x: /*[[${car.x}]]*/ null,
+        y: /*[[${car.y}]]*/ null,
+        items: [
+            /*[# th:each="item : ${car.items}"]*/
+            { fullType: /*[[${item.fullType}]]*/ '', count: /*[[${item.count}]]*/ 1, container: /*[[${item.container}]]*/ '' },
+            /*[/]*/
+        ]
+    });
+    /*[/]*/
+
+    // ── Skill categories ──
+    const skillCategories = [
+        {
+            title: '💪 Atributos Físicos',
+            skills: [
+                { key: 'skillFitness', label: 'Fitness' },
+                { key: 'skillStrength', label: 'Força' },
+                { key: 'skillSprinting', label: 'Corrida' },
+                { key: 'skillLightfoot', label: 'Pés Leves' },
+                { key: 'skillNimble', label: 'Agilidade' },
+                { key: 'skillSneak', label: 'Furtividade' }
+            ]
+        },
+        {
+            title: '⚔️ Combate',
+            skills: [
+                { key: 'skillAxe', label: 'Machado' },
+                { key: 'skillBlunt', label: 'Contundente' },
+                { key: 'skillSmallBlunt', label: 'Contundente Pequeno' },
+                { key: 'skillSmallBlade', label: 'Lâmina Pequena' },
+                { key: 'skillLongBlade', label: 'Lâmina Longa' },
+                { key: 'skillSpear', label: 'Lança' },
+                { key: 'skillMaintenance', label: 'Manutenção' }
+            ]
+        },
+        {
+            title: '🔫 Armas de Fogo',
+            skills: [
+                { key: 'skillAiming', label: 'Mira' },
+                { key: 'skillReloading', label: 'Recarga' }
+            ]
+        },
+        {
+            title: '🛠️ Ofícios',
+            skills: [
+                { key: 'skillCooking', label: 'Culinária' },
+                { key: 'skillWoodwork', label: 'Carpintaria' },
+                { key: 'skillTailoring', label: 'Costura' },
+                { key: 'skillMechanics', label: 'Mecânica' },
+                { key: 'skillElectricity', label: 'Eletricidade' },
+                { key: 'skillMetalWelding', label: 'Soldagem' },
+                { key: 'skillBlacksmith', label: 'Ferreiro' },
+                { key: 'skillMasonry', label: 'Alvenaria' },
+                { key: 'skillPottery', label: 'Cerâmica' },
+                { key: 'skillCarving', label: 'Entalhe' },
+                { key: 'skillGlassmaking', label: 'Vidraria' },
+                { key: 'skillFlintKnapping', label: 'Lascamento' }
+            ]
+        },
+        {
+            title: '🌿 Sobrevivência',
+            skills: [
+                { key: 'skillFarming', label: 'Agricultura' },
+                { key: 'skillFishing', label: 'Pesca' },
+                { key: 'skillTrapping', label: 'Armadilhas' },
+                { key: 'skillPlantScavenging', label: 'Forrageamento' },
+                { key: 'skillTracking', label: 'Rastreamento' },
+                { key: 'skillButchering', label: 'Abate' },
+                { key: 'skillHusbandry', label: 'Pecuária' },
+                { key: 'skillDoctor', label: 'Medicina' }
+            ]
+        }
+    ];
+
+    // ── Helpers ──
+    function formatXP(val) {
+        const v = val || 0;
+        if (v >= 1000000) return (v / 1000000).toFixed(1) + 'M';
+        if (v >= 1000) return (v / 1000).toFixed(1) + 'K';
+        return v.toLocaleString('pt-BR');
+    }
+
+    function esc(s) {
+        if (s == null) return '';
+        const d = document.createElement('div');
+        d.textContent = String(s);
+        return d.innerHTML;
+    }
+
+    // ── Skills Modal ──
+    function openSkillsModal(characterId) {
+        const char = charactersData.find(c => c.id === characterId);
+        if (!char) return;
+        document.getElementById('skillsModalTitle').textContent = '📊 ' + char.name + ' — Experiência';
+        let html = '';
+        skillCategories.forEach(cat => {
+            html += '<div class="skills-category">';
+            html += '<div class="skills-category-title">' + cat.title + '</div>';
+            html += '<div class="skills-grid">';
+            cat.skills.forEach(s => {
+                const val = char[s.key] || 0;
+                const cls = val === 0 ? ' zero' : '';
+                html += '<div class="skill-item">';
+                html += '<span class="skill-name">' + s.label + '</span>';
+                html += '<span class="skill-xp' + cls + '">' + formatXP(val) + ' XP</span>';
+                html += '</div>';
+            });
+            html += '</div></div>';
+        });
+        document.getElementById('skillsModalBody').innerHTML = html;
+        document.getElementById('skillsModal').classList.add('active');
+    }
+    function closeSkillsModal() { document.getElementById('skillsModal').classList.remove('active'); }
+
+    // ── Car Detail Modal ──
+    function openCarDetailModal(carId) {
+        const car = carsData.find(c => c.id === carId);
+        if (!car) return;
+        document.getElementById('carModalTitle').textContent = '🚗 ' + (car.vehicleName || 'Veículo');
+        const details = document.getElementById('carModalDetails');
+        details.innerHTML = `
+            <div class="detail-item"><div class="detail-label">Hash</div><div class="detail-value">${esc(car.vehicleHash)}</div></div>
+            <div class="detail-item"><div class="detail-label">Script</div><div class="detail-value">${esc(car.scriptName)}</div></div>
+            <div class="detail-item"><div class="detail-label">Dono</div><div class="detail-value">${esc(car.ownerName)}</div></div>
+            <div class="detail-item"><div class="detail-label">Posição Original</div><div class="detail-value">${car.x != null ? Math.round(car.x) + ', ' + Math.round(car.y) : 'N/A'}</div></div>
+            <div class="detail-item"><div class="detail-label">Total de Itens</div><div class="detail-value">${car.items.length}</div></div>
+        `;
+        const tbody = document.getElementById('carModalItemsBody');
+        if (car.items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" class="no-items-table">Nenhum item encontrado</td></tr>';
+        } else {
+            tbody.innerHTML = car.items.map(item => `
+                <tr><td>${esc(item.fullType)}</td><td>${item.count}</td><td>${esc(item.container || '-')}</td></tr>
+            `).join('');
+        }
+        document.getElementById('carDetailModal').classList.add('active');
+    }
+    function closeCarDetailModal() { document.getElementById('carDetailModal').classList.remove('active'); }
+
+    // ── Character Migration Confirm ──
+    function openCharMigrateConfirm(characterId, playerName) {
+        document.getElementById('charConfirmText').textContent =
+            'Tem certeza que deseja migrar a experiência de "' + playerName + '"? A XP será concedida quando o personagem estiver online.';
+        document.getElementById('charMigrateForm').action = '/migration/character/' + characterId;
+        document.getElementById('charConfirmModal').classList.add('active');
+    }
+    function closeCharConfirm() { document.getElementById('charConfirmModal').classList.remove('active'); }
+
+    // ── Car Migration Confirm ──
+    function openCarMigrateConfirm(carId, vehicleName) {
+        document.getElementById('carConfirmText').textContent =
+            'Tem certeza que deseja migrar o veículo "' + vehicleName + '"? Ele será removido da lista e gerado no servidor.';
+        document.getElementById('carMigrateForm').action = '/migration/car/' + carId;
+        document.getElementById('carConfirmModal').classList.add('active');
+    }
+    function closeCarConfirm() { document.getElementById('carConfirmModal').classList.remove('active'); }
+
+    // ── Close all modals on Escape ──
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+            closeSkillsModal();
+            closeCarDetailModal();
+            closeCharConfirm();
+            closeCarConfirm();
+        }
+    });
+    /*]]>*/
+</script>
+</body>
+</html>
