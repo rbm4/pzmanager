@@ -196,6 +196,10 @@ public class SoftWipeService {
      */
     @Transactional
     public void executeAllPendingWipes() {
+        if (!softWipeEnabled) {
+            logger.info("Soft-wipe execution skipped at boot because the feature is disabled");
+            return;
+        }
         List<SoftWipe> pendingWipes = softWipeRepository.findByStatus(SoftWipeStatus.WIPE_AT_RESTART);
 
         if (pendingWipes.isEmpty()) {
