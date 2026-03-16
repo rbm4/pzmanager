@@ -1,0 +1,18 @@
+{
+ "w": 3584, 
+ "h": 2304, 
+ "skip": 0, 
+ "cell_rects": [[17, 46, 4, 7], [21, 46, 1, 2], [21, 50, 1, 3], [22, 45, 1, 3], [22, 50, 1, 3], [23, 45, 6, 8], [29, 45, 1, 1], [29, 47, 1, 1], [29, 49, 1, 4]], 
+ "cell_size": 256, 
+ "block_size": 8, 
+ "pz_version": "B42", 
+ "maxlayer": 9, 
+ "minlayer": 0, 
+ "pzmap2dzi_version": "1.1.7", 
+ "git_branch": "refs/heads/main", 
+ "git_commit": "f399c8bce0e3278423d7891f4ff483f742cd96c9", 
+ "legends": {}, 
+ "x0": -4096, 
+ "y0": -11264, 
+ "sqr": 1
+}

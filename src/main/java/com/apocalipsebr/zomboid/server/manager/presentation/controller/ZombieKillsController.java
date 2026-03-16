@@ -7,11 +7,14 @@ import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
 import com.apocalipsebr.zomboid.server.manager.presentation.dto.ZombieKillsUpdateDTO;
 import com.google.gson.Gson;
 
+import jakarta.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
@@ -49,15 +52,9 @@ public class ZombieKillsController {
         this.characterService = characterService;
     }
 
-    @EventListener(ApplicationReadyEvent.class)
-    public void scheduleConsumeKills() {
-
-        scheduler.schedule(() -> {
-            updateZombieKills();
-        }, 1, TimeUnit.MINUTES);
-    }
-
     @PostMapping("/consume")
+    @Scheduled(fixedRate = 60000)
+    @Transactional
     public ResponseEntity<Map<String, Object>> updateZombieKills() {
         Map<String, Object> response = new HashMap<>();
 
@@ -135,8 +132,6 @@ public class ZombieKillsController {
             response.put("error", "Error processing zombie kills: " + e.getMessage());
             response.put("processed", 0);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        } finally {
-            scheduleConsumeKills();
         }
     }
 

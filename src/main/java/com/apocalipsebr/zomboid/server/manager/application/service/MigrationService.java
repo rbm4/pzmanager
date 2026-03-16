@@ -167,6 +167,12 @@ public class MigrationService {
                     logger.info("Migration addxp: " + command);
                     serverCommandService.sendCommand(command);
                     appliedDeltas.put(mapping.gameKey, (double) xpToGrant);
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        throw new RuntimeException("Migration interrupted", e);
+                    }
                 }
             }
 

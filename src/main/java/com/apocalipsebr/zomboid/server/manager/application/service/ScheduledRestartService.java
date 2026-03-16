@@ -46,7 +46,6 @@ public class ScheduledRestartService {
         this.softWipeService = softWipeService;
     }
 
-    @EventListener(ApplicationReadyEvent.class)
     public void startupMessage() {
         if (!bootSequenceEnabled) {
             logger.info("Boot sequence is disabled, skipping startup message scheduler");
@@ -63,12 +62,10 @@ public class ScheduledRestartService {
      * for execution during the previous restart cycle (status = WIPE_AT_RESTART).
      * Runs after a 60-second delay to allow the game server to fully boot.
      */
-    @EventListener(ApplicationReadyEvent.class)
     public void executePendingSoftWipes() {
         softWipeService.executeAllPendingWipes();
     }
 
-    @EventListener(ApplicationReadyEvent.class)
     public void scheduleNextRestart() {
         if (!scheduledRestartEnabled) {
             logger.info("Scheduled automatic restart is disabled");
