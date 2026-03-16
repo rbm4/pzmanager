@@ -131,7 +131,6 @@ public class RegionService {
      * Automatically writes regions JSON file on application startup.
      * This ensures the mod always has the latest regions configuration.
      */
-    @EventListener(ApplicationReadyEvent.class)
     public void writeRegionsOnStartup() {
         try {
             writeRegionsJsonToFile();

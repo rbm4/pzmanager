@@ -39,6 +39,6 @@ public class LocaleConfig implements WebMvcConfigurer {
         // Maps to src/main/resources/map/ on the classpath
         registry.addResourceHandler("/pzmap/**")
                 .addResourceLocations("classpath:/map/")
-                .setCachePeriod(3600); // 1 hour cache for tiles
+                .setCachePeriod(1); // 1 hour cache for tiles
     }
 }
