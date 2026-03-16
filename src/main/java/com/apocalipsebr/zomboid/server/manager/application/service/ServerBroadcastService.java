@@ -57,7 +57,6 @@ public class ServerBroadcastService {
         return intervalMs;
     }
 
-    @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady() {
         if (!enabled) {
             logger.info("ServerBroadcastService disabled by configuration.");

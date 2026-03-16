@@ -70,7 +70,6 @@ public class SandboxPropertyService {
      * 3. For entries with overwriteAtStartup=true and appliedValue!=null,
      * write the appliedValue back to the respective file
      */
-    @EventListener(ApplicationReadyEvent.class)
     @Transactional
     public void syncSettingsOnStartup() {
         syncIniSettings();
