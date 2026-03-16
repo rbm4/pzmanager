@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migração de Backup - Admin</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff; min-height: 100vh; display: flex;
+        }
+        .container { margin-left: 280px; flex: 1; padding: 30px; overflow-y: auto; }
+
+        .page-header {
+            background: rgba(255,255,255,0.05); padding: 20px 30px; border-radius: 10px;
+            margin-bottom: 25px; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1);
+        }
+        .page-header h1 {
+            background: linear-gradient(45deg, #ff9800, #ff5722);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; font-size: 2rem;
+        }
+        .page-header p { color: #aaa; margin-top: 8px; font-size: 0.95rem; line-height: 1.5; }
+
+        /* ── Alert Banners ── */
+        .alert-banner {
+            padding: 15px 20px; border-radius: 10px; margin-bottom: 20px;
+            font-size: 0.95rem; font-weight: 500;
+        }
+        .alert-success { background: rgba(76,175,80,0.15); border: 1px solid #4caf50; color: #81c784; }
+        .alert-error { background: rgba(244,67,54,0.15); border: 1px solid #f44336; color: #ef9a9a; }
+
+        /* ── Filter Bar ── */
+        .filter-bar {
+            background: rgba(255,255,255,0.05); padding: 16px 24px; border-radius: 10px;
+            margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+        }
+        .filter-bar label { color: #aaa; font-size: 0.9rem; font-weight: 600; }
+        .filter-bar select, .filter-bar input {
+            background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); color: #fff;
+            padding: 8px 14px; border-radius: 8px; font-size: 0.9rem; min-width: 200px;
+        }
+        .filter-bar select option { background: #1a1a2e; color: #fff; }
+        .btn-filter {
+            background: rgba(79,172,254,0.2); border: 1px solid #4facfe; color: #4facfe;
+            padding: 8px 20px; border-radius: 8px; cursor: pointer; font-size: 0.9rem;
+            font-weight: 600; transition: all 0.3s; text-decoration: none;
+        }
+        .btn-filter:hover { background: rgba(79,172,254,0.4); }
+        .btn-clear {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #ccc;
+            padding: 8px 20px; border-radius: 8px; cursor: pointer; font-size: 0.9rem;
+            transition: all 0.3s; text-decoration: none;
+        }
+        .btn-clear:hover { background: rgba(255,255,255,0.2); color: #fff; }
+
+        /* ── Stats Row ── */
+        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .stat-card {
+            background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1); text-align: center;
+        }
+        .stat-card .stat-number { font-size: 2rem; font-weight: 700; margin-bottom: 5px; }
+        .stat-card .stat-label { color: #aaa; font-size: 0.85rem; }
+        .stat-total .stat-number { color: #ff9800; }
+        .stat-owners .stat-number { color: #4facfe; }
+
+        /* ── Owner Section ── */
+        .owner-section {
+            background: rgba(255,255,255,0.03); border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.08); margin-bottom: 25px; overflow: hidden;
+        }
+        .owner-header {
+            padding: 16px 24px; background: rgba(0,0,0,0.2);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .owner-header h3 { color: #ffb74d; font-size: 1.1rem; }
+        .owner-header .owner-count {
+            background: rgba(255,152,0,0.2); color: #ffb74d; padding: 4px 12px;
+            border-radius: 12px; font-size: 0.8rem; font-weight: 600;
+        }
+
+        /* ── Car Cards Grid ── */
+        .cars-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 16px; padding: 20px;
+        }
+        .car-card {
+            background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1); transition: all 0.3s ease;
+            display: flex; flex-direction: column; gap: 12px;
+        }
+        .car-card:hover { transform: translateY(-3px); border-color: rgba(255,152,0,0.5); box-shadow: 0 8px 25px rgba(255,152,0,0.15); }
+
+        .car-card-header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .car-card-name { font-size: 1.2rem; font-weight: 600; color: #ff9800; }
+        .car-card-script { color: #aaa; font-size: 0.82rem; font-style: italic; margin-top: 2px; }
+
+        .car-card-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .stat-box { background: rgba(0,0,0,0.2); padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.04); }
+        .stat-label { color: #aaa; font-size: 0.78rem; display: block; margin-bottom: 2px; }
+        .stat-val { font-size: 0.95rem; font-weight: 600; color: #fff; }
+
+        .car-card-footer {
+            padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08);
+            display: flex; gap: 8px; flex-wrap: wrap;
+        }
+
+        .badge { padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+        .badge-preserved { background: rgba(255,152,0,0.2); color: #ffb74d; border: 1px solid rgba(255,152,0,0.4); }
+
+        .btn-details {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #ccc;
+            padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; transition: all 0.3s;
+        }
+        .btn-details:hover { background: rgba(255,255,255,0.2); color: #fff; }
+
+        .btn-copy {
+            background: rgba(76,175,80,0.2); border: 1px solid #4caf50; color: #81c784;
+            padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.85rem;
+            font-weight: 600; transition: all 0.3s;
+        }
+        .btn-copy:hover { background: rgba(76,175,80,0.4); transform: translateY(-1px); }
+        .btn-copy:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+        /* ── Empty state ── */
+        .no-items {
+            text-align: center; padding: 40px 20px; color: #666;
+            background: rgba(255,255,255,0.03); border-radius: 15px; border: 1px solid rgba(255,255,255,0.05);
+        }
+        .no-items h3 { font-size: 1.2rem; margin-bottom: 8px; color: #888; }
+
+        /* ── Detail Modal ── */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0; z-index: 10000;
+            align-items: center; justify-content: center; background: rgba(0,0,0,0.82);
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal-box {
+            background: #1e2a3a; border-radius: 16px; width: min(92vw, 700px);
+            max-height: 85vh; display: flex; flex-direction: column;
+            border: 1px solid rgba(255,255,255,0.1); overflow: hidden;
+        }
+        .modal-header {
+            padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .modal-header h2 { color: #ff9800; font-size: 1.3rem; }
+        .modal-close {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+            color: #ccc; padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: all 0.3s;
+        }
+        .modal-close:hover { border-color: #e74c3c; color: #fff; }
+        .modal-body { padding: 24px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 16px; }
+
+        .detail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
+        .detail-item { background: rgba(0,0,0,0.25); padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06); }
+        .detail-label { color: #888; font-size: 0.8rem; margin-bottom: 4px; }
+        .detail-value { font-size: 1rem; font-weight: 600; }
+
+        .items-section h3 { color: #ffb74d; margin-bottom: 12px; font-size: 1.1rem; }
+        .items-table { width: 100%; border-collapse: collapse; }
+        .items-table th { text-align: left; padding: 10px; color: #aaa; font-size: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .items-table td { padding: 10px; font-size: 0.9rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .items-table tr:hover td { background: rgba(255,255,255,0.03); }
+        .no-items-table { text-align: center; padding: 20px; color: #666; }
+
+        /* ── Confirm Modal ── */
+        .confirm-modal-box {
+            background: #1e2a3a; border-radius: 16px; width: min(92vw, 480px);
+            padding: 30px; border: 1px solid rgba(255,255,255,0.1); text-align: center;
+        }
+        .confirm-modal-box h3 { color: #ff9800; margin-bottom: 15px; font-size: 1.2rem; }
+        .confirm-modal-box p { color: #aaa; margin-bottom: 20px; line-height: 1.6; font-size: 0.95rem; }
+        .confirm-actions { display: flex; gap: 12px; justify-content: center; }
+        .btn-cancel {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+            color: #ccc; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; transition: all 0.3s;
+        }
+        .btn-cancel:hover { background: rgba(255,255,255,0.2); }
+        .btn-confirm {
+            background: rgba(76,175,80,0.3); border: 1px solid #4caf50; color: #81c784;
+            padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.3s;
+        }
+        .btn-confirm:hover { background: rgba(76,175,80,0.5); }
+
+        @media (max-width: 768px) {
+            .container { margin-left: 0; }
+            body { flex-direction: column; }
+            .stats-row { grid-template-columns: 1fr; }
+            .cars-grid { grid-template-columns: 1fr; }
+            .filter-bar { flex-direction: column; align-items: stretch; }
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{header-component :: header}"></div>
+<div th:replace="~{sidebar-component :: sidebar}"></div>
+
+<main class="container">
+    <div class="page-header">
+        <h1>📦 Migração de Backup</h1>
+        <p>Visualize veículos preservados para migração do save anterior e copie-os para o datasource atual.
+           Use o filtro para encontrar veículos de um jogador específico.</p>
+    </div>
+
+    <!-- ── Alert Banners ── -->
+    <div class="alert-banner alert-success" th:if="${successMessage}" th:text="${successMessage}"></div>
+    <div class="alert-banner alert-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+    <!-- ── Filter Bar ── -->
+    <div class="filter-bar">
+        <label>Filtrar por Steam ID:</label>
+        <select id="steamIdFilter" onchange="applyFilter()">
+            <option value="">Todos os donos</option>
+            <option th:each="sid : ${ownerSteamIds}" th:value="${sid}" th:text="${sid}"
+                    th:selected="${filterSteamId != null && filterSteamId == sid}">SteamID</option>
+        </select>
+        <button class="btn-filter" onclick="applyFilter()">🔍 Filtrar</button>
+        <a class="btn-clear" href="/backup-migration">Limpar Filtro</a>
+    </div>
+
+    <!-- ── Stats Row ── -->
+    <div class="stats-row">
+        <div class="stat-card stat-total">
+            <div class="stat-number" th:text="${totalCars}">0</div>
+            <div class="stat-label">Veículos para Migração</div>
+        </div>
+        <div class="stat-card stat-owners">
+            <div class="stat-number" th:text="${ownerSteamIds.size()}">0</div>
+            <div class="stat-label">Donos Diferentes</div>
+        </div>
+    </div>
+
+    <!-- ── Cars grouped by owner ── -->
+    <div th:if="${carsByOwner.isEmpty()}" class="no-items">
+        <h3>📭 Nenhum veículo preservado para migração encontrado</h3>
+        <p th:if="${filterSteamId != null}">Tente limpar o filtro ou buscar por outro Steam ID.</p>
+        <p th:if="${filterSteamId == null}">O banco de dados de backup não contém veículos marcados para migração.</p>
+    </div>
+
+    <div th:each="entry : ${carsByOwner}" class="owner-section">
+        <div class="owner-header">
+            <h3>
+                <span th:text="${entry.value.get(0).ownerName != null ? entry.value.get(0).ownerName : 'Desconhecido'}">Owner</span>
+                <span style="color: #888; font-size: 0.85rem; font-weight: 400; margin-left: 10px;"
+                      th:text="'Steam: ' + ${entry.key}">Steam ID</span>
+            </h3>
+            <span class="owner-count" th:text="${entry.value.size()} + ' veículo(s)'">N cars</span>
+        </div>
+        <div class="cars-grid">
+            <div th:each="car : ${entry.value}" class="car-card">
+                <div class="car-card-header">
+                    <div>
+                        <div class="car-card-name" th:text="${car.vehicleName ?: 'Veículo sem nome'}">Vehicle</div>
+                        <div class="car-card-script" th:text="${car.scriptName ?: '-'}">Script</div>
+                    </div>
+                    <span class="badge badge-preserved">⏳ Migração</span>
+                </div>
+                <div class="car-card-stats">
+                    <div class="stat-box">
+                        <span class="stat-label">Posição</span>
+                        <span class="stat-val" th:if="${car.x != null}"
+                              th:text="${T(java.lang.Math).round(car.x) + ', ' + T(java.lang.Math).round(car.y)}">0, 0</span>
+                        <span class="stat-val" th:if="${car.x == null}">N/A</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Itens</span>
+                        <span class="stat-val" th:text="${car.items.size()}">0</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">ID (Backup)</span>
+                        <span class="stat-val" th:text="${car.id}">1</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Hash</span>
+                        <span class="stat-val" style="font-size: 0.75rem; word-break: break-all;"
+                              th:text="${#strings.abbreviate(car.vehicleHash, 16)}"
+                              th:title="${car.vehicleHash}">hash</span>
+                    </div>
+                </div>
+                <div class="car-card-footer">
+                    <button class="btn-details" th:data-car-id="${car.id}" onclick="openDetailModal(this.dataset.carId)">🔍 Detalhes</button>
+                    <button class="btn-copy" th:data-car-id="${car.id}" th:data-car-name="${car.vehicleName}" onclick="confirmCopy(this.dataset.carId, this.dataset.carName)">📋 Copiar para Atual</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- ── Detail Modal ── -->
+<div class="modal-overlay" id="detailModal" onclick="if(event.target===this) closeDetailModal()">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2 id="modalTitle">Detalhes do Veículo</h2>
+            <button class="modal-close" onclick="closeDetailModal()">✕ Fechar</button>
+        </div>
+        <div class="modal-body" id="modalBody">
+            <p style="color: #aaa; text-align: center;">Carregando...</p>
+        </div>
+    </div>
+</div>
+
+<!-- ── Confirm Copy Modal ── -->
+<div class="modal-overlay" id="confirmModal" onclick="if(event.target===this) closeConfirmModal()">
+    <div class="confirm-modal-box">
+        <h3>📋 Confirmar Cópia</h3>
+        <p id="confirmMessage">Deseja copiar este veículo para o datasource atual?</p>
+        <div class="confirm-actions">
+            <button class="btn-cancel" onclick="closeConfirmModal()">Cancelar</button>
+            <form id="confirmForm" method="post" style="display:inline;">
+                <button type="submit" class="btn-confirm">✅ Confirmar Cópia</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function applyFilter() {
+        var steamId = document.getElementById('steamIdFilter').value;
+        if (steamId) {
+            window.location.href = '/backup-migration?steamId=' + encodeURIComponent(steamId);
+        } else {
+            window.location.href = '/backup-migration';
+        }
+    }
+
+    function openDetailModal(carId) {
+        var modal = document.getElementById('detailModal');
+        var body = document.getElementById('modalBody');
+        body.innerHTML = '<p style="color: #aaa; text-align: center;">Carregando...</p>';
+        modal.classList.add('active');
+
+        fetch('/backup-migration/api/car/' + carId)
+            .then(function(r) { return r.json(); })
+            .then(function(car) {
+                var html = '<div class="detail-grid">';
+                html += '<div class="detail-item"><div class="detail-label">Veículo</div><div class="detail-value">' + (car.vehicleName || '-') + '</div></div>';
+                html += '<div class="detail-item"><div class="detail-label">Script</div><div class="detail-value">' + (car.scriptName || '-') + '</div></div>';
+                html += '<div class="detail-item"><div class="detail-label">Dono</div><div class="detail-value">' + (car.ownerName || '-') + '</div></div>';
+                html += '<div class="detail-item"><div class="detail-label">Steam ID</div><div class="detail-value" style="font-size:0.8rem;word-break:break-all;">' + (car.ownerSteamId || '-') + '</div></div>';
+                html += '<div class="detail-item"><div class="detail-label">Posição</div><div class="detail-value">' + (car.x != null ? Math.round(car.x) + ', ' + Math.round(car.y) : 'N/A') + '</div></div>';
+                html += '<div class="detail-item"><div class="detail-label">Hash</div><div class="detail-value" style="font-size:0.75rem;word-break:break-all;">' + (car.vehicleHash || '-') + '</div></div>';
+                html += '</div>';
+
+                if (car.items && car.items.length > 0) {
+                    html += '<div class="items-section"><h3>📦 Itens (' + car.items.length + ')</h3>';
+                    html += '<table class="items-table"><thead><tr><th>Item</th><th>Quantidade</th><th>Container</th></tr></thead><tbody>';
+                    car.items.forEach(function(item) {
+                        html += '<tr><td>' + escapeHtml(item.fullType) + '</td><td>' + item.count + '</td><td>' + escapeHtml(item.container || '-') + '</td></tr>';
+                    });
+                    html += '</tbody></table></div>';
+                } else {
+                    html += '<p class="no-items-table">Nenhum item no veículo.</p>';
+                }
+
+                document.getElementById('modalTitle').textContent = car.vehicleName || 'Detalhes do Veículo';
+                body.innerHTML = html;
+            })
+            .catch(function() {
+                body.innerHTML = '<p style="color: #ef9a9a; text-align: center;">Erro ao carregar detalhes.</p>';
+            });
+    }
+
+    function closeDetailModal() {
+        document.getElementById('detailModal').classList.remove('active');
+    }
+
+    function confirmCopy(carId, carName) {
+        document.getElementById('confirmMessage').textContent =
+            'Deseja copiar o veículo "' + (carName || 'sem nome') + '" para o datasource atual?';
+        document.getElementById('confirmForm').action = '/backup-migration/copy/' + carId;
+        document.getElementById('confirmModal').classList.add('active');
+    }
+
+    function closeConfirmModal() {
+        document.getElementById('confirmModal').classList.remove('active');
+    }
+
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(text));
+        return div.innerHTML;
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeDetailModal();
+            closeConfirmModal();
+        }
+    });
+</script>
+</body>
+</html>
