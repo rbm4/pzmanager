@@ -2,6 +2,7 @@ package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
 import com.apocalipsebr.zomboid.server.manager.application.service.ClaimedCarService;
 import com.apocalipsebr.zomboid.server.manager.application.service.InflationService;
+import com.apocalipsebr.zomboid.server.manager.application.service.MigrationService;
 import com.apocalipsebr.zomboid.server.manager.application.service.SeasonService;
 import com.apocalipsebr.zomboid.server.manager.application.service.ServerCommandService;
 import com.apocalipsebr.zomboid.server.manager.application.service.ServerRestartService;
@@ -34,6 +35,7 @@ public class ServerController {
     private final SeasonService seasonService;
     private final ClaimedCarService claimedCarService;
     private final SoftWipeService softWipeService;
+    private final MigrationService migrationService;
     private final CharacterRepository characterRepository;
     private final UserRepository userRepository;
 
@@ -45,6 +47,7 @@ public class ServerController {
                           SeasonService seasonService,
                           ClaimedCarService claimedCarService,
                           SoftWipeService softWipeService,
+                          MigrationService migrationService,
                           CharacterRepository characterRepository,
                           UserRepository userRepository) {
         this.serverCommandService = serverCommandService;
@@ -55,6 +58,7 @@ public class ServerController {
         this.seasonService = seasonService;
         this.claimedCarService = claimedCarService;
         this.softWipeService = softWipeService;
+        this.migrationService = migrationService;
         this.characterRepository = characterRepository;
         this.userRepository = userRepository;
     }
@@ -409,6 +413,75 @@ public class ServerController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("success", false, "message", "Erro ao marcar soft-wipes: " + e.getMessage()));
+        }
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/reset-migration")
+    public ResponseEntity<Map<String, Object>> resetCharacterMigration(@RequestBody ResetMigrationRequest request) {
+        try {
+            String username = request.getUsername();
+            if (username == null || username.isBlank()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("success", false, "message", "Username é obrigatório."));
+            }
+
+            Optional<User> userOpt = userRepository.findByUsername(username);
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("success", false, "message", "Usuário não encontrado: " + username));
+            }
+
+            List<Character> characters = characterRepository.findByUserOrderByZombieKillsDesc(userOpt.get());
+            if (characters.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("success", false, "message", "Nenhum personagem encontrado para: " + username));
+            }
+
+            int resetCount = 0;
+            List<String> resetNames = new java.util.ArrayList<>();
+            for (Character c : characters) {
+                if (migrationService.hasMigration(c.getId())) {
+                    migrationService.resetCharacterMigration(c.getId());
+                    resetCount++;
+                    resetNames.add(c.getPlayerName());
+                }
+            }
+
+            if (resetCount == 0) {
+                return ResponseEntity.ok(Map.of(
+                    "success", false,
+                    "message", "Nenhuma migração encontrada para os personagens de " + username
+                ));
+            }
+
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", resetCount + " migração(ões) resetada(s) para " + username + ". Personagens: " + String.join(", ", resetNames),
+                "resetCount", resetCount,
+                "characters", resetNames
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "Erro ao resetar migração: " + e.getMessage()));
+        }
+    }
+
+    public static class ResetMigrationRequest {
+        private String username;
+
+        public ResetMigrationRequest() {}
+
+        public ResetMigrationRequest(String username) {
+            this.username = username;
+        }
+
+        public String getUsername() {
+            return username;
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
         }
     }
 }

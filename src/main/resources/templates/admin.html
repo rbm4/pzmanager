@@ -376,6 +376,28 @@
                 </div>
             </div>
 
+            <!-- Reset XP Migration Card -->
+            <div class="card">
+                <h2>🔄 Reset Migração de XP</h2>
+                <div id="reset-migration-alert" class="alert"></div>
+                <p style="color: #aaa; margin-bottom: 20px;">
+                    Permite que um jogador migre a experiência dos personagens novamente. Isso remove os registros de migração existentes.
+                </p>
+                <div style="padding: 14px; border-radius: 8px; margin-bottom: 15px; background: rgba(255, 152, 0, 0.15); border: 1px solid rgba(255, 152, 0, 0.4); color: #ffb74d; font-size: 0.85rem; line-height: 1.5;">
+                    ⚠️ Ao resetar, o jogador poderá solicitar a migração de XP novamente para todos os personagens.
+                </div>
+                <form onsubmit="resetMigration(event)">
+                    <div class="form-group">
+                        <label for="reset-migration-username">Username do Jogador</label>
+                        <input type="text" id="reset-migration-username" placeholder="Digite o username" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="background: linear-gradient(45deg, #f7971e, #ffd200); color: #1a1a2e;">🔄 Resetar Migração de XP</button>
+                </form>
+                <div id="reset-migration-result" class="stats-display">
+                    <p id="reset-migration-result-text"></p>
+                </div>
+            </div>
+
             <!-- Soft Wipe Execution Card -->
             <div class="card">
                 <h2>🧹 Soft-Wipe Manual</h2>
@@ -766,6 +788,42 @@
                 }
             } catch (error) {
                 showAlert('migration-alert', 'Erro: ' + error.message, 'error');
+            }
+        }
+
+        async function resetMigration(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('reset-migration-username').value;
+            if (!username) {
+                showAlert('reset-migration-alert', 'Digite o username do jogador.', 'error');
+                return;
+            }
+
+            if (!confirm(`🔄 RESETAR MIGRAÇÃO?\n\nTodos os registros de migração de XP dos personagens de "${username}" serão removidos.\n\nO jogador poderá migrar novamente.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/reset-migration`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    showAlert('reset-migration-alert', result.message, 'success');
+                    const statsDisplay = document.getElementById('reset-migration-result');
+                    document.getElementById('reset-migration-result-text').textContent = '✅ ' + result.message;
+                    statsDisplay.classList.add('show');
+                    document.getElementById('reset-migration-username').value = '';
+                } else {
+                    showAlert('reset-migration-alert', result.message || 'Falha ao resetar migração', 'error');
+                }
+            } catch (error) {
+                showAlert('reset-migration-alert', 'Erro: ' + error.message, 'error');
             }
         }
 

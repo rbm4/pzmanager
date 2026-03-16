@@ -307,6 +307,18 @@ public class MigrationService {
         return migrationRepository.existsByCharacterId(characterId);
     }
 
+    /**
+     * Admin: delete the migration record for a character, allowing them to migrate XP again.
+     */
+    @Transactional
+    public void resetCharacterMigration(Long characterId) {
+        if (!migrationRepository.existsByCharacterId(characterId)) {
+            throw new IllegalArgumentException("Nenhuma migração encontrada para o personagem id=" + characterId);
+        }
+        migrationRepository.deleteByCharacterId(characterId);
+        logger.info("Admin reset migration for character id=" + characterId);
+    }
+
     // ─────────────────────────────────────────────────────────────
     //  SKILL SNAPSHOT
     // ─────────────────────────────────────────────────────────────

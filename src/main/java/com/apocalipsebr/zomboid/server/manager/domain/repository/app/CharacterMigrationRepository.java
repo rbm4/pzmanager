@@ -19,4 +19,6 @@ public interface CharacterMigrationRepository extends JpaRepository<CharacterMig
     List<CharacterMigration> findByStatus(String status);
 
     boolean existsByCharacterId(Long characterId);
+
+    void deleteByCharacterId(Long characterId);
 }
