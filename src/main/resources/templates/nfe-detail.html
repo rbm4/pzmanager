@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NF-e - Detalhes</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            margin-left: 280px;
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px;
+            background: rgba(33, 150, 243, 0.1);
+            border-radius: 10px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(33, 150, 243, 0.3);
+        }
+        .page-header h1 {
+            background: linear-gradient(45deg, #2196f3, #03a9f4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 1.8rem;
+        }
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+        .section h2 {
+            color: #03a9f4;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 15px;
+        }
+        .info-item label {
+            display: block;
+            color: #888;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .info-item span {
+            color: #ddd;
+            font-size: 0.95rem;
+            word-break: break-all;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .status-AUTORIZADA { background: rgba(76, 175, 80, 0.2); color: #4caf50; border: 1px solid rgba(76, 175, 80, 0.4); }
+        .status-PENDENTE { background: rgba(255, 193, 7, 0.2); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.4); }
+        .status-REJEITADA { background: rgba(244, 67, 54, 0.2); color: #f44336; border: 1px solid rgba(244, 67, 54, 0.4); }
+        .status-CANCELADA { background: rgba(158, 158, 158, 0.2); color: #9e9e9e; border: 1px solid rgba(158, 158, 158, 0.4); }
+        .status-ERRO { background: rgba(244, 67, 54, 0.2); color: #ff5722; border: 1px solid rgba(244, 67, 54, 0.4); }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        .btn-primary { background: linear-gradient(45deg, #2196f3, #03a9f4); color: #fff; }
+        .btn-success { background: linear-gradient(45deg, #4caf50, #8bc34a); color: #fff; }
+        .btn-danger { background: linear-gradient(45deg, #f44336, #e91e63); color: #fff; }
+        .btn-warning { background: linear-gradient(45deg, #ff9800, #ffc107); color: #000; }
+        .btn-secondary { background: rgba(255, 255, 255, 0.1); color: #ccc; border: 1px solid rgba(255, 255, 255, 0.2); }
+        .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+
+        .actions-bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .xml-content {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.8rem;
+            color: #aaa;
+            max-height: 300px;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 10px;
+        }
+        .form-group label { color: #aaa; font-size: 0.8rem; margin-bottom: 5px; }
+        .form-group textarea {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 6px;
+            padding: 10px;
+            color: #fff;
+            font-size: 0.9rem;
+            resize: vertical;
+        }
+        .form-group textarea:focus { outline: none; border-color: #03a9f4; }
+
+        .alert { padding: 12px 18px; border-radius: 8px; margin-bottom: 15px; }
+        .alert-success { background: rgba(76, 175, 80, 0.15); border: 1px solid rgba(76, 175, 80, 0.3); color: #4caf50; }
+        .alert-error { background: rgba(244, 67, 54, 0.15); border: 1px solid rgba(244, 67, 54, 0.3); color: #f44336; }
+
+        @media (max-width: 768px) {
+            .container { margin-left: 0; padding: 15px; }
+            .info-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{sidebar-component :: sidebar}"></div>
+    <div class="container">
+        <div class="page-header">
+            <div>
+                <h1 th:text="'NF-e #' + ${emission.numeroNota}">NF-e</h1>
+            </div>
+            <a href="/nfe" class="btn btn-secondary">← Voltar</a>
+        </div>
+
+        <div class="actions-bar">
+            <a th:if="${emission.xmlNotaProcessada != null or emission.xmlEnvio != null}"
+               th:href="@{'/nfe/' + ${emission.id} + '/xml'}" class="btn btn-success btn-sm">Download XML</a>
+            <button th:if="${emission.status == 'AUTORIZADA'}" class="btn btn-danger btn-sm" onclick="showCancelForm()">Cancelar NF-e</button>
+            <button th:if="${emission.status == 'AUTORIZADA'}" class="btn btn-warning btn-sm" onclick="showCorrectForm()">Carta de Correção</button>
+        </div>
+
+        <div id="alertArea"></div>
+
+        <!-- Cancel form (hidden) -->
+        <div id="cancelForm" class="section" style="display: none;">
+            <h2>Cancelar NF-e</h2>
+            <div class="form-group">
+                <label>Motivo do cancelamento (mínimo 15 caracteres)</label>
+                <textarea id="motivoCancelamento" rows="3" minlength="15" placeholder="Informe o motivo do cancelamento..."></textarea>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button class="btn btn-danger btn-sm" onclick="cancelNfe()">Confirmar Cancelamento</button>
+                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('cancelForm').style.display='none'">Voltar</button>
+            </div>
+        </div>
+
+        <!-- Correction form (hidden) -->
+        <div id="correctForm" class="section" style="display: none;">
+            <h2>Carta de Correção</h2>
+            <div class="form-group">
+                <label>Texto da correção (mínimo 15 caracteres)</label>
+                <textarea id="textoCorrecao" rows="3" minlength="15" placeholder="Informe o texto de correção..."></textarea>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button class="btn btn-warning btn-sm" onclick="correctNfe()">Enviar Correção</button>
+                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('correctForm').style.display='none'">Voltar</button>
+            </div>
+        </div>
+
+        <!-- Status -->
+        <div class="section">
+            <h2>Status</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>Status</label>
+                    <span class="status-badge" th:classappend="'status-' + ${emission.status}" th:text="${emission.status}"></span>
+                </div>
+                <div class="info-item">
+                    <label>Status SEFAZ</label>
+                    <span th:text="${emission.statusSefaz != null ? emission.statusSefaz : '-'}"></span>
+                </div>
+                <div class="info-item" style="grid-column: span 2;">
+                    <label>Motivo SEFAZ</label>
+                    <span th:text="${emission.motivoSefaz != null ? emission.motivoSefaz : '-'}"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Identificação -->
+        <div class="section">
+            <h2>Identificação</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>Número</label>
+                    <span th:text="${emission.numeroNota}"></span>
+                </div>
+                <div class="info-item">
+                    <label>Série</label>
+                    <span th:text="${emission.serie}"></span>
+                </div>
+                <div class="info-item">
+                    <label>Natureza da Operação</label>
+                    <span th:text="${emission.naturezaOperacao}"></span>
+                </div>
+                <div class="info-item">
+                    <label>Data de Emissão</label>
+                    <span th:text="${#temporals.format(emission.createdAt, 'dd/MM/yyyy HH:mm:ss')}"></span>
+                </div>
+                <div class="info-item" style="grid-column: 1 / -1;">
+                    <label>Chave de Acesso</label>
+                    <span th:text="${emission.chaveAcesso != null ? emission.chaveAcesso : '-'}"></span>
+                </div>
+                <div class="info-item">
+                    <label>Protocolo</label>
+                    <span th:text="${emission.protocolo != null ? emission.protocolo : '-'}"></span>
+                </div>
+                <div class="info-item">
+                    <label>Recibo</label>
+                    <span th:text="${emission.numeroRecibo != null ? emission.numeroRecibo : '-'}"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Emitente -->
+        <div class="section">
+            <h2>Emitente</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>CNPJ</label>
+                    <span th:text="${emission.emitenteCnpj}"></span>
+                </div>
+                <div class="info-item" style="grid-column: span 2;">
+                    <label>Razão Social</label>
+                    <span th:text="${emission.emitenteRazaoSocial}"></span>
+                </div>
+                <div class="info-item">
+                    <label>Inscrição Estadual</label>
+                    <span th:text="${emission.emitenteIe != null ? emission.emitenteIe : '-'}"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Destinatário -->
+        <div class="section" th:if="${emission.destinatarioCpfCnpj != null}">
+            <h2>Destinatário</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>CPF/CNPJ</label>
+                    <span th:text="${emission.destinatarioCpfCnpj}"></span>
+                </div>
+                <div class="info-item" style="grid-column: span 2;">
+                    <label>Nome / Razão Social</label>
+                    <span th:text="${emission.destinatarioNome != null ? emission.destinatarioNome : '-'}"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Valores -->
+        <div class="section">
+            <h2>Valores</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>Valor Total NF-e</label>
+                    <span th:text="'R$ ' + ${#numbers.formatDecimal(emission.valorTotal, 1, 2)}" style="color: #4caf50; font-weight: bold; font-size: 1.2rem;"></span>
+                </div>
+                <div class="info-item">
+                    <label>ICMS</label>
+                    <span th:text="${emission.valorIcms != null ? 'R$ ' + #numbers.formatDecimal(emission.valorIcms, 1, 2) : 'R$ 0,00'}"></span>
+                </div>
+                <div class="info-item">
+                    <label>PIS</label>
+                    <span th:text="${emission.valorPis != null ? 'R$ ' + #numbers.formatDecimal(emission.valorPis, 1, 2) : 'R$ 0,00'}"></span>
+                </div>
+                <div class="info-item">
+                    <label>COFINS</label>
+                    <span th:text="${emission.valorCofins != null ? 'R$ ' + #numbers.formatDecimal(emission.valorCofins, 1, 2) : 'R$ 0,00'}"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cancelamento -->
+        <div class="section" th:if="${emission.status == 'CANCELADA'}">
+            <h2>Cancelamento</h2>
+            <div class="info-grid">
+                <div class="info-item" style="grid-column: 1 / -1;">
+                    <label>Motivo</label>
+                    <span th:text="${emission.motivoCancelamento}"></span>
+                </div>
+                <div class="info-item">
+                    <label>Data do Cancelamento</label>
+                    <span th:text="${emission.canceladaEm != null ? #temporals.format(emission.canceladaEm, 'dd/MM/yyyy HH:mm:ss') : '-'}"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- XML -->
+        <div class="section" th:if="${emission.xmlNotaProcessada != null or emission.xmlEnvio != null}">
+            <h2>XML</h2>
+            <div class="xml-content" th:text="${emission.xmlNotaProcessada != null ? emission.xmlNotaProcessada : emission.xmlEnvio}"></div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        const emissionId = [[${emission.id}]];
+
+        function showCancelForm() {
+            document.getElementById('cancelForm').style.display = '';
+            document.getElementById('correctForm').style.display = 'none';
+        }
+
+        function showCorrectForm() {
+            document.getElementById('correctForm').style.display = '';
+            document.getElementById('cancelForm').style.display = 'none';
+        }
+
+        function showAlert(type, message) {
+            const area = document.getElementById('alertArea');
+            area.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+        }
+
+        function cancelNfe() {
+            const motivo = document.getElementById('motivoCancelamento').value;
+            if (motivo.length < 15) {
+                showAlert('error', 'O motivo deve ter pelo menos 15 caracteres.');
+                return;
+            }
+            fetch('/nfe/' + emissionId + '/cancel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ motivo: motivo })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) {
+                    showAlert('error', data.error);
+                } else {
+                    showAlert('success', data.message);
+                    setTimeout(() => location.reload(), 2000);
+                }
+            })
+            .catch(err => showAlert('error', 'Erro: ' + err.message));
+        }
+
+        function correctNfe() {
+            const correcao = document.getElementById('textoCorrecao').value;
+            if (correcao.length < 15) {
+                showAlert('error', 'O texto de correção deve ter pelo menos 15 caracteres.');
+                return;
+            }
+            fetch('/nfe/' + emissionId + '/correct', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ correcao: correcao })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) {
+                    showAlert('error', data.error);
+                } else {
+                    showAlert('success', data.message);
+                }
+            })
+            .catch(err => showAlert('error', 'Erro: ' + err.message));
+        }
+    </script>
+</body>
+</html>

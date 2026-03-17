@@ -4,12 +4,14 @@ import com.apocalipsebr.zomboid.server.manager.application.service.ZomboidItemSe
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.ZomboidItem;
 import com.apocalipsebr.zomboid.server.manager.presentation.dto.CategoryBatchDTO;
 import com.apocalipsebr.zomboid.server.manager.presentation.dto.ItemDTO;
+import com.apocalipsebr.zomboid.server.manager.presentation.dto.SellableBatchItemDTO;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -152,6 +154,47 @@ public class ZomboidItemController {
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
             logger.severe("Error updating sellable status: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PatchMapping("/batch/sellable")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> updateSellableBatch(@RequestBody List<SellableBatchItemDTO> items) {
+        try {
+            int updated = 0;
+            int created = 0;
+            
+            for (SellableBatchItemDTO dto : items) {
+                try {
+                    zomboidItemService.updateSellableInfo(
+                        dto.getItemId(), dto.getSellable(), dto.getValue(), dto.getStoreDescription()
+                    );
+                    updated++;
+                } catch (IllegalArgumentException e) {
+                    ZomboidItem newItem = new ZomboidItem();
+                    newItem.setItemId(dto.getItemId());
+                    newItem.setName(dto.getItemId());
+                    newItem.setSellable(dto.getSellable() != null ? dto.getSellable() : false);
+                    if (dto.getValue() != null) newItem.setValue(dto.getValue());
+                    if (dto.getStoreDescription() != null) newItem.setStoreDescription(dto.getStoreDescription());
+                    if (dto.getCategory() != null) newItem.setCategory(dto.getCategory());
+                    if (dto.getIcon() != null) newItem.setIcon(dto.getIcon());
+                    newItem.setPage(" ");
+                    zomboidItemService.createItem(newItem);
+                    created++;
+                }
+            }
+            
+            return ResponseEntity.ok(Map.of(
+                "message", "Batch sellable update completed",
+                "updated", updated,
+                "created", created,
+                "total", items.size()
+            ));
+        } catch (Exception e) {
+            logger.severe("Error in batch sellable update: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("error", e.getMessage()));
         }

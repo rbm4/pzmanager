@@ -29,6 +29,7 @@ public class SecurityConfig {
                 .requestMatchers("/donations/webhook").permitAll() // PagBank webhook callback
                 .requestMatchers("/items/manage", "/items/*/edit", "/items/*/toggle-sellable").hasRole("ADMIN") // Admin item management
                 .requestMatchers("/admin/**").hasRole("ADMIN") // Admin panel access
+                .requestMatchers("/nfe/**").hasRole("ADMIN") // NF-e management
                 .anyRequest().authenticated() // All other routes require authentication
             )
             .formLogin(form -> form
