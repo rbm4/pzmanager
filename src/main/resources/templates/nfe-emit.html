@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emitir NF-e</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            margin-left: 280px;
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px;
+            background: rgba(33, 150, 243, 0.1);
+            border-radius: 10px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(33, 150, 243, 0.3);
+        }
+        .page-header h1 {
+            background: linear-gradient(45deg, #2196f3, #03a9f4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 2rem;
+        }
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+        .section h2 {
+            color: #03a9f4;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        .form-group label {
+            color: #aaa;
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 6px;
+            padding: 10px 12px;
+            color: #fff;
+            font-size: 0.9rem;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #03a9f4;
+        }
+        .form-group select option { background: #1a1a2e; color: #fff; }
+        .form-group textarea { resize: vertical; min-height: 60px; }
+
+        /* Items table */
+        .items-section { overflow-x: auto; }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .items-table th {
+            color: #03a9f4;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            padding: 8px 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            text-align: left;
+        }
+        .items-table td {
+            padding: 6px;
+        }
+        .items-table input, .items-table select {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+            padding: 6px 8px;
+            color: #fff;
+            font-size: 0.85rem;
+            width: 100%;
+        }
+        .items-table input:focus, .items-table select:focus {
+            outline: none;
+            border-color: #03a9f4;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        .btn-primary { background: linear-gradient(45deg, #2196f3, #03a9f4); color: #fff; }
+        .btn-primary:hover { opacity: 0.85; }
+        .btn-success { background: linear-gradient(45deg, #4caf50, #8bc34a); color: #fff; }
+        .btn-danger { background: linear-gradient(45deg, #f44336, #e91e63); color: #fff; }
+        .btn-secondary { background: rgba(255, 255, 255, 0.1); color: #ccc; border: 1px solid rgba(255, 255, 255, 0.2); }
+        .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+        .btn-lg { padding: 14px 30px; font-size: 1rem; }
+
+        .actions-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .alert { padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; }
+        .alert-error { background: rgba(244, 67, 54, 0.15); border: 1px solid rgba(244, 67, 54, 0.3); color: #f44336; }
+        .alert-success { background: rgba(76, 175, 80, 0.15); border: 1px solid rgba(76, 175, 80, 0.3); color: #4caf50; }
+        .alert-warning { background: rgba(255, 193, 7, 0.15); border: 1px solid rgba(255, 193, 7, 0.3); color: #ffc107; }
+
+        #resultModal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        #resultModal.active { display: flex; }
+        .modal-content {
+            background: #1a1a2e;
+            border-radius: 12px;
+            padding: 30px;
+            border: 1px solid rgba(33, 150, 243, 0.3);
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+        .modal-content h2 { margin-bottom: 15px; }
+        .modal-content p { color: #aaa; margin-bottom: 10px; line-height: 1.6; }
+        .modal-content .detail { font-size: 0.85rem; color: #888; }
+
+        .loading { display: none; }
+        .loading.active { display: flex; align-items: center; gap: 10px; color: #03a9f4; }
+        .spinner {
+            width: 20px; height: 20px;
+            border: 2px solid rgba(3, 169, 244, 0.3);
+            border-top: 2px solid #03a9f4;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 768px) {
+            .container { margin-left: 0; padding: 15px; }
+            .form-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{sidebar-component :: sidebar}"></div>
+    <div class="container">
+        <div class="page-header">
+            <h1>Emitir NF-e</h1>
+            <a href="/nfe" class="btn btn-secondary">← Voltar</a>
+        </div>
+
+        <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+        <form id="nfeForm">
+            <!-- Identificação -->
+            <div class="section">
+                <h2>Identificação da Operação</h2>
+                <div class="form-grid">
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>Natureza da Operação *</label>
+                        <input type="text" id="naturezaOperacao" value="Venda de mercadoria" maxlength="60" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Finalidade</label>
+                        <select id="finalidade">
+                            <option value="NORMAL">Normal</option>
+                            <option value="COMPLEMENTAR">Complementar</option>
+                            <option value="AJUSTE">Ajuste</option>
+                            <option value="DEVOLUCAO_MERCADORIA">Devolução</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo Operação</label>
+                        <select id="tipoOperacao">
+                            <option value="SAIDA">Saída (Venda)</option>
+                            <option value="ENTRADA">Entrada (Compra)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Destino</label>
+                        <select id="destinoOperacao">
+                            <option value="OPERACAO_INTERNA">Interna (mesmo estado)</option>
+                            <option value="OPERACAO_INTERESTADUAL">Interestadual</option>
+                            <option value="OPERACAO_COM_EXTERIOR">Exterior</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Consumidor Final</label>
+                        <select id="consumidorFinal">
+                            <option value="SIM">Sim</option>
+                            <option value="NAO">Não</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Presença do Comprador</label>
+                        <select id="presencaComprador">
+                            <option value="NAO_APLICA">Não se aplica</option>
+                            <option value="OPERACAO_PRESENCIAL">Presencial</option>
+                            <option value="OPERACAO_NAO_PRESENCIAL_INTERNET">Internet</option>
+                            <option value="OPERACAO_NAO_PRESENCIAL_TELEATENDIMENTO">Teleatendimento</option>
+                            <option value="OPERACAO_NAO_PRESENCIAL_OUTROS">Outros (não presencial)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Destinatário -->
+            <div class="section">
+                <h2>Destinatário</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>CPF/CNPJ</label>
+                        <input type="text" id="destCpfCnpj" placeholder="Somente números">
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>Nome / Razão Social</label>
+                        <input type="text" id="destNome" maxlength="60">
+                    </div>
+                    <div class="form-group">
+                        <label>Indicador IE</label>
+                        <select id="destIndicadorIe">
+                            <option value="NAO_CONTRIBUINTE">Não Contribuinte (9)</option>
+                            <option value="CONTRIBUINTE_ICMS">Contribuinte ICMS (1)</option>
+                            <option value="CONTRIBUINTE_ISENTO_INSCRICAO_CONTRIBUINTES_ICMS">Isento (2)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Inscrição Estadual</label>
+                        <input type="text" id="destIe" placeholder="Se contribuinte">
+                    </div>
+                    <div class="form-group">
+                        <label>E-mail</label>
+                        <input type="email" id="destEmail" maxlength="60">
+                    </div>
+                </div>
+
+                <h3 style="color: #aaa; font-size: 0.9rem; margin: 15px 0 10px;">Endereço do Destinatário</h3>
+                <div class="form-grid">
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>Logradouro</label>
+                        <input type="text" id="destLogradouro" maxlength="60">
+                    </div>
+                    <div class="form-group">
+                        <label>Número</label>
+                        <input type="text" id="destNumero" maxlength="60">
+                    </div>
+                    <div class="form-group">
+                        <label>Complemento</label>
+                        <input type="text" id="destComplemento" maxlength="60">
+                    </div>
+                    <div class="form-group">
+                        <label>Bairro</label>
+                        <input type="text" id="destBairro" maxlength="60">
+                    </div>
+                    <div class="form-group">
+                        <label>Código Município (IBGE)</label>
+                        <input type="text" id="destCodMunicipio" maxlength="7" placeholder="7 dígitos">
+                    </div>
+                    <div class="form-group">
+                        <label>Município</label>
+                        <input type="text" id="destMunicipio" maxlength="60">
+                    </div>
+                    <div class="form-group">
+                        <label>UF</label>
+                        <select id="destUf">
+                            <option value="">Selecione</option>
+                            <option value="AC">AC</option><option value="AL">AL</option>
+                            <option value="AM">AM</option><option value="AP">AP</option>
+                            <option value="BA">BA</option><option value="CE">CE</option>
+                            <option value="DF">DF</option><option value="ES">ES</option>
+                            <option value="GO">GO</option><option value="MA">MA</option>
+                            <option value="MG">MG</option><option value="MS">MS</option>
+                            <option value="MT">MT</option><option value="PA">PA</option>
+                            <option value="PB">PB</option><option value="PE">PE</option>
+                            <option value="PI">PI</option><option value="PR">PR</option>
+                            <option value="RJ">RJ</option><option value="RN">RN</option>
+                            <option value="RO">RO</option><option value="RR">RR</option>
+                            <option value="RS">RS</option><option value="SC">SC</option>
+                            <option value="SE">SE</option><option value="SP">SP</option>
+                            <option value="TO">TO</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>CEP</label>
+                        <input type="text" id="destCep" maxlength="8" placeholder="Somente números">
+                    </div>
+                    <div class="form-group">
+                        <label>Telefone</label>
+                        <input type="text" id="destTelefone" placeholder="Somente números">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Itens -->
+            <div class="section items-section">
+                <h2>Itens da Nota</h2>
+                <div style="overflow-x: auto;">
+                    <table class="items-table" id="itemsTable">
+                        <thead>
+                            <tr>
+                                <th style="width:60px;">#</th>
+                                <th>Código</th>
+                                <th>Descrição</th>
+                                <th>NCM</th>
+                                <th>CFOP</th>
+                                <th>UN</th>
+                                <th>Qtd</th>
+                                <th>Vlr Unit</th>
+                                <th>Vlr Total</th>
+                                <th>ICMS CST</th>
+                                <th>ICMS Orig</th>
+                                <th>ICMS BC</th>
+                                <th>ICMS %</th>
+                                <th>ICMS Vlr</th>
+                                <th>PIS CST</th>
+                                <th>COFINS CST</th>
+                                <th style="width:50px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="itemsBody">
+                        </tbody>
+                    </table>
+                </div>
+                <div style="margin-top: 15px;">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="addItem()">+ Adicionar Item</button>
+                </div>
+                <div style="margin-top: 15px; text-align: right;">
+                    <strong style="color: #03a9f4;">Total: R$ <span id="totalGeral">0.00</span></strong>
+                </div>
+            </div>
+
+            <!-- Transporte -->
+            <div class="section">
+                <h2>Transporte</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Modalidade do Frete</label>
+                        <select id="modalidadeFrete">
+                            <option value="SEM_OCORRENCIA_TRANSPORTE">Sem frete (9)</option>
+                            <option value="CONTRATACAO_POR_CONTA_DO_REMETENTE">Por conta do remetente (0)</option>
+                            <option value="CONTRATACAO_POR_CONTA_DO_DESTINATARIO">Por conta do destinatário (1)</option>
+                            <option value="CONTRATACAO_POR_CONTA_DE_TERCEIROS">Por conta de terceiros (2)</option>
+                            <option value="PROPRIO_POR_CONTA_DO_REMETENTE">Próprio - remetente (3)</option>
+                            <option value="PROPRIO_POR_CONTA_DO_DESTINATARIO">Próprio - destinatário (4)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagamento -->
+            <div class="section">
+                <h2>Pagamento</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Meio de Pagamento</label>
+                        <select id="meioPagamento">
+                            <option value="DINHEIRO">Dinheiro (01)</option>
+                            <option value="CHEQUE">Cheque (02)</option>
+                            <option value="CARTAO_CREDITO">Cartão Crédito (03)</option>
+                            <option value="CARTAO_DEBITO">Cartão Débito (04)</option>
+                            <option value="BOLETO_BANCARIO">Boleto Bancário (15)</option>
+                            <option value="DEPOSITO_BANCARIO">Depósito Bancário (16)</option>
+                            <option value="PIX_DINAMICO">PIX Dinâmico (17)</option>
+                            <option value="TRANSFERENCIA_BANCARIA">Transferência Bancária (18)</option>
+                            <option value="PIX_ESTATICO">PIX Estático (20)</option>
+                            <option value="SEM_PAGAMENTO">Sem Pagamento (90)</option>
+                            <option value="OUTRO">Outro (99)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Indicador</label>
+                        <select id="indicadorPagamento">
+                            <option value="A_VISTA">À Vista</option>
+                            <option value="A_PRAZO">A Prazo</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Valor do Pagamento (R$)</label>
+                        <input type="number" id="valorPagamento" step="0.01" placeholder="Preenchido automaticamente">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Adicionais -->
+            <div class="section">
+                <h2>Informações Adicionais</h2>
+                <div class="form-group full-width">
+                    <label>Informações Complementares</label>
+                    <textarea id="informacoesComplementares" rows="3" maxlength="5000" placeholder="Opcional"></textarea>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="actions-bar">
+                <a href="/nfe" class="btn btn-secondary">Cancelar</a>
+                <div>
+                    <div class="loading" id="loadingIndicator">
+                        <div class="spinner"></div>
+                        <span>Enviando para SEFAZ...</span>
+                    </div>
+                    <button type="submit" class="btn btn-success btn-lg" id="submitBtn">
+                        Emitir NF-e
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Result Modal -->
+        <div id="resultModal">
+            <div class="modal-content" id="resultContent">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let itemCount = 0;
+
+        function addItem() {
+            itemCount++;
+            const tbody = document.getElementById('itemsBody');
+            const tr = document.createElement('tr');
+            tr.id = 'item-' + itemCount;
+            tr.innerHTML = `
+                <td>${itemCount}</td>
+                <td><input type="text" class="item-codigo" maxlength="60" placeholder="PROD001"></td>
+                <td><input type="text" class="item-descricao" maxlength="120" placeholder="Descrição do produto"></td>
+                <td><input type="text" class="item-ncm" maxlength="8" placeholder="00000000"></td>
+                <td><input type="text" class="item-cfop" maxlength="4" placeholder="5102"></td>
+                <td><input type="text" class="item-unidade" maxlength="6" value="UN"></td>
+                <td><input type="number" class="item-qtd" step="0.0001" value="1" min="0.0001" onchange="calcItemTotal(this)"></td>
+                <td><input type="number" class="item-vlrunit" step="0.01" value="0.00" min="0" onchange="calcItemTotal(this)"></td>
+                <td><input type="number" class="item-vlrtotal" step="0.01" value="0.00" readonly style="background: rgba(33,150,243,0.1);"></td>
+                <td>
+                    <select class="item-icms-cst">
+                        <option value="102">SN 102</option>
+                        <option value="103">SN 103</option>
+                        <option value="300">SN 300</option>
+                        <option value="400">SN 400</option>
+                        <option value="500">SN 500</option>
+                        <option value="00">CST 00</option>
+                        <option value="20">CST 20</option>
+                        <option value="40">CST 40</option>
+                        <option value="41">CST 41</option>
+                        <option value="60">CST 60</option>
+                    </select>
+                </td>
+                <td>
+                    <select class="item-icms-orig">
+                        <option value="NACIONAL">0-Nac</option>
+                        <option value="ESTRANGEIRA_IMPORTACAO_DIRETA">1-Imp</option>
+                        <option value="ESTRANGEIRA_ADQUIRIDA_MERCADO_INTERNO">2-Merc</option>
+                    </select>
+                </td>
+                <td><input type="number" class="item-icms-bc" step="0.01" value="0.00"></td>
+                <td><input type="number" class="item-icms-aliq" step="0.01" value="0.00"></td>
+                <td><input type="number" class="item-icms-vlr" step="0.01" value="0.00"></td>
+                <td>
+                    <select class="item-pis-cst">
+                        <option value="07">07-Isenta</option>
+                        <option value="04">04-Monof</option>
+                        <option value="06">06-Alíq0</option>
+                        <option value="08">08-S/Inc</option>
+                        <option value="01">01-Trib</option>
+                    </select>
+                </td>
+                <td>
+                    <select class="item-cofins-cst">
+                        <option value="07">07-Isenta</option>
+                        <option value="04">04-Monof</option>
+                        <option value="06">06-Alíq0</option>
+                        <option value="08">08-S/Inc</option>
+                        <option value="01">01-Trib</option>
+                    </select>
+                </td>
+                <td><button type="button" class="btn btn-danger btn-sm" onclick="removeItem(${itemCount})">×</button></td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        function removeItem(id) {
+            const row = document.getElementById('item-' + id);
+            if (row) {
+                row.remove();
+                updateTotal();
+            }
+        }
+
+        function calcItemTotal(el) {
+            const tr = el.closest('tr');
+            const qtd = parseFloat(tr.querySelector('.item-qtd').value) || 0;
+            const vlrUnit = parseFloat(tr.querySelector('.item-vlrunit').value) || 0;
+            const total = qtd * vlrUnit;
+            tr.querySelector('.item-vlrtotal').value = total.toFixed(2);
+            updateTotal();
+        }
+
+        function updateTotal() {
+            let total = 0;
+            document.querySelectorAll('.item-vlrtotal').forEach(input => {
+                total += parseFloat(input.value) || 0;
+            });
+            document.getElementById('totalGeral').textContent = total.toFixed(2);
+        }
+
+        function collectItems() {
+            const items = [];
+            document.querySelectorAll('#itemsBody tr').forEach(tr => {
+                items.push({
+                    codigo: tr.querySelector('.item-codigo').value,
+                    descricao: tr.querySelector('.item-descricao').value,
+                    ncm: tr.querySelector('.item-ncm').value,
+                    cfop: tr.querySelector('.item-cfop').value,
+                    unidade: tr.querySelector('.item-unidade').value,
+                    quantidade: parseFloat(tr.querySelector('.item-qtd').value) || 0,
+                    valorUnitario: parseFloat(tr.querySelector('.item-vlrunit').value) || 0,
+                    valorTotal: parseFloat(tr.querySelector('.item-vlrtotal').value) || 0,
+                    valorDesconto: 0,
+                    icmsOrigem: tr.querySelector('.item-icms-orig').value,
+                    icmsCst: tr.querySelector('.item-icms-cst').value,
+                    icmsBaseCalculo: parseFloat(tr.querySelector('.item-icms-bc').value) || 0,
+                    icmsAliquota: parseFloat(tr.querySelector('.item-icms-aliq').value) || 0,
+                    icmsValor: parseFloat(tr.querySelector('.item-icms-vlr').value) || 0,
+                    pisCst: tr.querySelector('.item-pis-cst').value,
+                    pisBaseCalculo: 0,
+                    pisAliquota: 0,
+                    pisValor: 0,
+                    cofinsCst: tr.querySelector('.item-cofins-cst').value,
+                    cofinsBaseCalculo: 0,
+                    cofinsAliquota: 0,
+                    cofinsValor: 0
+                });
+            });
+            return items;
+        }
+
+        document.getElementById('nfeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const items = collectItems();
+            if (items.length === 0) {
+                alert('Adicione pelo menos um item.');
+                return;
+            }
+
+            // Validate required fields
+            for (let i = 0; i < items.length; i++) {
+                if (!items[i].codigo || !items[i].descricao || !items[i].ncm || !items[i].cfop) {
+                    alert('Preencha todos os campos obrigatórios do item ' + (i + 1) + ' (código, descrição, NCM, CFOP).');
+                    return;
+                }
+            }
+
+            const payload = {
+                naturezaOperacao: document.getElementById('naturezaOperacao').value,
+                finalidade: document.getElementById('finalidade').value,
+                tipoOperacao: document.getElementById('tipoOperacao').value,
+                destinoOperacao: document.getElementById('destinoOperacao').value,
+                consumidorFinal: document.getElementById('consumidorFinal').value,
+                presencaComprador: document.getElementById('presencaComprador').value,
+                destinatarioCpfCnpj: document.getElementById('destCpfCnpj').value.replace(/\D/g, ''),
+                destinatarioNome: document.getElementById('destNome').value,
+                destinatarioIe: document.getElementById('destIe').value,
+                destinatarioIndicadorIe: document.getElementById('destIndicadorIe').value,
+                destinatarioEmail: document.getElementById('destEmail').value,
+                destinatarioLogradouro: document.getElementById('destLogradouro').value,
+                destinatarioNumero: document.getElementById('destNumero').value,
+                destinatarioComplemento: document.getElementById('destComplemento').value,
+                destinatarioBairro: document.getElementById('destBairro').value,
+                destinatarioCodigoMunicipio: document.getElementById('destCodMunicipio').value,
+                destinatarioMunicipio: document.getElementById('destMunicipio').value,
+                destinatarioUf: document.getElementById('destUf').value,
+                destinatarioCep: document.getElementById('destCep').value.replace(/\D/g, ''),
+                destinatarioTelefone: document.getElementById('destTelefone').value.replace(/\D/g, ''),
+                itens: items,
+                modalidadeFrete: document.getElementById('modalidadeFrete').value,
+                meioPagamento: document.getElementById('meioPagamento').value,
+                indicadorPagamento: document.getElementById('indicadorPagamento').value,
+                valorPagamento: parseFloat(document.getElementById('valorPagamento').value) || null,
+                informacoesComplementares: document.getElementById('informacoesComplementares').value
+            };
+
+            // Show loading
+            document.getElementById('submitBtn').style.display = 'none';
+            document.getElementById('loadingIndicator').classList.add('active');
+
+            fetch('/nfe/emit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('submitBtn').style.display = '';
+                document.getElementById('loadingIndicator').classList.remove('active');
+
+                const modal = document.getElementById('resultModal');
+                const content = document.getElementById('resultContent');
+
+                if (data.error) {
+                    content.innerHTML = `
+                        <h2 style="color: #f44336;">Erro na Emissão</h2>
+                        <p>${data.error}</p>
+                        <button class="btn btn-secondary" onclick="document.getElementById('resultModal').classList.remove('active')">Fechar</button>
+                    `;
+                } else {
+                    const statusColor = data.status === 'AUTORIZADA' ? '#4caf50' : data.status === 'REJEITADA' ? '#f44336' : '#ffc107';
+                    content.innerHTML = `
+                        <h2 style="color: ${statusColor};">NF-e ${data.status}</h2>
+                        <p><strong>Número:</strong> ${data.numeroNota} / Série: ${data.serie}</p>
+                        ${data.chaveAcesso ? '<p class="detail"><strong>Chave:</strong> ' + data.chaveAcesso + '</p>' : ''}
+                        ${data.protocolo ? '<p class="detail"><strong>Protocolo:</strong> ' + data.protocolo + '</p>' : ''}
+                        ${data.motivoSefaz ? '<p class="detail"><strong>Motivo:</strong> ' + data.motivoSefaz + '</p>' : ''}
+                        <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
+                            <a href="/nfe/${data.id}" class="btn btn-primary">Ver Detalhes</a>
+                            <a href="/nfe" class="btn btn-secondary">Lista de NF-e</a>
+                        </div>
+                    `;
+                }
+                modal.classList.add('active');
+            })
+            .catch(err => {
+                document.getElementById('submitBtn').style.display = '';
+                document.getElementById('loadingIndicator').classList.remove('active');
+                alert('Erro de conexão: ' + err.message);
+            });
+        });
+
+        // Add first item on load
+        addItem();
+    </script>
+</body>
+</html>

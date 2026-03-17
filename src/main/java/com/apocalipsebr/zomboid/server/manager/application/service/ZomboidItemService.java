@@ -134,6 +134,18 @@ public class ZomboidItemService {
         return zomboidItemRepository.findDistinctCategoriesFromSellableItems();
     }
 
+    @Transactional
+    public ZomboidItem updateSellableInfo(String itemId, Boolean sellable, Integer value, String storeDescription) {
+        ZomboidItem item = zomboidItemRepository.findByItemId(itemId)
+            .orElseThrow(() -> new IllegalArgumentException("Item not found with itemId: " + itemId));
+        
+        if (sellable != null) item.setSellable(sellable);
+        if (value != null) item.setValue(value);
+        if (storeDescription != null) item.setStoreDescription(storeDescription);
+        
+        return zomboidItemRepository.save(item);
+    }
+
     public record PurchaseResult(boolean success, String message) {}
 
     @Transactional

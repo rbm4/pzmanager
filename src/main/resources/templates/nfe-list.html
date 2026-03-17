@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NF-e - Notas Fiscais</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            margin-left: 280px;
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px;
+            background: rgba(33, 150, 243, 0.1);
+            border-radius: 10px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(33, 150, 243, 0.3);
+        }
+        .page-header h1 {
+            background: linear-gradient(45deg, #2196f3, #03a9f4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 2rem;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: linear-gradient(45deg, #2196f3, #03a9f4);
+            color: #fff;
+        }
+        .btn-primary:hover { opacity: 0.85; }
+        .btn-success { background: linear-gradient(45deg, #4caf50, #8bc34a); color: #fff; }
+        .btn-danger { background: linear-gradient(45deg, #f44336, #e91e63); color: #fff; }
+        .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-AUTORIZADA { background: rgba(76, 175, 80, 0.2); color: #4caf50; border: 1px solid rgba(76, 175, 80, 0.4); }
+        .status-PENDENTE { background: rgba(255, 193, 7, 0.2); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.4); }
+        .status-REJEITADA { background: rgba(244, 67, 54, 0.2); color: #f44336; border: 1px solid rgba(244, 67, 54, 0.4); }
+        .status-CANCELADA { background: rgba(158, 158, 158, 0.2); color: #9e9e9e; border: 1px solid rgba(158, 158, 158, 0.4); }
+        .status-ERRO { background: rgba(244, 67, 54, 0.2); color: #ff5722; border: 1px solid rgba(244, 67, 54, 0.4); }
+
+        .sefaz-status {
+            padding: 12px 20px;
+            background: rgba(33, 150, 243, 0.1);
+            border: 1px solid rgba(33, 150, 243, 0.3);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        .sefaz-status span { color: #03a9f4; font-weight: bold; }
+
+        .alert-warning {
+            padding: 15px 20px;
+            background: rgba(255, 193, 7, 0.15);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #ffc107;
+        }
+
+        .table-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        th {
+            color: #03a9f4;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        td { color: #ccc; font-size: 0.9rem; }
+        tr:hover { background: rgba(255, 255, 255, 0.03); }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        .empty-state h3 { color: #888; margin-bottom: 10px; }
+
+        .actions { display: flex; gap: 8px; }
+
+        @media (max-width: 768px) {
+            .container { margin-left: 0; padding: 15px; }
+            .page-header { flex-direction: column; gap: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{sidebar-component :: sidebar}"></div>
+    <div class="container">
+        <div class="page-header">
+            <h1>Notas Fiscais Eletrônicas</h1>
+            <div>
+                <a href="/nfe/emit" class="btn btn-primary">+ Emitir NF-e</a>
+            </div>
+        </div>
+
+        <div class="sefaz-status" id="sefazStatus">
+            Status SEFAZ: <span id="sefazStatusText">Verificando...</span>
+        </div>
+
+        <div th:if="${!configured}" class="alert-warning">
+            ⚠ NF-e não está configurada. Configure o certificado digital e os dados do emitente nas propriedades do sistema.
+        </div>
+
+        <div class="table-container">
+            <div th:if="${#lists.isEmpty(emissions)}" class="empty-state">
+                <h3>Nenhuma NF-e emitida</h3>
+                <p>Clique em "Emitir NF-e" para criar sua primeira nota fiscal.</p>
+            </div>
+
+            <table th:if="${!#lists.isEmpty(emissions)}">
+                <thead>
+                    <tr>
+                        <th>Número</th>
+                        <th>Série</th>
+                        <th>Destinatário</th>
+                        <th>Valor Total</th>
+                        <th>Status</th>
+                        <th>Natureza</th>
+                        <th>Data</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="e : ${emissions}">
+                        <td th:text="${e.numeroNota}"></td>
+                        <td th:text="${e.serie}"></td>
+                        <td>
+                            <span th:text="${e.destinatarioNome}"></span>
+                            <br>
+                            <small style="color: #666;" th:text="${e.destinatarioCpfCnpj}"></small>
+                        </td>
+                        <td th:text="'R$ ' + ${#numbers.formatDecimal(e.valorTotal, 1, 2)}"></td>
+                        <td>
+                            <span class="status-badge" th:classappend="'status-' + ${e.status}" th:text="${e.status}"></span>
+                        </td>
+                        <td th:text="${e.naturezaOperacao}"></td>
+                        <td th:text="${#temporals.format(e.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
+                        <td>
+                            <div class="actions">
+                                <a th:href="@{'/nfe/' + ${e.id}}" class="btn btn-primary btn-sm">Ver</a>
+                                <a th:if="${e.xmlNotaProcessada != null or e.xmlEnvio != null}"
+                                   th:href="@{'/nfe/' + ${e.id} + '/xml'}" class="btn btn-success btn-sm">XML</a>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Check SEFAZ status on load
+        fetch('/nfe/status-sefaz')
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('sefazStatusText').textContent = data.status || 'Indisponível';
+            })
+            .catch(() => {
+                document.getElementById('sefazStatusText').textContent = 'Erro ao verificar';
+            });
+    </script>
+</body>
+</html>
