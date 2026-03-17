@@ -111,7 +111,7 @@ public class MigrationService {
         }
 
         if (migrationRepository.existsByCharacterId(characterId)) {
-            // throw new IllegalArgumentException("Este personagem já possui uma migração registrada");
+            throw new IllegalArgumentException("Este personagem já possui uma migração registrada");
         }
 
         // Snapshot current skill XP values

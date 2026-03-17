@@ -278,8 +278,7 @@
                     📊 Ver Experiência
                 </button>
                 <!-- Migrate button: only if no migration exists and character is alive -->
-                 <!--th:if="${!characterMigrations.containsKey(character.id) && !character.isDead}"-->
-                <button 
+                <button th:if="${!characterMigrations.containsKey(character.id) && !character.isDead}"
                         class="btn-migrate"
                         th:attr="onclick='openCharMigrateConfirm(' + ${character.id} + ', \'' + ${character.playerName} + '\')'">
                     🔄 Migrar XP
