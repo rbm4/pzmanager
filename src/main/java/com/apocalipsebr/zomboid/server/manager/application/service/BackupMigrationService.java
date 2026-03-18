@@ -75,7 +75,7 @@ public class BackupMigrationService {
                 .orElseThrow(() -> new IllegalArgumentException("Backup car not found with ID: " + backupCarId));
 
         ClaimedCar newCar = new ClaimedCar();
-        var salt = new java.util.Random().nextInt(9999) + 1
+        var salt = new java.util.Random().nextInt(9999);
         newCar.setVehicleHash(backupCar.getVehicleHash()+salt);
         newCar.setOwnerSteamId(backupCar.getOwnerSteamId());
         newCar.setOwnerName(backupCar.getOwnerName());
