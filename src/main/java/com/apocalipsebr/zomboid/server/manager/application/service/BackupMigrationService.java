@@ -74,15 +74,9 @@ public class BackupMigrationService {
         BackupClaimedCar backupCar = backupClaimedCarRepository.findById(backupCarId)
                 .orElseThrow(() -> new IllegalArgumentException("Backup car not found with ID: " + backupCarId));
 
-        // Check if already copied (by vehicle hash)
-        Optional<ClaimedCar> existing = claimedCarRepository.findByVehicleHash(backupCar.getVehicleHash());
         ClaimedCar newCar = new ClaimedCar();
-        if (existing.isPresent()) {
-            logger.info("Car with hash " + backupCar.getVehicleHash() + " already exists in app datasource, skipping copy.");
-            newCar = existing.get();
-        }
-
-        newCar.setVehicleHash(backupCar.getVehicleHash());
+        var salt = new java.util.Random().nextInt(9999) + 1
+        newCar.setVehicleHash(backupCar.getVehicleHash()+salt);
         newCar.setOwnerSteamId(backupCar.getOwnerSteamId());
         newCar.setOwnerName(backupCar.getOwnerName());
         newCar.setVehicleName(backupCar.getVehicleName());
