@@ -83,7 +83,7 @@ public class BackupMigrationController {
 
             // Find or resolve target user from the owner's steam ID (±5 tolerance for Lua imprecision)
             long steamIdLong = Long.parseLong(backupCar.getOwnerSteamId());
-            User targetUser = userRepository.findByApproximateSteamId(steamIdLong - 10, steamIdLong + 10).orElse(null);
+            User targetUser = userRepository.findByApproximateSteamId(steamIdLong - 12, steamIdLong + 12).orElse(null);
 
             ClaimedCar copied = backupMigrationService.copyCarToAppDatasource(backupCarId, targetUser);
             redirectAttributes.addFlashAttribute("successMessage",
