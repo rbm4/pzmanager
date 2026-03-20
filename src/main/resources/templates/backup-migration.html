@@ -189,6 +189,30 @@
         }
         .btn-confirm:hover { background: rgba(76,175,80,0.5); }
 
+        .btn-deliver {
+            background: rgba(255,152,0,0.2); border: 1px solid #ff9800; color: #ffb74d;
+            padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.85rem;
+            font-weight: 600; transition: all 0.3s;
+        }
+        .btn-deliver:hover { background: rgba(255,152,0,0.4); transform: translateY(-1px); }
+        .btn-deliver:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+        /* ── Delivery Progress Modal ── */
+        .delivery-modal-box {
+            background: #1e2a3a; border-radius: 16px; width: min(92vw, 600px);
+            max-height: 80vh; display: flex; flex-direction: column;
+            border: 1px solid rgba(255,255,255,0.1); overflow: hidden;
+        }
+        .delivery-modal-box .modal-header { padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; }
+        .delivery-modal-box .modal-header h2 { color: #ff9800; font-size: 1.2rem; }
+        .delivery-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
+        .delivery-progress-text { color: #4facfe; font-size: 0.95rem; margin-bottom: 12px; font-weight: 600; }
+        .delivery-log {
+            background: rgba(0,0,0,0.3); border-radius: 8px; padding: 14px;
+            font-family: 'Courier New', monospace; font-size: 0.82rem; color: #38ef7d;
+            white-space: pre-wrap; word-wrap: break-word; max-height: 350px; overflow-y: auto;
+        }
+
         @media (max-width: 768px) {
             .container { margin-left: 0; }
             body { flex-direction: column; }
@@ -287,6 +311,7 @@
                 <div class="car-card-footer">
                     <button class="btn-details" th:data-car-id="${car.id}" onclick="openDetailModal(this.dataset.carId)">🔍 Detalhes</button>
                     <button class="btn-copy" th:data-car-id="${car.id}" th:data-car-name="${car.vehicleName}" onclick="confirmCopy(this.dataset.carId, this.dataset.carName)">📋 Copiar para Atual</button>
+                    <button class="btn-deliver" th:data-car-id="${car.id}" th:data-car-name="${car.vehicleName}" onclick="deliverItems(this.dataset.carId, this.dataset.carName)">📦 Deliver Items</button>
                 </div>
             </div>
         </div>
@@ -302,6 +327,20 @@
         </div>
         <div class="modal-body" id="modalBody">
             <p style="color: #aaa; text-align: center;">Carregando...</p>
+        </div>
+    </div>
+</div>
+
+<!-- ── Delivery Progress Modal ── -->
+<div class="modal-overlay" id="deliveryModal" onclick="if(event.target===this) closeDeliveryModal()">
+    <div class="delivery-modal-box">
+        <div class="modal-header">
+            <h2 id="deliveryTitle">📦 Delivering Items</h2>
+            <button class="modal-close" id="deliveryCloseBtn" onclick="closeDeliveryModal()">✕ Fechar</button>
+        </div>
+        <div class="delivery-body">
+            <div class="delivery-progress-text" id="deliveryProgressText">Preparing...</div>
+            <pre class="delivery-log" id="deliveryLog"></pre>
         </div>
     </div>
 </div>
@@ -388,10 +427,90 @@
         return div.innerHTML;
     }
 
+    function deliverItems(carId, carName) {
+        if (!confirm('📦 Deliver all items from "' + (carName || 'vehicle') + '" to admin via RCON?')) return;
+
+        var modal = document.getElementById('deliveryModal');
+        var titleEl = document.getElementById('deliveryTitle');
+        var progressEl = document.getElementById('deliveryProgressText');
+        var logEl = document.getElementById('deliveryLog');
+        var closeBtn = document.getElementById('deliveryCloseBtn');
+
+        titleEl.textContent = '📦 ' + (carName || 'Vehicle') + ' — Delivering Items';
+        progressEl.textContent = 'Fetching vehicle items...';
+        logEl.textContent = '';
+        closeBtn.disabled = true;
+        modal.classList.add('active');
+
+        fetch('/backup-migration/api/car/' + carId)
+            .then(function(r) { return r.json(); })
+            .then(function(car) {
+                if (!car.items || car.items.length === 0) {
+                    progressEl.textContent = 'No items in this vehicle.';
+                    closeBtn.disabled = false;
+                    return;
+                }
+                executeDelivery(car.items, progressEl, logEl, closeBtn);
+            })
+            .catch(function(err) {
+                progressEl.textContent = 'Error fetching vehicle data.';
+                logEl.textContent = err.message;
+                closeBtn.disabled = false;
+            });
+    }
+
+    async function executeDelivery(items, progressEl, logEl, closeBtn) {
+        var total = items.length;
+        var success = 0;
+        var fail = 0;
+
+        for (var i = 0; i < total; i++) {
+            var item = items[i];
+            var command = 'additem "admin" "' + item.fullType + '" ' + item.count;
+            progressEl.textContent = 'Executing ' + (i + 1) + '/' + total + '...';
+            logEl.textContent += '[' + (i + 1) + '/' + total + '] ' + command + ' ... ';
+
+            try {
+                var response = await fetch('/api/server/command', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command: command })
+                });
+                var result = await response.json();
+                if (response.ok && result.success) {
+                    logEl.textContent += '✅\n';
+                    success++;
+                } else {
+                    logEl.textContent += '❌ ' + (result.error || 'Failed') + '\n';
+                    fail++;
+                }
+            } catch (err) {
+                logEl.textContent += '❌ ' + err.message + '\n';
+                fail++;
+            }
+
+            logEl.scrollTop = logEl.scrollHeight;
+
+            if (i < total - 1) {
+                await new Promise(function(r) { setTimeout(r, 1000); });
+            }
+        }
+
+        progressEl.textContent = 'Done! ✅ ' + success + ' succeeded, ❌ ' + fail + ' failed (out of ' + total + ')';
+        closeBtn.disabled = false;
+    }
+
+    function closeDeliveryModal() {
+        var closeBtn = document.getElementById('deliveryCloseBtn');
+        if (closeBtn.disabled) return;
+        document.getElementById('deliveryModal').classList.remove('active');
+    }
+
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             closeDetailModal();
             closeConfirmModal();
+            closeDeliveryModal();
         }
     });
 </script>

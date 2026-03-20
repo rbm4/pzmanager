@@ -415,6 +415,28 @@
             </div>
         </div>
 
+        <!-- Batch Commands Card (Full Width) -->
+        <div class="card full-width-card">
+            <h2>📋 Batch Commands</h2>
+            <div id="batch-alert" class="alert"></div>
+            <p style="color: #aaa; margin-bottom: 20px;">
+                Paste multiple commands (one per line). Leading <code style="color: #ff6b6b;">/</code> will be stripped automatically. Commands are executed sequentially with a 1-second interval.
+            </p>
+            <form onsubmit="executeBatchCommands(event)">
+                <div class="form-group">
+                    <label for="batch-commands">Commands (one per line)</label>
+                    <textarea id="batch-commands" placeholder='/additem "admin" "Base.UnusableMetal" 1
+/additem "admin" "Base.LightBulbGreen" 1
+/additem "admin" "Base.NutsBolts" 5' required></textarea>
+                </div>
+                <button type="submit" id="batch-submit-btn" class="btn btn-primary">Execute All Commands</button>
+            </form>
+            <div id="batch-progress" style="display: none; margin-top: 15px; padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                <h3 style="color: #4facfe; margin-bottom: 10px; font-size: 0.9rem;">📤 Progress: <span id="batch-progress-text">0/0</span></h3>
+                <pre id="batch-log" style="color: #38ef7d; font-family: 'Courier New', monospace; font-size: 0.85rem; white-space: pre-wrap; word-wrap: break-word; margin: 0; max-height: 300px; overflow-y: auto;"></pre>
+            </div>
+        </div>
+
         <!-- Import Items Card (Full Width) -->
         <div class="card full-width-card">
             <h2>📥 Import Zomboid Items (Batch)</h2>
@@ -457,6 +479,67 @@
                 alert.style.display = 'none';
             }, 5000);
         }
+        async function executeBatchCommands(event) {
+            event.preventDefault();
+
+            const input = document.getElementById('batch-commands').value.trim();
+            const commands = input.split('\n').map(l => l.trim()).filter(l => l.length > 0).map(l => l.startsWith('/') ? l.substring(1) : l);
+
+            if (commands.length === 0) {
+                showAlert('batch-alert', 'No commands to execute.', 'error');
+                return;
+            }
+
+            if (!confirm(`Execute ${commands.length} command(s) sequentially?`)) return;
+
+            const progressDiv = document.getElementById('batch-progress');
+            const progressText = document.getElementById('batch-progress-text');
+            const logPre = document.getElementById('batch-log');
+            const submitBtn = document.getElementById('batch-submit-btn');
+
+            progressDiv.style.display = 'block';
+            logPre.textContent = '';
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Executing...';
+
+            let successCount = 0;
+            let failCount = 0;
+
+            for (let i = 0; i < commands.length; i++) {
+                progressText.textContent = `${i + 1}/${commands.length}`;
+                logPre.textContent += `[${i + 1}/${commands.length}] ${commands[i]} ... `;
+
+                try {
+                    const response = await fetch(`${API_BASE}/command`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ command: commands[i] })
+                    });
+                    const result = await response.json();
+                    if (response.ok && result.success) {
+                        logPre.textContent += '✅\n';
+                        successCount++;
+                    } else {
+                        logPre.textContent += '❌ ' + (result.error || 'Failed') + '\n';
+                        failCount++;
+                    }
+                } catch (error) {
+                    logPre.textContent += '❌ ' + error.message + '\n';
+                    failCount++;
+                }
+
+                logPre.scrollTop = logPre.scrollHeight;
+
+                if (i < commands.length - 1) {
+                    await new Promise(r => setTimeout(r, 1000));
+                }
+            }
+
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Execute All Commands';
+            showAlert('batch-alert', `Done! ✅ ${successCount} succeeded, ❌ ${failCount} failed.`, failCount > 0 ? 'error' : 'success');
+        }
+
         async function sendCustomCommand(event) {
             event.preventDefault();
             
