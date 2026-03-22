@@ -5,9 +5,11 @@ import java.util.logging.Logger;
 
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Service;
 
 import com.apocalipsebr.zomboid.server.manager.presentation.controller.ZombieKillsController;
 
+@Service
 public class ApplicationReadyService {
     private static final Logger logger = Logger.getLogger(ApplicationReadyService.class.getName());
 
