@@ -91,7 +91,8 @@ public class PagBankService {
         webhookUrls.add(notificationUrl);
 
         // Build customer with user-provided email and CPF
-        var customer = new PagBankOrderParamsDTO.Customer(user.getUsername(), email, cpf);
+        String cleanName = user.getUsername().replaceAll("[^\\p{L}\\s]", "");
+        var customer = new PagBankOrderParamsDTO.Customer(cleanName, email, cpf);
 
         // Build the request DTO
         var params = new PagBankOrderParamsDTO();
