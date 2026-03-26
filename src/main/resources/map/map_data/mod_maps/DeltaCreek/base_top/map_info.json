@@ -1,0 +1,18 @@
+{
+ "w": 1536, 
+ "h": 512, 
+ "skip": 0, 
+ "cell_rects": [[23, 32, 3, 2]], 
+ "cell_size": 256, 
+ "block_size": 8, 
+ "pz_version": "B42", 
+ "maxlayer": 8, 
+ "minlayer": 0, 
+ "pzmap2dzi_version": "1.1.7", 
+ "git_branch": "refs/heads/main", 
+ "git_commit": "f399c8bce0e3278423d7891f4ff483f742cd96c9", 
+ "legends": {}, 
+ "x0": -5120, 
+ "y0": -8192, 
+ "sqr": 1
+}
