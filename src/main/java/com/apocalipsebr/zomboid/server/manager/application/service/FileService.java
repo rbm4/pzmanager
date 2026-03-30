@@ -85,6 +85,40 @@ public class FileService {
         }
     }
 
+    public String getMergedLogContent(List<String> filenames, int lines) throws IOException {
+        Path logsDir = Paths.get(logsPath);
+        StringBuilder merged = new StringBuilder();
+
+        for (String filename : filenames) {
+            Path filePath = logsDir.resolve(filename);
+
+            if (!filePath.normalize().startsWith(logsDir.normalize())) {
+                throw new SecurityException("Access denied: " + filename);
+            }
+
+            File file = filePath.toFile();
+            if (!file.exists() || !file.isFile()) {
+                continue;
+            }
+
+            List<String> fileLines = Files.readAllLines(filePath);
+            if (!fileLines.isEmpty()) {
+                if (merged.length() > 0) {
+                    merged.append("\n\n═══════════════════════════════════════════════════\n");
+                    merged.append("📄 ").append(filename).append("\n");
+                    merged.append("═══════════════════════════════════════════════════\n\n");
+                } else {
+                    merged.append("📄 ").append(filename).append("\n");
+                    merged.append("═══════════════════════════════════════════════════\n\n");
+                }
+                int startIndex = Math.max(0, fileLines.size() - lines);
+                merged.append(String.join("\n", fileLines.subList(startIndex, fileLines.size())));
+            }
+        }
+
+        return merged.toString();
+    }
+
     public String getLogsPath() {
         return logsPath;
     }

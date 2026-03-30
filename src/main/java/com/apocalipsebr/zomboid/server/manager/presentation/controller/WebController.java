@@ -76,6 +76,12 @@ public class WebController {
         return "admin";
     }
 
+    @GetMapping("/logs")
+    @PreAuthorize("hasRole('ADMIN')")
+    public String logsViewer() {
+        return "logs";
+    }
+
     @GetMapping("/player")
     public String playerPanel(HttpSession session, Model model) {
         var sessionUser = (User) session.getAttribute("user");

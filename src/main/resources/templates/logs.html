@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Logs - Admin Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            margin-left: 280px;
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .page-header h1 {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a6f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logs-path {
+            font-size: 0.85rem;
+            color: #aaa;
+        }
+
+        /* Filters Panel */
+        .filters-panel {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: flex-end;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .filter-group label {
+            font-size: 0.78rem;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filter-input, .filter-select {
+            padding: 7px 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 6px;
+            color: white;
+            font-size: 0.85rem;
+        }
+
+        .filter-input::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+        }
+
+        .filter-select option {
+            background: #1a1a2e;
+            color: white;
+        }
+
+        .merge-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 14px;
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .merge-toggle:hover {
+            background: rgba(255, 193, 7, 0.2);
+        }
+
+        .merge-toggle.active {
+            background: rgba(255, 193, 7, 0.25);
+            border-color: rgba(255, 193, 7, 0.6);
+        }
+
+        .merge-toggle input[type="checkbox"] {
+            accent-color: #ffc107;
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .merge-toggle span {
+            font-size: 0.85rem;
+            color: #ffc107;
+            font-weight: 600;
+        }
+
+        .btn-apply {
+            padding: 7px 18px;
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-apply:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-clear-filters {
+            padding: 7px 14px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 6px;
+            color: #aaa;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-clear-filters:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+        }
+
+        .logs-layout {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 20px;
+            height: calc(100vh - 290px);
+        }
+
+        /* File List Panel */
+        .file-list-panel {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .file-list-header {
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.08);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-list-header h3 {
+            color: #4facfe;
+            font-size: 0.9rem;
+        }
+
+        .file-count {
+            background: rgba(79, 172, 254, 0.2);
+            color: #4facfe;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .file-search {
+            padding: 8px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .file-search input {
+            width: 100%;
+            padding: 7px 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 6px;
+            color: white;
+            font-size: 0.82rem;
+        }
+
+        .file-search input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .file-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 6px;
+        }
+
+        .file-item {
+            display: grid;
+            grid-template-columns: 24px 78px 42px 1fr;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+            font-size: 0.82rem;
+        }
+
+        .file-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .file-item.active {
+            background: rgba(79, 172, 254, 0.15);
+            border-color: rgba(79, 172, 254, 0.4);
+        }
+
+        .file-date {
+            color: #aaa;
+            font-size: 0.78rem;
+            font-family: monospace;
+        }
+
+        .file-time {
+            color: #888;
+            font-size: 0.78rem;
+            font-family: monospace;
+        }
+
+        .file-type {
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .file-type-badge {
+            display: inline-block;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 0.72rem;
+            font-weight: 600;
+        }
+
+        .file-list-loading,
+        .file-list-error {
+            padding: 20px;
+            text-align: center;
+            color: #aaa;
+        }
+
+        .file-list-error {
+            color: #ff6b6b;
+        }
+
+        /* Viewer Panel */
+        .viewer-panel {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .viewer-toolbar {
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.08);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .viewer-file-name {
+            font-weight: 600;
+            color: #4facfe;
+            font-size: 0.88rem;
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .viewer-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .lines-select {
+            padding: 5px 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            color: white;
+            font-size: 0.82rem;
+            cursor: pointer;
+        }
+
+        .lines-select option {
+            background: #1a1a2e;
+            color: white;
+        }
+
+        .btn {
+            padding: 5px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-refresh {
+            background: rgba(79, 172, 254, 0.2);
+            border: 1px solid rgba(79, 172, 254, 0.4);
+            color: #4facfe;
+        }
+
+        .btn-refresh:hover {
+            background: rgba(79, 172, 254, 0.35);
+        }
+
+        .btn-download {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.4);
+            color: #4caf50;
+        }
+
+        .btn-download:hover {
+            background: rgba(76, 175, 80, 0.35);
+        }
+
+        .btn-reload-list {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.4);
+            color: #ffc107;
+        }
+
+        .btn-reload-list:hover {
+            background: rgba(255, 193, 7, 0.35);
+        }
+
+        .viewer-content {
+            flex: 1;
+            overflow: auto;
+            padding: 0;
+        }
+
+        .log-output {
+            width: 100%;
+            height: 100%;
+            padding: 15px 20px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #e0e0e0;
+            font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.82rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-all;
+            overflow: auto;
+            min-height: 100%;
+        }
+
+        .viewer-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(79, 172, 254, 0.3);
+            border-top-color: #4facfe;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Type color coding */
+        .type-DebugLog { color: #ff6b6b; }
+        .type-chat { color: #4caf50; }
+        .type-user { color: #4facfe; }
+        .type-admin { color: #ffc107; }
+        .type-map { color: #e040fb; }
+        .type-default { color: #ccc; }
+
+        /* Mobile responsiveness */
+        @media (max-width: 1100px) {
+            .logs-layout {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            .file-list-panel { max-height: 350px; }
+            .viewer-panel { min-height: 500px; }
+        }
+
+        @media (max-width: 768px) {
+            .container { margin-left: 0; padding: 15px; }
+            .filters-panel { flex-direction: column; }
+            .viewer-toolbar { flex-direction: column; align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{header-component :: header}"></div>
+    <div th:replace="~{sidebar-component :: sidebar}"></div>
+
+    <div class="container">
+        <div class="page-header">
+            <div>
+                <h1>📋 Server Logs</h1>
+                <div class="logs-path" id="logsPath"></div>
+            </div>
+            <button class="btn btn-reload-list" onclick="loadFileList()">🔄 Recarregar Lista</button>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-panel">
+            <div class="filter-group">
+                <label>Data Início</label>
+                <input type="date" class="filter-input" id="filterDateFrom">
+            </div>
+            <div class="filter-group">
+                <label>Data Fim</label>
+                <input type="date" class="filter-input" id="filterDateTo">
+            </div>
+            <div class="filter-group">
+                <label>Tipo de Log</label>
+                <select class="filter-select" id="filterType">
+                    <option value="">Todos</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Busca</label>
+                <input type="text" class="filter-input" id="fileFilter" placeholder="Filtrar por nome..." style="width:180px">
+            </div>
+            <label class="merge-toggle" id="mergeToggle">
+                <input type="checkbox" id="mergeCheckbox">
+                <span>📎 Mesclar Logs</span>
+            </label>
+            <button class="btn-apply" onclick="applyFilters()">🔍 Filtrar</button>
+            <button class="btn-clear-filters" onclick="clearFilters()">✖ Limpar</button>
+        </div>
+
+        <div class="logs-layout">
+            <!-- File List -->
+            <div class="file-list-panel">
+                <div class="file-list-header">
+                    <h3>📁 Arquivos de Log</h3>
+                    <span class="file-count" id="fileCount">0</span>
+                </div>
+                <div class="file-list" id="fileList">
+                    <div class="file-list-loading">Carregando arquivos...</div>
+                </div>
+            </div>
+
+            <!-- Log Viewer -->
+            <div class="viewer-panel">
+                <div class="viewer-toolbar">
+                    <span class="viewer-file-name" id="viewerFileName">Nenhum arquivo selecionado</span>
+                    <div class="viewer-controls">
+                        <label style="color:#aaa;font-size:0.78rem">Linhas/arquivo:</label>
+                        <select class="lines-select" id="linesSelect" onchange="reloadCurrent()">
+                            <option value="100">100</option>
+                            <option value="500">500</option>
+                            <option value="1000">1000</option>
+                            <option value="10000" selected>10000</option>
+                            <option value="50000">50000</option>
+                            <option value="900000000">Tudo</option>
+                        </select>
+                        <button class="btn btn-refresh" id="btnRefresh" onclick="reloadCurrent()" disabled>🔄</button>
+                        <button class="btn btn-download" id="btnDownload" onclick="downloadCurrentLog()" disabled>⬇ Baixar</button>
+                    </div>
+                </div>
+                <div class="viewer-content">
+                    <div class="viewer-placeholder" id="viewerPlaceholder">
+                        Selecione um arquivo ou use Mesclar Logs com filtros
+                    </div>
+                    <div class="log-output" id="logOutput" style="display:none"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ── State ── */
+        let allFiles = [];       // raw file paths from API
+        let parsedFiles = [];    // { path, date, time, type, folder }
+        let filteredFiles = [];
+        let currentFile = null;
+        let isMergeView = false;
+
+        /* ── Parse filename pattern ── */
+        // Pattern: (optional folder/) YYYY-MM-DD_HH-MM_LogType.ext
+        const FILE_RE = /^(?:([^/\\]+)[/\\])?(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2})_(.+)\.\w+$/;
+
+        function parseFile(path) {
+            const normalized = path.replace(/\\/g, '/');
+            const m = FILE_RE.exec(normalized);
+            if (m) {
+                return { path, folder: m[1] || '', date: m[2], time: m[3].replace('-', ':'), type: m[4] };
+            }
+            // fallback for files not matching the pattern
+            const name = normalized.split('/').pop();
+            return { path, folder: '', date: '', time: '', type: name };
+        }
+
+        /* ── Load file list ── */
+        async function loadFileList() {
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = '<div class="file-list-loading"><span class="spinner"></span> Carregando...</div>';
+
+            try {
+                const res = await fetch('/api/logs/list');
+                if (!res.ok) throw new Error('Erro ao carregar lista');
+                const data = await res.json();
+
+                allFiles = data.files || [];
+                document.getElementById('logsPath').textContent = 'Caminho: ' + (data.path || '');
+
+                parsedFiles = allFiles.map(parseFile);
+
+                // Sort descending by date then time
+                parsedFiles.sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
+
+                populateTypeFilter();
+                applyFilters();
+            } catch (e) {
+                fileList.innerHTML = '<div class="file-list-error">❌ ' + e.message + '</div>';
+            }
+        }
+
+        /* ── Populate type dropdown ── */
+        function populateTypeFilter() {
+            const types = [...new Set(parsedFiles.map(f => f.type).filter(Boolean))].sort();
+            const sel = document.getElementById('filterType');
+            const current = sel.value;
+            sel.innerHTML = '<option value="">Todos</option>';
+            types.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t;
+                opt.textContent = t;
+                sel.appendChild(opt);
+            });
+            sel.value = current;
+        }
+
+        /* ── Apply filters ── */
+        function applyFilters() {
+            const dateFrom = document.getElementById('filterDateFrom').value;
+            const dateTo = document.getElementById('filterDateTo').value;
+            const type = document.getElementById('filterType').value;
+            const text = document.getElementById('fileFilter').value.toLowerCase();
+
+            filteredFiles = parsedFiles.filter(f => {
+                if (dateFrom && f.date && f.date < dateFrom) return false;
+                if (dateTo && f.date && f.date > dateTo) return false;
+                if (type && f.type !== type) return false;
+                if (text && !f.path.toLowerCase().includes(text)) return false;
+                return true;
+            });
+
+            document.getElementById('fileCount').textContent = filteredFiles.length;
+            renderFileList();
+        }
+
+        function clearFilters() {
+            document.getElementById('filterDateFrom').value = '';
+            document.getElementById('filterDateTo').value = '';
+            document.getElementById('filterType').value = '';
+            document.getElementById('fileFilter').value = '';
+            document.getElementById('mergeCheckbox').checked = false;
+            updateMergeToggleStyle();
+            applyFilters();
+        }
+
+        /* ── Render file list ── */
+        function renderFileList() {
+            const container = document.getElementById('fileList');
+
+            if (filteredFiles.length === 0) {
+                container.innerHTML = '<div class="file-list-loading">Nenhum arquivo encontrado</div>';
+                return;
+            }
+
+            container.innerHTML = filteredFiles.map(f => {
+                const isActive = currentFile === f.path ? ' active' : '';
+                const escaped = f.path.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+                const safeJs = f.path.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                return '<div class="file-item' + isActive + '" onclick="selectFile(\'' + safeJs + '\')" title="' + escaped + '">'
+                    + '<span style="font-size:0.9rem">' + (f.date ? '📝' : '📄') + '</span>'
+                    + '<span class="file-date">' + (f.date || '—') + '</span>'
+                    + '<span class="file-time">' + (f.time || '') + '</span>'
+                    + '<span class="file-type">' + escapeHtml(f.type) + '</span>'
+                    + '</div>';
+            }).join('');
+        }
+
+        function escapeHtml(s) {
+            return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        /* ── Select single file ── */
+        async function selectFile(path) {
+            currentFile = path;
+            isMergeView = false;
+            document.getElementById('viewerFileName').textContent = path;
+            document.getElementById('btnRefresh').disabled = false;
+            document.getElementById('btnDownload').disabled = false;
+            renderFileList();
+            await loadLogContent(path);
+        }
+
+        /* ── Load single log ── */
+        async function loadLogContent(filepath) {
+            const logOutput = document.getElementById('logOutput');
+            const placeholder = document.getElementById('viewerPlaceholder');
+            const lines = document.getElementById('linesSelect').value;
+
+            showLoading(placeholder, logOutput);
+
+            try {
+                const parts = filepath.replace(/\\/g, '/').split('/');
+                let url;
+                if (parts.length > 1) {
+                    url = '/api/logs/view/' + encodeURIComponent(parts[0]) + '/' + encodeURIComponent(parts.slice(1).join('/'));
+                } else {
+                    url = '/api/logs/view/' + encodeURIComponent(filepath);
+                }
+                url += '?lines=' + lines;
+
+                const res = await fetch(url);
+                if (!res.ok) throw new Error(await res.text() || 'Erro ao carregar arquivo');
+
+                showContent(placeholder, logOutput, await res.text());
+            } catch (e) {
+                showError(placeholder, logOutput, e.message);
+            }
+        }
+
+        /* ── Merge mode ── */
+        document.getElementById('mergeCheckbox').addEventListener('change', function() {
+            updateMergeToggleStyle();
+            if (this.checked) {
+                loadMergedLogs();
+            }
+        });
+
+        function updateMergeToggleStyle() {
+            const toggle = document.getElementById('mergeToggle');
+            toggle.classList.toggle('active', document.getElementById('mergeCheckbox').checked);
+        }
+
+        async function loadMergedLogs() {
+            if (filteredFiles.length === 0) {
+                alert('Nenhum arquivo filtrado para mesclar. Ajuste os filtros primeiro.');
+                document.getElementById('mergeCheckbox').checked = false;
+                updateMergeToggleStyle();
+                return;
+            }
+
+            if (filteredFiles.length > 100) {
+                if (!confirm('Existem ' + filteredFiles.length + ' arquivos filtrados. Mesclar muitos arquivos pode demorar. Continuar?')) {
+                    document.getElementById('mergeCheckbox').checked = false;
+                    updateMergeToggleStyle();
+                    return;
+                }
+            }
+
+            isMergeView = true;
+            currentFile = null;
+            const logOutput = document.getElementById('logOutput');
+            const placeholder = document.getElementById('viewerPlaceholder');
+            const lines = document.getElementById('linesSelect').value;
+
+            document.getElementById('viewerFileName').textContent =
+                '📎 Mesclando ' + filteredFiles.length + ' arquivo(s)';
+            document.getElementById('btnRefresh').disabled = false;
+            document.getElementById('btnDownload').disabled = true;
+
+            showLoading(placeholder, logOutput);
+
+            try {
+                const filePaths = filteredFiles.map(f => f.path);
+                const res = await fetch('/api/logs/merge?lines=' + lines, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(filePaths)
+                });
+
+                if (!res.ok) throw new Error(await res.text() || 'Erro ao mesclar logs');
+
+                const typeLabel = document.getElementById('filterType').value || 'Todos';
+                const dateFrom = document.getElementById('filterDateFrom').value || '—';
+                const dateTo = document.getElementById('filterDateTo').value || '—';
+                document.getElementById('viewerFileName').textContent =
+                    '📎 ' + filteredFiles.length + ' arquivo(s) | Tipo: ' + typeLabel + ' | Período: ' + dateFrom + ' → ' + dateTo;
+
+                showContent(placeholder, logOutput, await res.text());
+            } catch (e) {
+                showError(placeholder, logOutput, e.message);
+            }
+        }
+
+        /* ── Reload current view ── */
+        function reloadCurrent() {
+            if (isMergeView) {
+                loadMergedLogs();
+            } else if (currentFile) {
+                loadLogContent(currentFile);
+            }
+        }
+
+        /* ── Download ── */
+        function downloadCurrentLog() {
+            if (!currentFile) return;
+            const parts = currentFile.replace(/\\/g, '/').split('/');
+            const filename = parts[parts.length - 1];
+            window.location.href = '/api/logs/download/' + encodeURIComponent(filename);
+        }
+
+        /* ── UI helpers ── */
+        function showLoading(placeholder, logOutput) {
+            placeholder.style.display = 'flex';
+            placeholder.innerHTML = '<span class="spinner"></span>&nbsp; Carregando...';
+            logOutput.style.display = 'none';
+        }
+
+        function showContent(placeholder, logOutput, text) {
+            placeholder.style.display = 'none';
+            logOutput.style.display = 'block';
+            logOutput.textContent = text || '(Vazio)';
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+
+        function showError(placeholder, logOutput, msg) {
+            placeholder.style.display = 'flex';
+            placeholder.innerHTML = '❌ ' + escapeHtml(msg);
+            logOutput.style.display = 'none';
+        }
+
+        /* ── Keyboard shortcut: Enter on filter inputs applies filters ── */
+        document.querySelectorAll('.filters-panel input, .filters-panel select').forEach(el => {
+            el.addEventListener('keydown', e => { if (e.key === 'Enter') applyFilters(); });
+            if (el.tagName === 'SELECT') el.addEventListener('change', applyFilters);
+        });
+
+        /* ── Init ── */
+        loadFileList();
+    </script>
+</body>
+</html>
