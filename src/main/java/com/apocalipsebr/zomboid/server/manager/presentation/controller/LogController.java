@@ -63,7 +63,7 @@ public class LogController {
             @PathVariable String folder,
             @RequestParam(defaultValue = "10000") int lines) {
         try {
-            String content = fileService.getLogFileContent(folder + filename, lines);
+            String content = fileService.getLogFileContent(folder + "/" + filename, lines);
             return ResponseEntity.ok()
                     .contentType(MediaType.TEXT_PLAIN)
                     .body(content);
