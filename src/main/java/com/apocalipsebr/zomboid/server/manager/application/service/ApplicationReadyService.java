@@ -18,19 +18,22 @@ public class ApplicationReadyService {
     private final ScheduledRestartService scheduledRestartService;
     private final ServerBroadcastService serverBroadcastService;
     private final ZombieKillsController zombieKillsController;
+    private final ProxyService proxyService;
 
     public ApplicationReadyService(
         RegionService regionService,
         SandboxPropertyService sandboxPropertyService,
         ScheduledRestartService scheduledRestartService,
         ServerBroadcastService serverBroadcastService,
-        ZombieKillsController zombieKillsController
+        ZombieKillsController zombieKillsController,
+        ProxyService proxyService
     ) {
         this.regionService = regionService;
         this.sandboxPropertyService = sandboxPropertyService;
         this.scheduledRestartService = scheduledRestartService;
         this.serverBroadcastService = serverBroadcastService;
         this.zombieKillsController = zombieKillsController;
+        this.proxyService = proxyService;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -83,6 +86,14 @@ public class ApplicationReadyService {
             logger.log(Level.SEVERE, "Failed to sync sandbox settings on startup", e);
         } finally {
             logger.info("syncSettingsOnStartup completed");
+        }
+        Thread.sleep(2000);
+        try {
+            proxyService.reconcile();
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Failed to reconcile proxy activations on startup", e);
+        } finally {
+            logger.info("proxyService.reconcile completed");
         }
     }
 }

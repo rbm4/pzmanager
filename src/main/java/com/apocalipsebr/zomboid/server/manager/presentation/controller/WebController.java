@@ -82,6 +82,15 @@ public class WebController {
         return "logs";
     }
 
+    @GetMapping("/proxy")
+    public String proxyPage(HttpSession session) {
+        var user = (User) session.getAttribute("user");
+        if (user == null) {
+            return "redirect:/login";
+        }
+        return "proxy";
+    }
+
     @GetMapping("/player")
     public String playerPanel(HttpSession session, Model model) {
         var sessionUser = (User) session.getAttribute("user");

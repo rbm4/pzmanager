@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proxy - Apocalipse [BR]</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            margin-left: 280px;
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px;
+            background: rgba(79, 172, 254, 0.1);
+            border-radius: 10px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(79, 172, 254, 0.3);
+        }
+
+        .page-header h1 {
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 2rem;
+        }
+
+        .header-info { text-align: right; }
+        .header-label { color: #aaa; font-size: 0.9rem; }
+        .header-value { color: #4facfe; font-size: 1.3rem; font-weight: 600; }
+
+        /* Proxy card */
+        .proxy-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+            transition: border-color 0.3s;
+        }
+
+        .proxy-card.active {
+            border-color: rgba(76, 175, 80, 0.5);
+            background: rgba(76, 175, 80, 0.05);
+        }
+
+        .proxy-card.starting {
+            border-color: rgba(255, 193, 7, 0.5);
+            background: rgba(255, 193, 7, 0.05);
+        }
+
+        .proxy-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .proxy-name {
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .proxy-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .proxy-badge.stopped {
+            background: rgba(158, 158, 158, 0.2);
+            border: 1px solid rgba(158, 158, 158, 0.4);
+            color: #9e9e9e;
+        }
+
+        .proxy-badge.active {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.4);
+            color: #4caf50;
+        }
+
+        .proxy-badge.starting {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.4);
+            color: #ffc107;
+        }
+
+        /* Connection info */
+        .connection-info {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .connection-info h3 {
+            color: #4caf50;
+            margin-bottom: 12px;
+            font-size: 1rem;
+        }
+
+        .connection-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .connection-row:last-child { border-bottom: none; }
+        .connection-label { color: #aaa; font-size: 0.9rem; }
+
+        .connection-value {
+            color: #fff;
+            font-weight: 600;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 1rem;
+        }
+
+        .connection-value.highlight {
+            color: #4caf50;
+            font-size: 1.15rem;
+        }
+
+        /* Countdown bar */
+        .countdown-section { margin-bottom: 20px; }
+
+        .countdown-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .countdown-label span { color: #aaa; font-size: 0.9rem; }
+
+        .countdown-time {
+            font-size: 1.2rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            color: #4caf50;
+        }
+
+        .countdown-time.warning { color: #ff9800; }
+        .countdown-time.critical { color: #f44336; }
+
+        .countdown-bar-bg {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .countdown-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4caf50, #8bc34a);
+            border-radius: 4px;
+            transition: width 1s linear;
+        }
+
+        .countdown-bar.warning { background: linear-gradient(90deg, #ff9800, #ffc107); }
+        .countdown-bar.critical { background: linear-gradient(90deg, #f44336, #ff5722); }
+
+        /* Activation form */
+        .activation-form { margin-top: 15px; }
+
+        .duration-selector {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .duration-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            padding: 14px 20px;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+            text-align: center;
+            min-width: 100px;
+            flex: 1;
+        }
+
+        .duration-btn:hover {
+            background: rgba(79, 172, 254, 0.15);
+            border-color: rgba(79, 172, 254, 0.4);
+            color: #fff;
+        }
+
+        .duration-btn.selected {
+            background: rgba(79, 172, 254, 0.2);
+            border-color: #4facfe;
+            color: #fff;
+            box-shadow: 0 0 12px rgba(79, 172, 254, 0.2);
+        }
+
+        .duration-hours {
+            font-size: 1.3rem;
+            font-weight: 700;
+            display: block;
+        }
+
+        .duration-credits {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-top: 4px;
+            display: block;
+        }
+
+        .duration-btn.selected .duration-credits { color: #ccc; }
+
+        .cost-preview {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cost-label { color: #aaa; font-size: 0.95rem; }
+        .cost-value { font-size: 1.5rem; font-weight: 700; color: #ffc107; }
+
+        .btn-activate {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1.15rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-activate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-activate:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-extend {
+            padding: 12px 25px;
+            background: rgba(76, 175, 80, 0.3);
+            border: 1px solid rgba(76, 175, 80, 0.5);
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-extend:hover {
+            background: rgba(76, 175, 80, 0.5);
+        }
+
+        .btn-extend:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Activated by info */
+        .activated-by {
+            color: #aaa;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+        }
+
+        .activated-by strong { color: #4facfe; }
+
+        /* Error / success messages */
+        .error-message {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid rgba(244, 67, 54, 0.4);
+            color: #f44336;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .success-message {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.4);
+            color: #4caf50;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        /* How to connect instructions */
+        .instructions {
+            background: rgba(33, 150, 243, 0.08);
+            border: 1px solid rgba(33, 150, 243, 0.25);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .instructions h3 {
+            color: #2196f3;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .instructions ol {
+            padding-left: 20px;
+            color: #ccc;
+            line-height: 1.8;
+        }
+
+        .instructions code {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            color: #4facfe;
+        }
+
+        /* Extend modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            background: rgba(0, 0, 0, 0.7);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show { display: flex; }
+
+        .modal-content {
+            background: #1a1a2e;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 480px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content h2 {
+            color: #4facfe;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+
+        .modal-close {
+            float: right;
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0 5px;
+        }
+
+        .modal-close:hover { color: #fff; }
+
+        /* History section */
+        .history-section {
+            margin-top: 40px;
+        }
+
+        .history-section h2 {
+            color: #4facfe;
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .history-table th {
+            text-align: left;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: #4facfe;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .history-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: #ccc;
+            font-size: 0.9rem;
+        }
+
+        .history-table tr:hover td {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .history-status {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .history-status.expired {
+            background: rgba(158, 158, 158, 0.2);
+            color: #9e9e9e;
+        }
+
+        .history-status.active {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+        }
+
+        .history-status.failed {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+        }
+
+        .history-empty {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .pagination button {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            color: #ccc;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            background: rgba(79, 172, 254, 0.2);
+            border-color: #4facfe;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid #4facfe;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Loading skeleton */
+        .loading-skeleton {
+            text-align: center;
+            padding: 60px;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .container { margin-left: 0; padding: 15px; }
+            .page-header h1 { font-size: 1.5rem; }
+            .duration-selector { flex-direction: column; }
+            .duration-btn { min-width: unset; }
+            .connection-row { flex-direction: column; gap: 4px; }
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{header-component :: header}"></div>
+<div th:replace="~{sidebar-component :: sidebar}"></div>
+
+<div class="container">
+    <div class="page-header">
+        <h1>🌐 Proxy de Conexão</h1>
+        <div class="header-info">
+            <div class="header-label">Seu saldo</div>
+            <div class="header-value" id="user-credits">— ₳</div>
+        </div>
+    </div>
+
+    <!-- Error / success banners -->
+    <div class="error-message" id="global-error"></div>
+    <div class="success-message" id="global-success"></div>
+
+    <!-- Proxy cards loaded dynamically -->
+    <div id="proxy-list">
+        <div class="loading-skeleton">
+            <span class="spinner"></span> Carregando proxies...
+        </div>
+    </div>
+
+    <!-- History -->
+    <div class="history-section" id="history-section" style="display:none;">
+        <h2>📋 Histórico de Ativações</h2>
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Região</th>
+                    <th>Duração</th>
+                    <th>Custo</th>
+                    <th>Data</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="history-body"></tbody>
+        </table>
+        <div class="history-empty" id="history-empty" style="display:none;">Nenhuma ativação encontrada.</div>
+        <div class="pagination" id="history-pagination"></div>
+    </div>
+</div>
+
+<!-- Extend modal -->
+<div class="modal-overlay" id="extend-modal" onclick="if(event.target===this) closeExtendModal()">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeExtendModal()">&times;</button>
+        <h2>⏱️ Estender Proxy</h2>
+        <p style="color:#aaa; margin-bottom:20px;" id="extend-current-info"></p>
+
+        <div class="duration-selector" id="extend-duration-selector"></div>
+        <div class="cost-preview" id="extend-cost-preview" style="display:none;">
+            <span class="cost-label">Custo adicional</span>
+            <span class="cost-value" id="extend-cost-value">0 ₳</span>
+        </div>
+        <div class="error-message" id="extend-error"></div>
+        <button class="btn-activate" id="btn-extend-confirm" onclick="confirmExtend()" disabled>Estender</button>
+    </div>
+</div>
+
+<script>
+    /* ── State ── */
+    let pricing = {};
+    let currentProxies = [];
+    let selectedDuration = {};   // proxyId → hours
+    let extendActivationId = null;
+    let extendMaxAdditional = 0;
+    let selectedExtendHours = 0;
+    let countdownTimers = {};
+    let pollInterval = null;
+
+    /* ── Init ── */
+    document.addEventListener('DOMContentLoaded', () => {
+        loadStatus();
+        loadHistory(0);
+        // Auto-refresh every 15s
+        pollInterval = setInterval(loadStatus, 15000);
+    });
+
+    /* ── API helpers ── */
+    async function api(url, options = {}) {
+        const resp = await fetch(url, {
+            headers: { 'Content-Type': 'application/json' },
+            ...options
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw { status: resp.status, data };
+        return data;
+    }
+
+    /* ── Load proxy status ── */
+    async function loadStatus() {
+        try {
+            const data = await api('/api/proxy/status');
+            pricing = data.pricing;
+            currentProxies = data.proxies;
+            document.getElementById('user-credits').textContent = data.userCredits.toLocaleString('pt-BR') + ' ₳';
+            renderProxies(data.proxies);
+        } catch (e) {
+            document.getElementById('proxy-list').innerHTML =
+                '<div class="proxy-card"><p style="color:#f44336;">Erro ao carregar proxies. Tente recarregar a página.</p></div>';
+        }
+    }
+
+    /* ── Render proxy cards ── */
+    function renderProxies(proxies) {
+        const container = document.getElementById('proxy-list');
+        container.innerHTML = '';
+
+        for (const proxy of proxies) {
+            const isActive = proxy.status === 'ACTIVE';
+            const isStarting = proxy.status === 'STARTING';
+            const isStopped = proxy.status === 'STOPPED';
+
+            let cardClass = 'proxy-card';
+            if (isActive) cardClass += ' active';
+            if (isStarting) cardClass += ' starting';
+
+            let badgeClass = proxy.status.toLowerCase();
+
+            let html = `
+                <div class="${cardClass}" id="card-${proxy.proxyId}">
+                    <div class="proxy-card-header">
+                        <span class="proxy-name">🌎 ${escHtml(proxy.region)}</span>
+                        <span class="proxy-badge ${badgeClass}">${statusLabel(proxy.status)}</span>
+                    </div>`;
+
+            if (isStarting) {
+                html += `
+                    <div style="text-align:center; padding:20px; color:#ffc107;">
+                        <span class="spinner"></span>
+                        Iniciando instância... Aguarde, isso pode levar até 1 minuto.
+                    </div>`;
+                if (proxy.activatedBy) {
+                    html += `<div class="activated-by">Ativado por <strong>${escHtml(proxy.activatedBy)}</strong></div>`;
+                }
+            }
+
+            if (isActive) {
+                html += renderActiveProxy(proxy);
+            }
+
+            if (isStopped) {
+                html += renderStoppedProxy(proxy);
+            }
+
+            html += '</div>';
+            container.innerHTML += html;
+        }
+
+        // Start/update countdown for active proxies
+        for (const proxy of proxies) {
+            if (proxy.status === 'ACTIVE') startCountdown(proxy);
+        }
+    }
+
+    function renderActiveProxy(proxy) {
+        let html = '';
+
+        if (proxy.activatedBy) {
+            html += `<div class="activated-by">Ativado por <strong>${escHtml(proxy.activatedBy)}</strong> · ${proxy.hours}h</div>`;
+        }
+
+        // Countdown
+        html += `
+            <div class="countdown-section">
+                <div class="countdown-label">
+                    <span>Tempo restante</span>
+                    <span class="countdown-time" id="countdown-${proxy.proxyId}">${formatMinutes(proxy.remainingMinutes)}</span>
+                </div>
+                <div class="countdown-bar-bg">
+                    <div class="countdown-bar" id="bar-${proxy.proxyId}" style="width:${Math.min(100, (proxy.remainingMinutes / (proxy.hours * 60)) * 100)}%"></div>
+                </div>
+            </div>`;
+
+        // Connection info
+        html += `
+            <div class="connection-info">
+                <h3>📡 Dados de Conexão</h3>
+                <div class="connection-row">
+                    <span class="connection-label">IP do Servidor</span>
+                    <span class="connection-value highlight">${escHtml(proxy.address)}</span>
+                </div>
+                <div class="connection-row">
+                    <span class="connection-label">Porta</span>
+                    <span class="connection-value">${proxy.port}</span>
+                </div>
+            </div>`;
+
+        // Instructions
+        html += `
+            <div class="instructions">
+                <h3>🎮 Como conectar</h3>
+                <ol>
+                    <li>No Project Zomboid, abra <strong>Join Server</strong></li>
+                    <li>Use o IP <code>${escHtml(proxy.address)}</code> como endereço do servidor</li>
+                    <li>Conecte normalmente — seu tráfego será roteado por um caminho mais rápido</li>
+                </ol>
+            </div>`;
+
+        // Extend button
+        if (proxy.activationId) {
+            html += `<button class="btn-extend" onclick="openExtendModal(${proxy.activationId}, ${proxy.hours}, '${escHtml(proxy.proxyId)}')">⏱️ Estender Tempo</button>`;
+        }
+
+        return html;
+    }
+
+    function renderStoppedProxy(proxy) {
+        const pid = proxy.proxyId;
+        let html = `
+            <div class="activation-form" id="form-${pid}">
+                <p style="color:#aaa; margin-bottom:15px;">
+                    Ative o proxy para melhorar sua conexão com o servidor. 
+                    Todos os jogadores poderão usar o proxy enquanto estiver ativo.
+                </p>
+                <div class="duration-selector" id="dur-${pid}">`;
+
+        for (let h = pricing.minHours; h <= pricing.maxHours; h += pricing.hourStep) {
+            const credits = Math.ceil(h / 24 * pricing.creditsPer24h);
+            html += `
+                    <button class="duration-btn" onclick="selectDuration('${pid}', ${h}, this)" data-hours="${h}">
+                        <span class="duration-hours">${h}h</span>
+                        <span class="duration-credits">${credits.toLocaleString('pt-BR')} ₳</span>
+                    </button>`;
+        }
+
+        html += `
+                </div>
+                <div class="cost-preview" id="cost-${pid}" style="display:none;">
+                    <span class="cost-label">Custo total</span>
+                    <span class="cost-value" id="cost-val-${pid}">0 ₳</span>
+                </div>
+                <button class="btn-activate" id="btn-activate-${pid}" onclick="activateProxy('${pid}')" disabled>Ativar Proxy</button>
+            </div>`;
+        return html;
+    }
+
+    /* ── Duration selection ── */
+    function selectDuration(proxyId, hours, btn) {
+        selectedDuration[proxyId] = hours;
+        const container = btn.parentElement;
+        container.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+
+        const credits = Math.ceil(hours / 24 * pricing.creditsPer24h);
+        document.getElementById('cost-' + proxyId).style.display = 'flex';
+        document.getElementById('cost-val-' + proxyId).textContent = credits.toLocaleString('pt-BR') + ' ₳';
+        document.getElementById('btn-activate-' + proxyId).disabled = false;
+    }
+
+    /* ── Activate proxy ── */
+    async function activateProxy(proxyId) {
+        const hours = selectedDuration[proxyId];
+        if (!hours) return;
+
+        const btn = document.getElementById('btn-activate-' + proxyId);
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Ativando...';
+
+        hideMessages();
+
+        try {
+            await api('/api/proxy/activate', {
+                method: 'POST',
+                body: JSON.stringify({ proxyId, hours })
+            });
+
+            showSuccess('Proxy ativado com sucesso! Aguarde a instância iniciar...');
+            loadStatus();
+            loadHistory(0);
+        } catch (e) {
+            const msg = e.data?.error || 'Erro ao ativar proxy.';
+            showError(msg);
+            btn.disabled = false;
+            btn.textContent = 'Ativar Proxy';
+        }
+    }
+
+    /* ── Extend modal ── */
+    function openExtendModal(activationId, currentHours, proxyId) {
+        extendActivationId = activationId;
+        extendMaxAdditional = pricing.maxHours - currentHours;
+        selectedExtendHours = 0;
+
+        if (extendMaxAdditional <= 0) {
+            showError('Duração máxima de ' + pricing.maxHours + 'h já atingida.');
+            return;
+        }
+
+        document.getElementById('extend-current-info').textContent =
+            'Duração atual: ' + currentHours + 'h / máximo: ' + pricing.maxHours + 'h';
+
+        const selector = document.getElementById('extend-duration-selector');
+        selector.innerHTML = '';
+
+        for (let h = pricing.hourStep; h <= extendMaxAdditional; h += pricing.hourStep) {
+            const credits = Math.ceil(h / 24 * pricing.creditsPer24h);
+            const btn = document.createElement('button');
+            btn.className = 'duration-btn';
+            btn.innerHTML = `<span class="duration-hours">+${h}h</span><span class="duration-credits">${credits.toLocaleString('pt-BR')} ₳</span>`;
+            btn.onclick = () => selectExtendDuration(h, btn);
+            selector.appendChild(btn);
+        }
+
+        document.getElementById('extend-cost-preview').style.display = 'none';
+        document.getElementById('btn-extend-confirm').disabled = true;
+        document.getElementById('extend-error').style.display = 'none';
+        document.getElementById('extend-modal').classList.add('show');
+    }
+
+    function closeExtendModal() {
+        document.getElementById('extend-modal').classList.remove('show');
+    }
+
+    function selectExtendDuration(hours, btn) {
+        selectedExtendHours = hours;
+        const selector = document.getElementById('extend-duration-selector');
+        selector.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+
+        const credits = Math.ceil(hours / 24 * pricing.creditsPer24h);
+        document.getElementById('extend-cost-preview').style.display = 'flex';
+        document.getElementById('extend-cost-value').textContent = credits.toLocaleString('pt-BR') + ' ₳';
+        document.getElementById('btn-extend-confirm').disabled = false;
+    }
+
+    async function confirmExtend() {
+        if (!extendActivationId || !selectedExtendHours) return;
+
+        const btn = document.getElementById('btn-extend-confirm');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Estendendo...';
+
+        try {
+            const data = await api('/api/proxy/extend', {
+                method: 'POST',
+                body: JSON.stringify({
+                    activationId: extendActivationId,
+                    additionalHours: selectedExtendHours
+                })
+            });
+
+            closeExtendModal();
+            showSuccess('Proxy estendido! Novo total: ' + data.totalHours + 'h.');
+            loadStatus();
+            loadHistory(0);
+        } catch (e) {
+            const errEl = document.getElementById('extend-error');
+            errEl.textContent = e.data?.error || 'Erro ao estender.';
+            errEl.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Estender';
+        }
+    }
+
+    /* ── Countdown ── */
+    function startCountdown(proxy) {
+        const key = proxy.proxyId;
+        if (countdownTimers[key]) clearInterval(countdownTimers[key]);
+
+        let remaining = proxy.remainingMinutes * 60; // seconds
+        const total = proxy.hours * 3600;
+
+        countdownTimers[key] = setInterval(() => {
+            remaining--;
+            if (remaining <= 0) {
+                clearInterval(countdownTimers[key]);
+                loadStatus();
+                return;
+            }
+
+            const el = document.getElementById('countdown-' + key);
+            const bar = document.getElementById('bar-' + key);
+            if (!el || !bar) { clearInterval(countdownTimers[key]); return; }
+
+            el.textContent = formatSeconds(remaining);
+            const pct = Math.max(0, (remaining / total) * 100);
+            bar.style.width = pct + '%';
+
+            // Color classes
+            el.className = 'countdown-time';
+            bar.className = 'countdown-bar';
+            if (remaining < 1800) { el.classList.add('critical'); bar.classList.add('critical'); }
+            else if (remaining < 3600) { el.classList.add('warning'); bar.classList.add('warning'); }
+        }, 1000);
+    }
+
+    /* ── History ── */
+    async function loadHistory(page) {
+        try {
+            const data = await api(`/api/proxy/history?page=${page}&size=10`);
+            const section = document.getElementById('history-section');
+            const body = document.getElementById('history-body');
+            const empty = document.getElementById('history-empty');
+            const pag = document.getElementById('history-pagination');
+
+            section.style.display = 'block';
+
+            if (data.activations.length === 0 && page === 0) {
+                body.innerHTML = '';
+                empty.style.display = 'block';
+                pag.innerHTML = '';
+                return;
+            }
+
+            empty.style.display = 'none';
+            body.innerHTML = data.activations.map(a => `
+                <tr>
+                    <td>${escHtml(a.proxyId)}</td>
+                    <td>${a.hours}h</td>
+                    <td>${a.creditsSpent.toLocaleString('pt-BR')} ₳</td>
+                    <td>${formatDate(a.activatedAt)}</td>
+                    <td><span class="history-status ${a.status.toLowerCase()}">${statusLabel(a.status)}</span></td>
+                </tr>
+            `).join('');
+
+            // Pagination
+            let pagHtml = '';
+            if (page > 0) pagHtml += `<button onclick="loadHistory(${page - 1})">← Anterior</button>`;
+            pagHtml += `<span style="color:#aaa; padding:8px;">Página ${page + 1} de ${Math.max(1, data.totalPages)}</span>`;
+            if (page < data.totalPages - 1) pagHtml += `<button onclick="loadHistory(${page + 1})">Próxima →</button>`;
+            pag.innerHTML = pagHtml;
+        } catch (e) { /* silent */ }
+    }
+
+    /* ── Helpers ── */
+    function formatMinutes(min) {
+        if (min <= 0) return '0:00';
+        const h = Math.floor(min / 60);
+        const m = Math.floor(min % 60);
+        return h + ':' + String(m).padStart(2, '0');
+    }
+
+    function formatSeconds(sec) {
+        const h = Math.floor(sec / 3600);
+        const m = Math.floor((sec % 3600) / 60);
+        const s = sec % 60;
+        if (h > 0) return h + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        return m + ':' + String(s).padStart(2, '0');
+    }
+
+    function formatDate(iso) {
+        if (!iso) return '—';
+        const d = new Date(iso);
+        return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function statusLabel(s) {
+        const labels = {
+            'STOPPED': 'Desligado', 'STARTING': 'Iniciando', 'ACTIVE': 'Ativo',
+            'STOPPING': 'Parando', 'EXPIRED': 'Expirado', 'FAILED': 'Falhou'
+        };
+        return labels[s] || s;
+    }
+
+    function escHtml(str) {
+        if (!str) return '';
+        const d = document.createElement('div');
+        d.textContent = str;
+        return d.innerHTML;
+    }
+
+    function showError(msg) {
+        const el = document.getElementById('global-error');
+        el.textContent = msg;
+        el.style.display = 'block';
+        setTimeout(() => el.style.display = 'none', 8000);
+    }
+
+    function showSuccess(msg) {
+        const el = document.getElementById('global-success');
+        el.textContent = msg;
+        el.style.display = 'block';
+        setTimeout(() => el.style.display = 'none', 8000);
+    }
+
+    function hideMessages() {
+        document.getElementById('global-error').style.display = 'none';
+        document.getElementById('global-success').style.display = 'none';
+    }
+</script>
+</body>
+</html>

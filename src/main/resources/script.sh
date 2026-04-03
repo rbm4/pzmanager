@@ -1,4 +1,9 @@
 ﻿#!/bin/bash
+if [ -f /etc/pzmanager/env ]; then
+  set -a
+  source /etc/pzmanager/env
+  set +a
+fi
 
 REPO_DIR="/home/pzuser/pzmanager"
 DEPLOY_DIR="/home/pzuser/deploy"
