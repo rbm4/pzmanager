@@ -77,12 +77,6 @@ public class ProxyService {
 
     @Transactional
     public ActivateResult activate(User user, String proxyId, int hours) {
-        // Validate hours
-        if (!proxyProperties.isValidHours(hours)) {
-            return ActivateResult.fail("Invalid duration. Must be " + proxyProperties.getMinHours()
-                    + "-" + proxyProperties.getMaxHours() + "h in " + proxyProperties.getHourStep() + "h increments.", 400);
-        }
-
         // Resolve proxy definition from DB
         Optional<ProxyDefinition> defOpt = proxyDefinitionRepository.findByProxyId(proxyId);
         if (defOpt.isEmpty() || !defOpt.get().getEnabled()) {
