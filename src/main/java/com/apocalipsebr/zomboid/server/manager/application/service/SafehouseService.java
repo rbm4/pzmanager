@@ -40,7 +40,7 @@ public class SafehouseService {
     /**
      * Writes a ZIP to the given output stream containing:
      * - map_meta.bin at the root
-     * - map_vehicle.bin at the root (vehicle data)
+     * - vehicles.db and vehicles.db-journal at the root (vehicle data)
      * - map/{bx}/{by}.bin (z=0) and map/{bx}/{by}_{z}.bin (z=-1..+4) for each bin around detected safehouses
      *
      * @param marginTiles number of tiles around each safehouse to include (default 2)
@@ -78,7 +78,8 @@ public class SafehouseService {
             Path saveRoot = mapDir.getParent();
             totalBytes += addRootFileToZip(zos, metaPath, "map_meta.bin", warnings);
             if (saveRoot != null) {
-                totalBytes += addRootFileToZip(zos, saveRoot.resolve("map_vehicle.bin"), "map_vehicle.bin", warnings);
+                totalBytes += addRootFileToZip(zos, saveRoot.resolve("vehicles.db"), "vehicles.db", warnings);
+                totalBytes += addRootFileToZip(zos, saveRoot.resolve("vehicles.db-journal"), "vehicles.db-journal", warnings);
             }
 
             // Include bin files for each z-level: map/{bx}/{by}.bin (z=0), map/{bx}/{by}_{z}.bin (z!=0)
