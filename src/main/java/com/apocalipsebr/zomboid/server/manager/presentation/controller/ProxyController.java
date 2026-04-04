@@ -6,8 +6,11 @@ import com.apocalipsebr.zomboid.server.manager.application.service.ProxyService.
 import com.apocalipsebr.zomboid.server.manager.application.service.ProxyService.ProxyInfo;
 import com.apocalipsebr.zomboid.server.manager.application.service.ProxyService.StatusResult;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.ProxyActivation;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.ProxyDefinition;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
+import com.apocalipsebr.zomboid.server.manager.domain.repository.app.ProxyDefinitionRepository;
 import com.apocalipsebr.zomboid.server.manager.infrastructure.config.AwsProxyConfig.ProxyProperties;
+import com.apocalipsebr.zomboid.server.manager.infrastructure.config.HostingerConfig.HostingerProperties;
 import com.apocalipsebr.zomboid.server.manager.presentation.dto.ProxyActivateRequest;
 import com.apocalipsebr.zomboid.server.manager.presentation.dto.ProxyExtendRequest;
 import org.springframework.data.domain.Page;
@@ -32,10 +35,16 @@ public class ProxyController {
 
     private final ProxyService proxyService;
     private final ProxyProperties proxyProperties;
+    private final ProxyDefinitionRepository proxyDefinitionRepository;
+    private final HostingerProperties hostingerProperties;
 
-    public ProxyController(ProxyService proxyService, ProxyProperties proxyProperties) {
+    public ProxyController(ProxyService proxyService, ProxyProperties proxyProperties,
+                           ProxyDefinitionRepository proxyDefinitionRepository,
+                           HostingerProperties hostingerProperties) {
         this.proxyService = proxyService;
         this.proxyProperties = proxyProperties;
+        this.proxyDefinitionRepository = proxyDefinitionRepository;
+        this.hostingerProperties = hostingerProperties;
     }
 
     @GetMapping("/status")
@@ -102,13 +111,18 @@ public class ProxyController {
         }
 
         ProxyActivation activation = result.activation();
-        String address = proxyProperties.getAddresses().getOrDefault(activation.getProxyId(), "");
+        String address = proxyDefinitionRepository.findByProxyId(activation.getProxyId())
+                .map(def -> def.getDnsSubdomain() + "." + hostingerProperties.getBaseDomain())
+                .orElse("");
+        int port = proxyDefinitionRepository.findByProxyId(activation.getProxyId())
+                .map(ProxyDefinition::getPort)
+                .orElse(16261);
 
         return ResponseEntity.ok(Map.of(
                 "activationId", activation.getId(),
                 "proxyId", activation.getProxyId(),
                 "address", address,
-                "port", 16261,
+                "port", port,
                 "hours", activation.getHours(),
                 "creditsSpent", activation.getCreditsSpent(),
                 "expiresAt", activation.getExpiresAt(),

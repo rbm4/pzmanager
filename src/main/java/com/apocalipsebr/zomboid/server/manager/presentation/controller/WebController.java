@@ -82,6 +82,12 @@ public class WebController {
         return "logs";
     }
 
+    @GetMapping("/admin/proxies")
+    @PreAuthorize("hasRole('ADMIN')")
+    public String adminProxies() {
+        return "admin-proxies";
+    }
+
     @GetMapping("/proxy")
     public String proxyPage(HttpSession session) {
         var user = (User) session.getAttribute("user");

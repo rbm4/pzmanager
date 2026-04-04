@@ -2,9 +2,12 @@ package com.apocalipsebr.zomboid.server.manager.application.service;
 
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Character;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.ProxyActivation;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.ProxyDefinition;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.ProxyActivationRepository;
-import com.apocalipsebr.zomboid.server.manager.infrastructure.adapter.Ec2ProxyManager;
+import com.apocalipsebr.zomboid.server.manager.domain.repository.app.ProxyDefinitionRepository;
+import com.apocalipsebr.zomboid.server.manager.infrastructure.adapter.ProxyInstanceState;
+import com.apocalipsebr.zomboid.server.manager.infrastructure.adapter.ProxyProvider;
 import com.apocalipsebr.zomboid.server.manager.infrastructure.config.AwsProxyConfig.ProxyProperties;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,12 +17,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Service
 public class ProxyService {
@@ -28,23 +29,39 @@ public class ProxyService {
     private static final int STARTING_TIMEOUT_MINUTES = 5;
 
     private final ProxyActivationRepository proxyActivationRepository;
-    private final Ec2ProxyManager ec2ProxyManager;
+    private final ProxyDefinitionRepository proxyDefinitionRepository;
+    private final Map<String, ProxyProvider> providersByType;
     private final ProxyProperties proxyProperties;
     private final CharacterService characterService;
     private final TransactionLogService transactionLogService;
+    private final HostingerDnsService hostingerDnsService;
 
     private final Object activationLock = new Object();
 
     public ProxyService(ProxyActivationRepository proxyActivationRepository,
-                        Ec2ProxyManager ec2ProxyManager,
+                        ProxyDefinitionRepository proxyDefinitionRepository,
+                        List<ProxyProvider> providers,
                         ProxyProperties proxyProperties,
                         CharacterService characterService,
-                        TransactionLogService transactionLogService) {
+                        TransactionLogService transactionLogService,
+                        HostingerDnsService hostingerDnsService) {
         this.proxyActivationRepository = proxyActivationRepository;
-        this.ec2ProxyManager = ec2ProxyManager;
+        this.proxyDefinitionRepository = proxyDefinitionRepository;
         this.proxyProperties = proxyProperties;
         this.characterService = characterService;
         this.transactionLogService = transactionLogService;
+        this.hostingerDnsService = hostingerDnsService;
+        this.providersByType = providers.stream()
+                .collect(Collectors.toMap(ProxyProvider::getProviderType, p -> p));
+        logger.info("Registered proxy providers: " + providersByType.keySet());
+    }
+
+    private ProxyProvider getProvider(ProxyDefinition definition) {
+        ProxyProvider provider = providersByType.get(definition.getProviderType());
+        if (provider == null) {
+            throw new IllegalStateException("No proxy provider registered for type: " + definition.getProviderType());
+        }
+        return provider;
     }
 
     // ==================== ACTIVATE ====================
@@ -66,11 +83,15 @@ public class ProxyService {
                     + "-" + proxyProperties.getMaxHours() + "h in " + proxyProperties.getHourStep() + "h increments.", 400);
         }
 
-        // Validate proxy ID exists in config
-        String instanceId = proxyProperties.getInstances().get(proxyId);
-        if (instanceId == null || instanceId.isBlank()) {
-            return ActivateResult.fail("Unknown proxy region: " + proxyId, 400);
+        // Resolve proxy definition from DB
+        Optional<ProxyDefinition> defOpt = proxyDefinitionRepository.findByProxyId(proxyId);
+        if (defOpt.isEmpty() || !defOpt.get().getEnabled()) {
+            return ActivateResult.fail("Unknown or disabled proxy: " + proxyId, 400);
         }
+        ProxyDefinition definition = defOpt.get();
+
+        ProxyProvider provider = getProvider(definition);
+        String instanceId = definition.getInstanceId();
 
         int creditsCost = proxyProperties.calculateCredits(hours);
 
@@ -119,13 +140,13 @@ public class ProxyService {
             ProxyActivation activation = new ProxyActivation(user, proxyId, instanceId, creditsCost, hours);
             activation = proxyActivationRepository.save(activation);
 
-            // Start EC2 instance
+            // Start instance via provider
             try {
-                ec2ProxyManager.startInstance(instanceId);
+                provider.startInstance(instanceId, definition.getProviderRegion());
                 logger.info("Proxy activation #" + activation.getId() + " created by " + user.getUsername()
-                        + " — " + proxyId + " for " + hours + "h, cost: " + creditsCost + " ₳");
+                        + " — " + proxyId + " (" + definition.getProviderType() + ") for " + hours + "h, cost: " + creditsCost + " ₳");
             } catch (Exception e) {
-                logger.log(Level.SEVERE, "Failed to start EC2 instance " + instanceId, e);
+                logger.log(Level.SEVERE, "Failed to start instance " + instanceId + " via " + definition.getProviderType(), e);
                 activation.setStatus(ProxyActivation.STATUS_FAILED);
                 activation.setStoppedAt(LocalDateTime.now());
                 proxyActivationRepository.save(activation);
@@ -231,11 +252,12 @@ public class ProxyService {
     @Transactional(propagation = Propagation.REQUIRED)
     public StatusResult getStatus(User user) {
         List<ProxyInfo> proxies = new ArrayList<>();
+        List<ProxyDefinition> definitions = proxyDefinitionRepository.findByEnabledTrue();
 
-        for (Map.Entry<String, String> entry : proxyProperties.getInstances().entrySet()) {
-            String proxyId = entry.getKey();
-            String displayName = proxyProperties.getNames().getOrDefault(proxyId, proxyId);
-            String address = proxyProperties.getAddresses().getOrDefault(proxyId, "");
+        for (ProxyDefinition definition : definitions) {
+            String proxyId = definition.getProxyId();
+            String displayName = definition.getDisplayName();
+            String dnsAddress = hostingerDnsService.buildDnsName(definition.getDnsSubdomain());
 
             Optional<ProxyActivation> active = proxyActivationRepository.findByProxyIdAndStatusIn(
                     proxyId, List.of(ProxyActivation.STATUS_ACTIVE, ProxyActivation.STATUS_STARTING));
@@ -243,11 +265,11 @@ public class ProxyService {
             if (active.isPresent()) {
                 ProxyActivation a = active.get();
                 long remaining = ChronoUnit.MINUTES.between(LocalDateTime.now(), a.getExpiresAt());
-                proxies.add(new ProxyInfo(proxyId, displayName, address, 16261,
+                proxies.add(new ProxyInfo(proxyId, displayName, dnsAddress, definition.getPort(),
                         a.getStatus(), a.getUser().getUsername(), a.getExpiresAt(),
                         Math.max(0, remaining), a.getId(), a.getHours()));
             } else {
-                proxies.add(new ProxyInfo(proxyId, displayName, null, 16261,
+                proxies.add(new ProxyInfo(proxyId, displayName, null, definition.getPort(),
                         "STOPPED", null, null, 0, null, 0));
             }
         }
@@ -266,27 +288,34 @@ public class ProxyService {
 
     @Transactional
     public void processExpiredActivations() {
-        // 1. ACTIVE past expiry → STOPPING (call EC2 stop)
+        // 1. ACTIVE past expiry → STOPPING (call provider stop)
         List<ProxyActivation> expired = proxyActivationRepository
                 .findByStatusAndExpiresAtBefore(ProxyActivation.STATUS_ACTIVE, LocalDateTime.now());
         for (ProxyActivation activation : expired) {
             try {
-                logger.info("Proxy #" + activation.getId() + " (" + activation.getProxyId()
-                        + ") expired — stopping EC2 instance " + activation.getInstanceId());
-                ec2ProxyManager.stopInstance(activation.getInstanceId());
+                ProxyDefinition def = resolveDefinition(activation.getProxyId());
+                if (def != null) {
+                    ProxyProvider provider = getProvider(def);
+                    logger.info("Proxy #" + activation.getId() + " (" + activation.getProxyId()
+                            + ") expired — stopping instance " + activation.getInstanceId());
+                    provider.stopInstance(activation.getInstanceId(), def.getProviderRegion());
+                }
                 activation.setStatus(ProxyActivation.STATUS_STOPPING);
                 proxyActivationRepository.save(activation);
             } catch (Exception e) {
-                logger.log(Level.SEVERE, "Failed to stop EC2 instance " + activation.getInstanceId(), e);
+                logger.log(Level.SEVERE, "Failed to stop instance " + activation.getInstanceId(), e);
             }
         }
 
-        // 2. STOPPING → check EC2 state, if stopped → EXPIRED
+        // 2. STOPPING → check provider state, if stopped → EXPIRED
         List<ProxyActivation> stopping = proxyActivationRepository.findByStatus(ProxyActivation.STATUS_STOPPING);
         for (ProxyActivation activation : stopping) {
             try {
-                String state = ec2ProxyManager.getInstanceState(activation.getInstanceId());
-                if ("stopped".equals(state)) {
+                ProxyDefinition def = resolveDefinition(activation.getProxyId());
+                if (def == null) continue;
+                ProxyProvider provider = getProvider(def);
+                ProxyInstanceState state = provider.getInstanceState(activation.getInstanceId(), def.getProviderRegion());
+                if (state.isStopped()) {
                     activation.setStatus(ProxyActivation.STATUS_EXPIRED);
                     activation.setStoppedAt(LocalDateTime.now());
                     proxyActivationRepository.save(activation);
@@ -297,25 +326,25 @@ public class ProxyService {
             }
         }
 
-        // 3. STARTING older than 5 min → check EC2, promote to ACTIVE or mark FAILED
+        // 3. STARTING older than 5 min → check provider, promote to ACTIVE or mark FAILED
         LocalDateTime cutoff = LocalDateTime.now().minusMinutes(STARTING_TIMEOUT_MINUTES);
         List<ProxyActivation> staleStarting = proxyActivationRepository
                 .findByStatusAndActivatedAtBefore(ProxyActivation.STATUS_STARTING, cutoff);
         for (ProxyActivation activation : staleStarting) {
             try {
-                String state = ec2ProxyManager.getInstanceState(activation.getInstanceId());
-                if ("running".equals(state)) {
-                    activation.setStatus(ProxyActivation.STATUS_ACTIVE);
-                    proxyActivationRepository.save(activation);
-                    logger.info("Proxy #" + activation.getId() + " (" + activation.getProxyId() + ") promoted to ACTIVE");
-                } else if ("stopped".equals(state) || "terminated".equals(state)) {
+                ProxyDefinition def = resolveDefinition(activation.getProxyId());
+                if (def == null) continue;
+                ProxyProvider provider = getProvider(def);
+                ProxyInstanceState state = provider.getInstanceState(activation.getInstanceId(), def.getProviderRegion());
+                if (state.isRunning()) {
+                    promoteToActive(activation, def, state);
+                } else if (state.isStopped() || state.isTerminated()) {
                     activation.setStatus(ProxyActivation.STATUS_FAILED);
                     activation.setStoppedAt(LocalDateTime.now());
                     proxyActivationRepository.save(activation);
                     refundCredits(activation.getUser(), activation.getCreditsSpent(), activation.getProxyId());
-                    logger.warning("Proxy #" + activation.getId() + " FAILED (EC2 state: " + state + ") — credits refunded");
+                    logger.warning("Proxy #" + activation.getId() + " FAILED (state: " + state.state() + ") — credits refunded");
                 }
-                // else: still pending/shutting-down, wait for next cycle
             } catch (Exception e) {
                 logger.log(Level.WARNING, "Failed to check stale STARTING activation #" + activation.getId(), e);
             }
@@ -324,13 +353,14 @@ public class ProxyService {
         // 4. Check fresh STARTING activations (< 5 min) → if running, promote to ACTIVE
         List<ProxyActivation> freshStarting = proxyActivationRepository.findByStatus(ProxyActivation.STATUS_STARTING);
         for (ProxyActivation activation : freshStarting) {
-            if (activation.getActivatedAt().isBefore(cutoff)) continue; // already handled above
+            if (activation.getActivatedAt().isBefore(cutoff)) continue;
             try {
-                String state = ec2ProxyManager.getInstanceState(activation.getInstanceId());
-                if ("running".equals(state)) {
-                    activation.setStatus(ProxyActivation.STATUS_ACTIVE);
-                    proxyActivationRepository.save(activation);
-                    logger.info("Proxy #" + activation.getId() + " (" + activation.getProxyId() + ") promoted to ACTIVE");
+                ProxyDefinition def = resolveDefinition(activation.getProxyId());
+                if (def == null) continue;
+                ProxyProvider provider = getProvider(def);
+                ProxyInstanceState state = provider.getInstanceState(activation.getInstanceId(), def.getProviderRegion());
+                if (state.isRunning()) {
+                    promoteToActive(activation, def, state);
                 }
             } catch (Exception e) {
                 logger.log(Level.WARNING, "Failed to check STARTING activation #" + activation.getId(), e);
@@ -338,28 +368,49 @@ public class ProxyService {
         }
     }
 
+    private void promoteToActive(ProxyActivation activation, ProxyDefinition definition, ProxyInstanceState state) {
+        activation.setStatus(ProxyActivation.STATUS_ACTIVE);
+        proxyActivationRepository.save(activation);
+        logger.info("Proxy #" + activation.getId() + " (" + activation.getProxyId() + ") promoted to ACTIVE");
+
+        // Update DNS with the instance's public IP
+        if (state.hasPublicIp()) {
+            hostingerDnsService.updateProxyDns(definition.getDnsSubdomain(), state.publicIp());
+        } else {
+            logger.warning("Proxy #" + activation.getId() + " is running but has no public IP — DNS not updated");
+        }
+    }
+
     // ==================== RECONCILIATION (called on startup) ====================
 
     @Transactional
     public void reconcile() {
-        if (!ec2ProxyManager.isConfigured()) {
-            logger.info("EC2 not configured — skipping proxy reconciliation");
+        List<ProxyDefinition> definitions = proxyDefinitionRepository.findByEnabledTrue();
+        if (definitions.isEmpty()) {
+            logger.info("No proxy definitions found — skipping reconciliation");
             return;
         }
 
-        logger.info("Running proxy reconciliation...");
+        logger.info("Running proxy reconciliation for " + definitions.size() + " definitions...");
 
-        // 1. ACTIVE activations — verify EC2 is actually running
+        // 1. ACTIVE activations — verify instance is actually running
         List<ProxyActivation> activeRecords = proxyActivationRepository.findByStatus(ProxyActivation.STATUS_ACTIVE);
         for (ProxyActivation activation : activeRecords) {
             try {
-                String state = ec2ProxyManager.getInstanceState(activation.getInstanceId());
-                if ("stopped".equals(state) || "terminated".equals(state)) {
-                    logger.warning("Reconcile: Proxy #" + activation.getId() + " marked ACTIVE but EC2 is " + state
+                ProxyDefinition def = resolveDefinition(activation.getProxyId());
+                if (def == null) continue;
+                ProxyProvider provider = getProvider(def);
+                if (!provider.isConfigured()) continue;
+                ProxyInstanceState state = provider.getInstanceState(activation.getInstanceId(), def.getProviderRegion());
+                if (state.isStopped() || state.isTerminated()) {
+                    logger.warning("Reconcile: Proxy #" + activation.getId() + " marked ACTIVE but instance is " + state.state()
                             + " — marking EXPIRED");
                     activation.setStatus(ProxyActivation.STATUS_EXPIRED);
                     activation.setStoppedAt(LocalDateTime.now());
                     proxyActivationRepository.save(activation);
+                } else if (state.isRunning() && state.hasPublicIp()) {
+                    // Ensure DNS is correct for running instances
+                    hostingerDnsService.updateProxyDns(def.getDnsSubdomain(), state.publicIp());
                 }
             } catch (Exception e) {
                 logger.log(Level.WARNING, "Reconcile: Failed to check activation #" + activation.getId(), e);
@@ -372,11 +423,12 @@ public class ProxyService {
                 .findByStatusAndActivatedAtBefore(ProxyActivation.STATUS_STARTING, cutoff);
         for (ProxyActivation activation : staleStarting) {
             try {
-                String state = ec2ProxyManager.getInstanceState(activation.getInstanceId());
-                if ("running".equals(state)) {
-                    activation.setStatus(ProxyActivation.STATUS_ACTIVE);
-                    proxyActivationRepository.save(activation);
-                    logger.info("Reconcile: Proxy #" + activation.getId() + " promoted to ACTIVE (EC2 running)");
+                ProxyDefinition def = resolveDefinition(activation.getProxyId());
+                if (def == null) continue;
+                ProxyProvider provider = getProvider(def);
+                ProxyInstanceState state = provider.getInstanceState(activation.getInstanceId(), def.getProviderRegion());
+                if (state.isRunning()) {
+                    promoteToActive(activation, def, state);
                 } else {
                     activation.setStatus(ProxyActivation.STATUS_FAILED);
                     activation.setStoppedAt(LocalDateTime.now());
@@ -389,23 +441,23 @@ public class ProxyService {
             }
         }
 
-        // 3. Check for leaked instances (EC2 running but no ACTIVE/STARTING DB record)
-        for (Map.Entry<String, String> entry : proxyProperties.getInstances().entrySet()) {
-            String proxyId = entry.getKey();
-            String instanceId = entry.getValue();
+        // 3. Check for leaked instances (running but no ACTIVE/STARTING DB record)
+        for (ProxyDefinition def : definitions) {
             try {
+                ProxyProvider provider = getProvider(def);
+                if (!provider.isConfigured()) continue;
                 Optional<ProxyActivation> active = proxyActivationRepository.findByProxyIdAndStatusIn(
-                        proxyId, List.of(ProxyActivation.STATUS_ACTIVE, ProxyActivation.STATUS_STARTING));
+                        def.getProxyId(), List.of(ProxyActivation.STATUS_ACTIVE, ProxyActivation.STATUS_STARTING));
                 if (active.isEmpty()) {
-                    String state = ec2ProxyManager.getInstanceState(instanceId);
-                    if ("running".equals(state) || "pending".equals(state)) {
-                        logger.warning("Reconcile: EC2 instance " + instanceId + " (" + proxyId
+                    ProxyInstanceState state = provider.getInstanceState(def.getInstanceId(), def.getProviderRegion());
+                    if (state.isRunning() || "pending".equals(state.state())) {
+                        logger.warning("Reconcile: Instance " + def.getInstanceId() + " (" + def.getProxyId()
                                 + ") is running with no active DB record — stopping it");
-                        ec2ProxyManager.stopInstance(instanceId);
+                        provider.stopInstance(def.getInstanceId(), def.getProviderRegion());
                     }
                 }
             } catch (Exception e) {
-                logger.log(Level.WARNING, "Reconcile: Failed to check leaked instance " + instanceId, e);
+                logger.log(Level.WARNING, "Reconcile: Failed to check leaked instance " + def.getInstanceId(), e);
             }
         }
 
@@ -413,6 +465,10 @@ public class ProxyService {
         processExpiredActivations();
 
         logger.info("Proxy reconciliation complete");
+    }
+
+    private ProxyDefinition resolveDefinition(String proxyId) {
+        return proxyDefinitionRepository.findByProxyId(proxyId).orElse(null);
     }
 
     // ==================== HELPERS ====================
