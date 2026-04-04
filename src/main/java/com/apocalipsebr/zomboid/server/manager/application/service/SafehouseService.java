@@ -21,6 +21,9 @@ public class SafehouseService {
 
     private static final Logger log = LoggerFactory.getLogger(SafehouseService.class);
     private static final int DEFAULT_MARGIN = 2;
+    /** Z-levels to include for each chunk: -1 (basement) through +4 (upper floors). */
+    private static final int Z_MIN = -1;
+    private static final int Z_MAX = 4;
 
     private final MapDataService mapDataService;
 
@@ -37,7 +40,8 @@ public class SafehouseService {
     /**
      * Writes a ZIP to the given output stream containing:
      * - map_meta.bin at the root
-     * - map/{bx}/{by}.bin for each bin around detected safehouses (expanded by margin tiles)
+     * - map_vehicle.bin at the root (vehicle data)
+     * - map/{bx}/{by}.bin (z=0) and map/{bx}/{by}_{z}.bin (z=-1..+4) for each bin around detected safehouses
      *
      * @param marginTiles number of tiles around each safehouse to include (default 2)
      * @param out         the output stream to write the ZIP to
@@ -70,40 +74,39 @@ public class SafehouseService {
         List<String> missing = new ArrayList<>();
 
         try (ZipOutputStream zos = new ZipOutputStream(out)) {
-            // Include map_meta.bin at root
-            if (metaPath != null && Files.exists(metaPath)) {
-                byte[] metaData = Files.readAllBytes(metaPath);
-                zos.putNextEntry(new ZipEntry("map_meta.bin"));
-                zos.write(metaData);
-                zos.closeEntry();
-                totalBytes += metaData.length;
-            } else {
-                warnings.add("map_meta.bin not found — not included in export.");
+            // Include save-root files
+            Path saveRoot = mapDir.getParent();
+            totalBytes += addRootFileToZip(zos, metaPath, "map_meta.bin", warnings);
+            if (saveRoot != null) {
+                totalBytes += addRootFileToZip(zos, saveRoot.resolve("map_vehicle.bin"), "map_vehicle.bin", warnings);
             }
 
-            // Include bin files: map/{bx}/{by}.bin
+            // Include bin files for each z-level: map/{bx}/{by}.bin (z=0), map/{bx}/{by}_{z}.bin (z!=0)
             for (String key : binKeys) {
                 String[] parts = key.split("/");
                 int bx = Integer.parseInt(parts[0]);
                 int by = Integer.parseInt(parts[1]);
 
-                Path binFile = mapDir.resolve(String.valueOf(bx)).resolve(by + ".bin");
+                for (int z = Z_MIN; z <= Z_MAX; z++) {
+                    String fileName = (z == 0) ? by + ".bin" : by + "_" + z + ".bin";
+                    Path binFile = mapDir.resolve(String.valueOf(bx)).resolve(fileName);
 
-                // Security: ensure the path stays within the map folder
-                if (!binFile.normalize().startsWith(mapDir.normalize())) {
-                    warnings.add("Path traversal blocked: " + key);
-                    continue;
-                }
+                    // Security: ensure the path stays within the map folder
+                    if (!binFile.normalize().startsWith(mapDir.normalize())) {
+                        warnings.add("Path traversal blocked: " + key + " z=" + z);
+                        continue;
+                    }
 
-                if (Files.exists(binFile)) {
-                    byte[] binData = Files.readAllBytes(binFile);
-                    zos.putNextEntry(new ZipEntry("map/" + bx + "/" + by + ".bin"));
-                    zos.write(binData);
-                    zos.closeEntry();
-                    binsWritten++;
-                    totalBytes += binData.length;
-                } else {
-                    missing.add(key);
+                    if (Files.exists(binFile)) {
+                        byte[] binData = Files.readAllBytes(binFile);
+                        zos.putNextEntry(new ZipEntry("map/" + bx + "/" + fileName));
+                        zos.write(binData);
+                        zos.closeEntry();
+                        binsWritten++;
+                        totalBytes += binData.length;
+                    } else if (z == 0) {
+                        missing.add(key);
+                    }
                 }
             }
 
@@ -117,6 +120,21 @@ public class SafehouseService {
         log.info("Safehouse export complete: {} bins written, {} bytes total", binsWritten, totalBytes);
 
         return new ExportResult(safehouses.size(), binKeys.size(), binsWritten, totalBytes, warnings);
+    }
+
+    /**
+     * Adds a save-root file to the ZIP if it exists, returns bytes written.
+     */
+    private long addRootFileToZip(ZipOutputStream zos, Path filePath, String zipName, List<String> warnings) throws IOException {
+        if (filePath != null && Files.exists(filePath)) {
+            byte[] data = Files.readAllBytes(filePath);
+            zos.putNextEntry(new ZipEntry(zipName));
+            zos.write(data);
+            zos.closeEntry();
+            return data.length;
+        }
+        warnings.add(zipName + " not found — not included in export.");
+        return 0;
     }
 
     /**
