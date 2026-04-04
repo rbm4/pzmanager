@@ -2,7 +2,7 @@ package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
 import com.apocalipsebr.zomboid.server.manager.application.service.CharacterService;
 import com.apocalipsebr.zomboid.server.manager.application.service.MapCleanerService;
-import com.apocalipsebr.zomboid.server.manager.application.service.MapCleanerService.MapIndex;
+import com.apocalipsebr.zomboid.server.manager.application.service.MapDataService.MapIndex;
 import com.apocalipsebr.zomboid.server.manager.application.service.SoftWipeService;
 import com.apocalipsebr.zomboid.server.manager.application.service.SoftWipeService.CreateSoftWipeResult;
 import com.apocalipsebr.zomboid.server.manager.application.service.SoftWipeService.CancelResult;

@@ -3,6 +3,7 @@ package com.apocalipsebr.zomboid.server.manager.application.service;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,9 @@ import com.apocalipsebr.zomboid.server.manager.presentation.controller.ZombieKil
 @Service
 public class ApplicationReadyService {
     private static final Logger logger = Logger.getLogger(ApplicationReadyService.class.getName());
+
+    @Value("${proxy.reconcile.enabled}")
+    private boolean concileEnabled;
 
     private final RegionService regionService;
     private final SandboxPropertyService sandboxPropertyService;
@@ -88,12 +92,14 @@ public class ApplicationReadyService {
             logger.info("syncSettingsOnStartup completed");
         }
         Thread.sleep(2000);
-        try {
-            proxyService.reconcile();
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Failed to reconcile proxy activations on startup", e);
-        } finally {
-            logger.info("proxyService.reconcile completed");
+        if (concileEnabled){
+            try {
+                proxyService.reconcile();
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Failed to reconcile proxy activations on startup", e);
+            } finally {
+                logger.info("proxyService.reconcile completed");
+            }
         }
     }
 }

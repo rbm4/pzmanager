@@ -2,7 +2,7 @@ package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
 import com.apocalipsebr.zomboid.server.manager.application.service.MapCleanerService;
 import com.apocalipsebr.zomboid.server.manager.application.service.MapCleanerService.DeleteResult;
-import com.apocalipsebr.zomboid.server.manager.application.service.MapCleanerService.MapIndex;
+import com.apocalipsebr.zomboid.server.manager.application.service.MapDataService.MapIndex;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.ClaimedCar;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Region;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.ClaimedCarRepository;
