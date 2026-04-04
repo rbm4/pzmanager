@@ -126,7 +126,6 @@ public class ClaimedCarService {
 
         // Update fields from JSON
         String ownerSteamId = getStringOrNull(carJson, "ownerSteamID");
-        car.setOwnerSteamId(ownerSteamId != null ? ownerSteamId : "");
         car.setOwnerName(getStringOrNull(carJson, "ownerName"));
         car.setVehicleName(getStringOrNull(carJson, "vehicleName"));
         car.setScriptName(getStringOrNull(carJson, "scriptName"));
@@ -141,6 +140,7 @@ public class ClaimedCarService {
                 BigDecimal steamIdDecimal = new BigDecimal(ownerSteamId);
                 User user = userService.createOrGetUserBySteamId(steamIdDecimal);
                 car.setUser(user);
+                car.setOwnerSteamId(user.getSteamId());
             } catch (NumberFormatException e) {
                 logger.warning("Invalid ownerSteamID format for vehicle " + vehicleHash + ": " + ownerSteamId);
             }

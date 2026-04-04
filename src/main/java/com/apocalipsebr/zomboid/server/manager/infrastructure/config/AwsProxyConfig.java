@@ -19,9 +19,9 @@ public class AwsProxyConfig {
         private String secretKey;
         private String region = "sa-east-1";
         private int creditsPer24h = 4000;
-        private int minHours = 6;
-        private int maxHours = 36;
-        private int hourStep = 6;
+        private int minHours = 1;
+        private int maxHours = 73;
+        private int hourStep = 3;
         private int pollIntervalSeconds = 60;
 
         public boolean isEnabled() {
