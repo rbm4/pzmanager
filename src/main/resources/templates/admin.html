@@ -398,6 +398,22 @@
                 </div>
             </div>
 
+            <!-- Reset All Migrations Card -->
+            <div class="card">
+                <h2>🗑️ Reset Todas as Migrações</h2>
+                <div id="reset-all-migrations-alert" class="alert"></div>
+                <p style="color: #aaa; margin-bottom: 20px;">
+                    Remove TODOS os registros de migração de XP do servidor. Todos os jogadores poderão migrar novamente.
+                </p>
+                <div style="padding: 14px; border-radius: 8px; margin-bottom: 15px; background: rgba(255, 107, 107, 0.15); border: 1px solid rgba(255, 107, 107, 0.4); color: #ff6b6b; font-size: 0.85rem; line-height: 1.5;">
+                    ⚠️ Esta ação é irreversível! Todos os registros de migração serão permanentemente removidos.
+                </div>
+                <button onclick="resetAllMigrations()" class="btn btn-danger">🗑️ Resetar Todas as Migrações</button>
+                <div id="reset-all-migrations-result" class="stats-display">
+                    <p id="reset-all-migrations-result-text"></p>
+                </div>
+            </div>
+
             <!-- Soft Wipe Execution Card -->
             <div class="card">
                 <h2>🧹 Soft-Wipe Manual</h2>
@@ -907,6 +923,36 @@
                 }
             } catch (error) {
                 showAlert('reset-migration-alert', 'Erro: ' + error.message, 'error');
+            }
+        }
+
+        async function resetAllMigrations() {
+            if (!confirm('🗑️ RESETAR TODAS AS MIGRAÇÕES?\n\nTodos os registros de migração de XP de TODOS os jogadores serão removidos permanentemente.\n\nTodos poderão migrar novamente.')) {
+                return;
+            }
+
+            if (!confirm('🔴 CONFIRMAÇÃO FINAL\n\nTem certeza? Esta ação não pode ser desfeita.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/reset-all-migrations`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    showAlert('reset-all-migrations-alert', result.message, 'success');
+                    const statsDisplay = document.getElementById('reset-all-migrations-result');
+                    document.getElementById('reset-all-migrations-result-text').textContent = '✅ ' + result.message;
+                    statsDisplay.classList.add('show');
+                } else {
+                    showAlert('reset-all-migrations-alert', result.message || 'Falha ao resetar migrações', 'error');
+                }
+            } catch (error) {
+                showAlert('reset-all-migrations-alert', 'Erro: ' + error.message, 'error');
             }
         }
 

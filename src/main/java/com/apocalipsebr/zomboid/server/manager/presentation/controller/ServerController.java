@@ -417,6 +417,28 @@ public class ServerController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/reset-all-migrations")
+    public ResponseEntity<Map<String, Object>> resetAllMigrations() {
+        try {
+            long count = migrationService.resetAllMigrations();
+            if (count == 0) {
+                return ResponseEntity.ok(Map.of(
+                    "success", false,
+                    "message", "Nenhuma migração encontrada para resetar."
+                ));
+            }
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", count + " migração(ões) removida(s). Todos os jogadores podem migrar novamente.",
+                "deletedCount", count
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "Erro ao resetar migrações: " + e.getMessage()));
+        }
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/reset-migration")
     public ResponseEntity<Map<String, Object>> resetCharacterMigration(@RequestBody ResetMigrationRequest request) {
         try {

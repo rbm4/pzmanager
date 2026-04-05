@@ -54,7 +54,18 @@ public class AppDataSourceConfig {
 
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
         dataSource.setDriverClassName(driverClassName);
-        dataSource.setUrl(url);
+        // Append busy_timeout so concurrent writes wait instead of failing immediately
+        String jdbcUrl = url.contains("?") ? url + "&busy_timeout=30000" : url + "?busy_timeout=30000";
+        dataSource.setUrl(jdbcUrl);
+
+        // Enable WAL mode for better concurrent read/write performance
+        try (var conn = dataSource.getConnection();
+             var stmt = conn.createStatement()) {
+            stmt.execute("PRAGMA journal_mode=WAL");
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to enable WAL mode on SQLite database", e);
+        }
+
         appFlyway(dataSource).migrate();
         return dataSource;
     }

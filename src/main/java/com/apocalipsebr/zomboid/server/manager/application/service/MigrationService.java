@@ -319,6 +319,20 @@ public class MigrationService {
         logger.info("Admin reset migration for character id=" + characterId);
     }
 
+    /**
+     * Admin: delete ALL migration records from the table, allowing every player to migrate again.
+     */
+    @Transactional
+    public long resetAllMigrations() {
+        long count = migrationRepository.count();
+        if (count == 0) {
+            return 0;
+        }
+        migrationRepository.deleteAll();
+        logger.info("Admin reset ALL migrations: " + count + " records deleted");
+        return count;
+    }
+
     // ─────────────────────────────────────────────────────────────
     //  SKILL SNAPSHOT
     // ─────────────────────────────────────────────────────────────
