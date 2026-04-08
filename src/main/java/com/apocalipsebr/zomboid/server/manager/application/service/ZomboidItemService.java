@@ -135,13 +135,14 @@ public class ZomboidItemService {
     }
 
     @Transactional
-    public ZomboidItem updateSellableInfo(String itemId, Boolean sellable, Integer value, String storeDescription) {
+    public ZomboidItem updateSellableInfo(String itemId, Boolean sellable, Integer value, String storeDescription, String itemName) {
         ZomboidItem item = zomboidItemRepository.findByItemId(itemId)
             .orElseThrow(() -> new IllegalArgumentException("Item not found with itemId: " + itemId));
         
         if (sellable != null) item.setSellable(sellable);
         if (value != null) item.setValue(value);
         if (storeDescription != null) item.setStoreDescription(storeDescription);
+        if (itemName != null) item.setName(itemName);
         
         return zomboidItemRepository.save(item);
     }
