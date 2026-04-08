@@ -4,6 +4,7 @@ public class SellableBatchItemDTO {
     private String itemId;
     private String itemName;
     private Integer value;
+    private boolean custom;
     private Boolean sellable;
     private String storeDescription;
     private String category;
@@ -12,20 +13,30 @@ public class SellableBatchItemDTO {
     public SellableBatchItemDTO() {
     }
 
-    public SellableBatchItemDTO(String itemId, Integer value, Boolean sellable, String storeDescription, String category, String icon) {
+    public SellableBatchItemDTO(String itemId,
+            Integer value, Boolean sellable, String storeDescription, String category, String icon, boolean custom) {
         this.itemId = itemId;
         this.value = value;
         this.sellable = sellable;
         this.storeDescription = storeDescription;
         this.category = category;
         this.icon = icon;
+        this.custom = custom;
     }
 
-    public String getItemName(){
+    public boolean getCustom(){
+        return custom;
+    }
+
+    public void setCustom(boolean custom){
+        this.custom = custom;
+    }
+
+    public String getItemName() {
         return itemName;
     }
 
-    public void setItemName(String itemName){
+    public void setItemName(String itemName) {
         this.itemName = itemName;
     }
 
@@ -69,11 +80,11 @@ public class SellableBatchItemDTO {
         this.category = category;
     }
 
-    public String getIcon(){
+    public String getIcon() {
         return this.icon;
     }
 
-    public void setIcon(String icon){
+    public void setIcon(String icon) {
         this.icon = icon;
     }
 }

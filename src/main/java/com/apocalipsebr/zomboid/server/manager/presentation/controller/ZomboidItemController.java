@@ -177,6 +177,7 @@ public class ZomboidItemController {
                     newItem.setItemId(dto.getItemId());
                     newItem.setName(dto.getItemName());
                     newItem.setSellable(dto.getSellable() != null ? dto.getSellable() : false);
+                    newItem.setCustom(dto.getCustom());
                     if (dto.getValue() != null) newItem.setValue(dto.getValue());
                     if (dto.getStoreDescription() != null) newItem.setStoreDescription(dto.getStoreDescription());
                     if (dto.getCategory() != null) newItem.setCategory(dto.getCategory());
