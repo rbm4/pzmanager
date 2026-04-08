@@ -33,7 +33,7 @@ public class ServerBroadcastService {
             "Bem-vindo ao Apocalipse BR! Divirta-se e respeite as regras.",
             "Iniciem as pesquisas! A vacina sob patente da Umbrella corp já está em Knox County! Https://apocalipse.cloud/season-guide",
             "Cada zumbi abatido você ganha saldo para comprar itens e carros no site! Https://apocalipse.cloud/",
-            "Participe dos eventos semanais e ganhe recompensas!",
+            "Problemas de conexão? Teste um de nossos proxies! Https://apocalipse.cloud/proxy",
             "Lembre-se: trabalho em equipe aumenta suas chances de sobrevivência!",
             "Abates de Zumbis com efeitos de zona dão saldo extra no site!",
             "Doe para manter o servidor online! Acesse a aba de doações no site.",

@@ -175,7 +175,7 @@ public class ZomboidItemController {
                 } catch (IllegalArgumentException e) {
                     ZomboidItem newItem = new ZomboidItem();
                     newItem.setItemId(dto.getItemId());
-                    newItem.setName(dto.getItemId());
+                    newItem.setName(dto.getItemName());
                     newItem.setSellable(dto.getSellable() != null ? dto.getSellable() : false);
                     if (dto.getValue() != null) newItem.setValue(dto.getValue());
                     if (dto.getStoreDescription() != null) newItem.setStoreDescription(dto.getStoreDescription());

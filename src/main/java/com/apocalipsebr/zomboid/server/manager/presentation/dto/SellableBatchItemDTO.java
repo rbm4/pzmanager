@@ -2,6 +2,7 @@ package com.apocalipsebr.zomboid.server.manager.presentation.dto;
 
 public class SellableBatchItemDTO {
     private String itemId;
+    private String itemName;
     private Integer value;
     private Boolean sellable;
     private String storeDescription;
@@ -18,6 +19,14 @@ public class SellableBatchItemDTO {
         this.storeDescription = storeDescription;
         this.category = category;
         this.icon = icon;
+    }
+
+    public String getItemName(){
+        return itemName;
+    }
+
+    public void setItemName(String itemName){
+        this.itemName = itemName;
     }
 
     public String getItemId() {
