@@ -16,13 +16,13 @@ import java.util.logging.Logger;
 
 @Service
 public class ZomboidItemService {
-    
+
     private static final Logger logger = Logger.getLogger(ZomboidItemService.class.getName());
-    
+
     private final ZomboidItemRepository zomboidItemRepository;
     private final CharacterService characterService;
 
-    public ZomboidItemService(ZomboidItemRepository zomboidItemRepository,CharacterService characterService) {
+    public ZomboidItemService(ZomboidItemRepository zomboidItemRepository, CharacterService characterService) {
         this.zomboidItemRepository = zomboidItemRepository;
         this.characterService = characterService;
     }
@@ -30,7 +30,7 @@ public class ZomboidItemService {
     @Transactional
     public ZomboidItem createItem(ZomboidItem item) {
         logger.info("Creating new Zomboid item: " + item.getName());
-        
+
         // Check if itemId already exists
         Optional<ZomboidItem> existing = zomboidItemRepository.findByItemId(item.getItemId());
         if (existing.isPresent()) {
@@ -42,7 +42,7 @@ public class ZomboidItemService {
             existingItem.setPage(item.getPage());
             return zomboidItemRepository.save(existingItem);
         }
-        
+
         return zomboidItemRepository.save(item);
     }
 
@@ -73,10 +73,10 @@ public class ZomboidItemService {
     @Transactional
     public ZomboidItem updateItem(Long id, ZomboidItem updatedItem) {
         logger.info("Updating Zomboid item with id: " + id);
-        
+
         ZomboidItem item = zomboidItemRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Item not found with id: " + id));
-        
+                .orElseThrow(() -> new IllegalArgumentException("Item not found with id: " + id));
+
         item.setName(updatedItem.getName());
         item.setCategory(updatedItem.getCategory());
         item.setIcon(updatedItem.getIcon());
@@ -86,17 +86,17 @@ public class ZomboidItemService {
         item.setCustom(updatedItem.getCustom());
         item.setStoreDescription(updatedItem.getStoreDescription());
         item.setValue(updatedItem.getValue());
-        
+
         return zomboidItemRepository.save(item);
     }
 
     @Transactional
     public ZomboidItem updateSellableStatus(Long id, Boolean sellable) {
         logger.info("Updating sellable status for item id " + id + " to: " + sellable);
-        
+
         ZomboidItem item = zomboidItemRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Item not found with id: " + id));
-        
+                .orElseThrow(() -> new IllegalArgumentException("Item not found with id: " + id));
+
         item.setSellable(sellable);
         return zomboidItemRepository.save(item);
     }
@@ -111,7 +111,7 @@ public class ZomboidItemService {
 
     // Paginated methods
     public Page<ZomboidItem> getAllItemsPaginated(String search, String category, Pageable pageable) {
-        return zomboidItemRepository.list(search,category,pageable);
+        return zomboidItemRepository.list(search, category, pageable);
     }
 
     public Page<ZomboidItem> getSellableItemsPaginated(Pageable pageable) {
@@ -125,68 +125,80 @@ public class ZomboidItemService {
     public Page<ZomboidItem> getItemsByCategoryPaginated(String category, Pageable pageable) {
         return zomboidItemRepository.findByCategoryContainingIgnoreCaseAndSellableTrue(category, pageable);
     }
-    
+
     public List<String> getAllCategories() {
         return zomboidItemRepository.findDistinctCategories();
     }
-    
+
     public List<String> getSellableCategories() {
         return zomboidItemRepository.findDistinctCategoriesFromSellableItems();
     }
 
     @Transactional
-    public ZomboidItem updateSellableInfo(String itemId, Boolean sellable, Integer value, String storeDescription, String itemName) {
+    public ZomboidItem updateSellableInfo(String itemId,
+            Boolean sellable,
+            Integer value,
+            String storeDescription,
+            String itemName,
+            boolean custom) {
         ZomboidItem item = zomboidItemRepository.findByItemId(itemId)
-            .orElseThrow(() -> new IllegalArgumentException("Item not found with itemId: " + itemId));
-        
-        if (sellable != null) item.setSellable(sellable);
-        if (value != null) item.setValue(value);
-        if (storeDescription != null) item.setStoreDescription(storeDescription);
-        if (itemName != null) item.setName(itemName);
-        
+                .orElseThrow(() -> new IllegalArgumentException("Item not found with itemId: " + itemId));
+
+        if (sellable != null)
+            item.setSellable(sellable);
+        if (value != null)
+            item.setValue(value);
+        if (storeDescription != null)
+            item.setStoreDescription(storeDescription);
+        if (itemName != null)
+            item.setName(itemName);
+        item.setCustom(custom);
+
         return zomboidItemRepository.save(item);
     }
 
-    public record PurchaseResult(boolean success, String message) {}
+    public record PurchaseResult(boolean success, String message) {
+    }
 
     @Transactional
     public PurchaseResult purchaseItem(Long itemId, Long characterId, List<Character> userCharacters) {
         // Validate item exists and is sellable
         ZomboidItem item = zomboidItemRepository.findById(itemId)
-            .orElseThrow(() -> new IllegalArgumentException("Item not found"));
-        
+                .orElseThrow(() -> new IllegalArgumentException("Item not found"));
+
         if (!item.getSellable()) {
             return new PurchaseResult(false, "Item não está disponível para compra");
         }
-        
+
         // Validate character exists and belongs to user
         Character targetCharacter = userCharacters.stream()
-            .filter(c -> c.getId().equals(characterId))
-            .findFirst()
-            .orElseThrow(() -> new IllegalArgumentException("Character not found or does not belong to user"));
-        
+                .filter(c -> c.getId().equals(characterId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Character not found or does not belong to user"));
+
         // Check if character is online (lastUpdate within last 61 seconds)
         LocalDateTime cutoffTime = LocalDateTime.now().minusSeconds(61);
         if (targetCharacter.getLastUpdate() == null || targetCharacter.getLastUpdate().isBefore(cutoffTime)) {
-            return new PurchaseResult(false, "Personagem deve estar online para receber itens. Última vez visto: " + 
-                (targetCharacter.getLastUpdate() != null ? targetCharacter.getLastUpdate().toString() : "nunca"));
+            return new PurchaseResult(false, "Personagem deve estar online para receber itens. Última vez visto: " +
+                    (targetCharacter.getLastUpdate() != null ? targetCharacter.getLastUpdate().toString() : "nunca"));
         }
-        
+
         // Calculate total currency across all characters
         int totalCurrency = userCharacters.stream()
-            .mapToInt(c -> c.getCurrencyPoints() != null ? c.getCurrencyPoints() : 0)
-            .sum();
-        
+                .mapToInt(c -> c.getCurrencyPoints() != null ? c.getCurrencyPoints() : 0)
+                .sum();
+
         if (totalCurrency < item.getValue()) {
-            return new PurchaseResult(false, "Moeda insuficiente. Necessário: " + item.getValue() + 
-                " ₳, Disponível: " + totalCurrency + " ₳");
+            return new PurchaseResult(false, "Moeda insuficiente. Necessário: " + item.getValue() +
+                    " ₳, Disponível: " + totalCurrency + " ₳");
         }
-        
+
         // Deduct currency from characters (starting from first, then next, etc.)
         int remainingCost = item.getValue();
         for (Character character : userCharacters) {
-            if (remainingCost <= 0) break;
-            
+            if (remainingCost <= 0)
+                break;
+
             int currentPoints = character.getCurrencyPoints() != null ? character.getCurrencyPoints() : 0;
             if (currentPoints > 0) {
                 int deduction = Math.min(currentPoints, remainingCost);
@@ -196,7 +208,9 @@ public class ZomboidItemService {
             }
         }
         characterService.saveAll(userCharacters);
-        logger.info("Successfully purchased item " + item.getName() + " for character " + targetCharacter.getPlayerName());
-        return new PurchaseResult(true, "Compra realizada com sucesso! O item será entregue para " + targetCharacter.getPlayerName());
+        logger.info(
+                "Successfully purchased item " + item.getName() + " for character " + targetCharacter.getPlayerName());
+        return new PurchaseResult(true,
+                "Compra realizada com sucesso! O item será entregue para " + targetCharacter.getPlayerName());
     }
 }

@@ -169,7 +169,7 @@ public class ZomboidItemController {
             for (SellableBatchItemDTO dto : items) {
                 try {
                     zomboidItemService.updateSellableInfo(
-                        dto.getItemId(), dto.getSellable(), dto.getValue(), dto.getStoreDescription(),dto.getItemName()
+                        dto.getItemId(), dto.getSellable(), dto.getValue(), dto.getStoreDescription(),dto.getItemName(),dto.getCustom()
                     );
                     updated++;
                 } catch (IllegalArgumentException e) {
