@@ -4,7 +4,7 @@ public class SellableBatchItemDTO {
     private String itemId;
     private String itemName;
     private Integer value;
-    private boolean custom;
+    private Boolean custom;
     private Boolean sellable;
     private String storeDescription;
     private String category;
@@ -14,7 +14,7 @@ public class SellableBatchItemDTO {
     }
 
     public SellableBatchItemDTO(String itemId,
-            Integer value, Boolean sellable, String storeDescription, String category, String icon, boolean custom) {
+            Integer value, Boolean sellable, String storeDescription, String category, String icon, Boolean custom) {
         this.itemId = itemId;
         this.value = value;
         this.sellable = sellable;
@@ -24,11 +24,11 @@ public class SellableBatchItemDTO {
         this.custom = custom;
     }
 
-    public boolean getCustom(){
+    public Boolean getCustom(){
         return custom;
     }
 
-    public void setCustom(boolean custom){
+    public void setCustom(Boolean custom){
         this.custom = custom;
     }
 
