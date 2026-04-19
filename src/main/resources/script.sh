@@ -15,11 +15,11 @@ STARTUP_TIMEOUT=30
 # ── JVM memory tuning ─────────────────────────────────────────────
 # Without explicit limits the JVM auto-sizes to ~25% of host RAM,
 # which on a 16 GB server means ~4 GB max heap — far too much.
-JVM_OPTS="-Xms128m -Xmx384m \
+JVM_OPTS="-Xms256m -Xmx512m \
   -XX:+UseSerialGC \
-  -XX:MaxMetaspaceSize=128m \
-  -XX:ReservedCodeCacheSize=64m \
-  -XX:MaxDirectMemorySize=32m \
+  -XX:MaxMetaspaceSize=256m \
+  -XX:ReservedCodeCacheSize=128m \
+  -XX:MaxDirectMemorySize=64m \
   -XX:-TieredCompilation"
 
 # Ensure deploy directory exists (outside the repo)

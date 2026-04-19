@@ -1,5 +1,6 @@
 package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
+import com.apocalipsebr.zomboid.server.manager.application.service.DynamicDnsService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,11 +17,17 @@ public class SystemController {
     
     private static final Logger logger = Logger.getLogger(SystemController.class.getName());
     
+    private final DynamicDnsService dynamicDnsService;
+    
     @Value("${server.restart.password}")
     private String restartPassword;
     
     @Value("${app.version:unknown}")
     private String appVersion;
+    
+    public SystemController(DynamicDnsService dynamicDnsService) {
+        this.dynamicDnsService = dynamicDnsService;
+    }
     
     /**
      * Restart the application
@@ -72,6 +79,28 @@ public class SystemController {
         response.put("version", "v" + appVersion);
         response.put("timestamp", System.currentTimeMillis());
         response.put("uptime", ManagementFactory.getRuntimeMXBean().getUptime());
+        return ResponseEntity.ok(response);
+    }
+    
+    @GetMapping("/ddns")
+    public ResponseEntity<Map<String, Object>> ddnsStatus() {
+        Map<String, Object> response = new HashMap<>();
+        response.put("enabled", dynamicDnsService.isEnabled());
+        response.put("fqdn", dynamicDnsService.getFqdn());
+        response.put("currentIp", dynamicDnsService.getLastKnownIp());
+        response.put("lastUpdated", dynamicDnsService.getLastUpdatedAt());
+        response.put("lastError", dynamicDnsService.getLastError());
+        return ResponseEntity.ok(response);
+    }
+    
+    @PostMapping("/ddns/refresh")
+    public ResponseEntity<Map<String, Object>> ddnsForceRefresh() {
+        dynamicDnsService.forceUpdate();
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", dynamicDnsService.getLastError() == null);
+        response.put("ip", dynamicDnsService.getLastKnownIp());
+        response.put("fqdn", dynamicDnsService.getFqdn());
+        response.put("error", dynamicDnsService.getLastError());
         return ResponseEntity.ok(response);
     }
 }
