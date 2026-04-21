@@ -75,11 +75,11 @@ public class MapCleanerService {
                 safehouses.size(), safehouseProtectedBins.size(), SERVER_SAFEHOUSE_MARGIN);
 
         // Build server-side claimed car protection set
-        List<ClaimedCar> claimedCars = claimedCarRepository.findByXNotNullAndYNotNull();
-        Set<String> carProtectedBins = buildProtectedCarBinKeys(claimedCars, SERVER_CAR_MARGIN);
+        // List<ClaimedCar> claimedCars = claimedCarRepository.findByXNotNullAndYNotNull();
+        // Set<String> carProtectedBins = buildProtectedCarBinKeys(claimedCars, SERVER_CAR_MARGIN);
 
-        log.info("Server-side car protection: {} claimed cars, {} protected bins (margin={})",
-                claimedCars.size(), carProtectedBins.size(), SERVER_CAR_MARGIN);
+        // log.info("Server-side car protection: {} claimed cars, {} protected bins (margin={})",
+        //         claimedCars.size(), carProtectedBins.size(), SERVER_CAR_MARGIN);
 
         int deleted = 0;
         int notFound = 0;
@@ -106,11 +106,11 @@ public class MapCleanerService {
                 }
 
                 // Server-side claimed car protection: refuse to delete protected bins
-                if (carProtectedBins.contains(key)) {
-                    carProtectedSkips++;
-                    log.debug("Car-protected bin skipped: {}", key);
-                    continue;
-                }
+                // if (carProtectedBins.contains(key)) {
+                //     carProtectedSkips++;
+                //     log.debug("Car-protected bin skipped: {}", key);
+                //     continue;
+                // }
 
                 Path binFile = mapDir.resolve(String.valueOf(bx)).resolve(by + ".bin");
 
