@@ -258,13 +258,13 @@ public class SoftWipeService {
             return;
         }
 
-        // Call MapCleanerService to perform the actual deletion (with safehouse + car protections)
+        // Call MapCleanerService to perform the actual deletion
         MapCleanerService.DeleteResult result = mapCleanerService.deleteBins(binKeys);
 
         wipe.setStatus(result.success() ? SoftWipeStatus.COMPLETED : SoftWipeStatus.FAILED);
         wipe.setExecutedAt(LocalDateTime.now());
         wipe.setBinsDeleted(result.deletedCount());
-        wipe.setBinsProtected(result.protectedCount() + result.carProtectedCount());
+        wipe.setBinsProtected(result.protectedCount());
         if (!result.success()) {
             wipe.setErrorMessage(result.message());
         }
@@ -272,7 +272,7 @@ public class SoftWipeService {
         softWipeRepository.save(wipe);
 
         logger.info("Soft-wipe #" + wipe.getId() + " " + (result.success() ? "completed" : "failed")
-                + " — deleted " + result.deletedCount() + ", protected " + (result.protectedCount() + result.carProtectedCount())
+            + " — deleted " + result.deletedCount() + ", protected " + result.protectedCount()
                 + " out of " + binKeys.size() + " total bins");
     }
 
