@@ -101,7 +101,7 @@
 		<dependency>
 			<groupId>com.github.wmixvideo</groupId>
 			<artifactId>nfe</artifactId>
-			<version>5.0.48</version>
+			<version>5.0.50</version>
 		</dependency>
 
 		<dependency>
