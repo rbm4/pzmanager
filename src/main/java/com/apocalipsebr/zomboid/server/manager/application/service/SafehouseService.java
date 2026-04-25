@@ -1,10 +1,18 @@
 package com.apocalipsebr.zomboid.server.manager.application.service;
 
 import com.apocalipsebr.zomboid.server.manager.application.service.MapDataService.SafehouseInfo;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Character;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.SafehouseClaimRequest;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.SafehouseClaimStatus;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
+import com.apocalipsebr.zomboid.server.manager.domain.repository.app.SafehouseClaimRequestRepository;
+import com.apocalipsebr.zomboid.server.manager.domain.repository.app.TransactionLogRepository;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -21,20 +29,261 @@ public class SafehouseService {
 
     private static final Logger log = LoggerFactory.getLogger(SafehouseService.class);
     private static final int DEFAULT_MARGIN = 2;
+    private static final int MIN_SELECTION_SIZE = 10;
+    private static final int HARD_MIN_CLAIM_COST = 6000;
     /** Z-levels to include for each chunk: -1 (basement) through +4 (upper floors). */
     private static final int Z_MIN = -1;
     private static final int Z_MAX = 4;
 
     private final MapDataService mapDataService;
+    private final CharacterService characterService;
+    private final ServerCommandService serverCommandService;
+    private final TransactionLogService transactionLogService;
+    private final TransactionLogRepository transactionLogRepository;
+    private final SafehouseClaimRequestRepository safehouseClaimRequestRepository;
 
-    public SafehouseService(MapDataService mapDataService) {
+    @Value("${safehouse.claim.area-cost-factor:0.31}")
+    private double areaCostFactor;
+
+    @Value("${safehouse.claim.min-cost:6000}")
+    private int minCost;
+
+    @Value("${safehouse.claim.free-area:1600}")
+    private int freeArea;
+
+    public SafehouseService(MapDataService mapDataService,
+                            CharacterService characterService,
+                            ServerCommandService serverCommandService,
+                            TransactionLogService transactionLogService,
+                            TransactionLogRepository transactionLogRepository,
+                            SafehouseClaimRequestRepository safehouseClaimRequestRepository) {
         this.mapDataService = mapDataService;
+        this.characterService = characterService;
+        this.serverCommandService = serverCommandService;
+        this.transactionLogService = transactionLogService;
+        this.transactionLogRepository = transactionLogRepository;
+        this.safehouseClaimRequestRepository = safehouseClaimRequestRepository;
     }
 
     public SafehouseListResult listSafehouses() {
         List<String> warnings = new ArrayList<>();
         List<SafehouseInfo> safehouses = mapDataService.getSafehouses(warnings);
         return new SafehouseListResult(safehouses, warnings);
+    }
+
+    public ClaimPreview previewClaim(int x1, int y1, int x2, int y2) {
+        NormalizedRect rect = normalizeRect(x1, y1, x2, y2);
+        List<SafehouseInfo> overlaps = findOverlappingSafehouses(rect);
+        int cost = calculateClaimCost(rect.area());
+        return new ClaimPreview(
+                cost,
+                cost,
+                rect.area(),
+                !overlaps.isEmpty(),
+                overlaps.size(),
+                overlaps.stream()
+                        .map(sh -> sh.name() != null && !sh.name().isBlank() ? sh.name() : sh.owner())
+                        .filter(Objects::nonNull)
+                        .toList()
+        );
+    }
+
+    public List<SafehouseClaimRequest> getUserClaims(User user) {
+        return safehouseClaimRequestRepository.findByUserOrderByCreatedAtDesc(user);
+    }
+
+    public List<SafehouseClaimRequest> getPendingClaims() {
+        return safehouseClaimRequestRepository.findByStatusOrderByCreatedAtAsc(SafehouseClaimStatus.PENDING_REVIEW);
+    }
+
+    public List<SafehouseClaimRequest> getRecentClaims() {
+        return safehouseClaimRequestRepository.findAll().stream()
+                .sorted(Comparator.comparing(SafehouseClaimRequest::getCreatedAt).reversed())
+                .toList();
+    }
+
+    @Transactional
+    public CreateClaimResult requestClaim(User user, Long ownerCharacterId, int x1, int y1, int x2, int y2) {
+        if (ownerCharacterId == null) {
+            return new CreateClaimResult(false, "Selecione um personagem para ser dono da safehouse.", null);
+        }
+
+        List<Character> seasonCharacters = characterService.getUserCharacters(user);
+        Character ownerCharacter = seasonCharacters.stream()
+                .filter(c -> Objects.equals(c.getId(), ownerCharacterId))
+                .findFirst()
+                .orElse(null);
+        if (ownerCharacter == null) {
+            return new CreateClaimResult(false, "Personagem inválido para esta conta.", null);
+        }
+
+        String ownerCharacterName = ownerCharacter.getPlayerName() != null ? ownerCharacter.getPlayerName().trim() : "";
+        if (ownerCharacterName.isBlank()) {
+            return new CreateClaimResult(false, "O personagem selecionado não possui nome válido.", null);
+        }
+        if (ownerCharacterName.contains("##")) {
+            return new CreateClaimResult(false, "Nome do personagem inválido para envio ao servidor.", null);
+        }
+
+        NormalizedRect rect = normalizeRect(x1, y1, x2, y2);
+        if (rect.width() < MIN_SELECTION_SIZE || rect.height() < MIN_SELECTION_SIZE) {
+            return new CreateClaimResult(false,
+                    "Área selecionada muito pequena. Tamanho mínimo: " + MIN_SELECTION_SIZE + " tiles.", null);
+        }
+
+        List<SafehouseInfo> overlaps = findOverlappingSafehouses(rect);
+        if (!overlaps.isEmpty()) {
+            return new CreateClaimResult(false,
+                    "A area selecionada sobrepoe uma safehouse existente. Escolha outra regiao.", null);
+        }
+
+        int cost = calculateClaimCost(rect.area());
+
+        List<Character> userCharacters = characterService.getAllUserCharacters(user);
+        int totalCurrency = userCharacters.stream()
+                .mapToInt(c -> c.getCurrencyPoints() != null ? c.getCurrencyPoints() : 0)
+                .sum();
+        if (totalCurrency < cost) {
+            return new CreateClaimResult(false,
+                    "Saldo insuficiente. Custo: " + cost + " ₳, Saldo: " + totalCurrency + " ₳", null);
+        }
+
+        SafehouseClaimRequest claim = new SafehouseClaimRequest(
+                user,
+            ownerCharacterName,
+                rect.x1(),
+                rect.y1(),
+                rect.x2(),
+                rect.y2(),
+                cost,
+                !overlaps.isEmpty(),
+                overlaps.size());
+        claim = safehouseClaimRequestRepository.save(claim);
+
+        int remainingCost = cost;
+        for (Character character : userCharacters) {
+            if (remainingCost <= 0) {
+                break;
+            }
+            int currentPoints = character.getCurrencyPoints() != null ? character.getCurrencyPoints() : 0;
+            if (currentPoints <= 0) {
+                continue;
+            }
+
+            int deduction = Math.min(currentPoints, remainingCost);
+            character.setCurrencyPoints(currentPoints - deduction);
+            remainingCost -= deduction;
+
+            transactionLogService.logTransaction(
+                    user,
+                    character,
+                    "SAFEHOUSE_CLAIM",
+                    "Safehouse Claim (Owner: " + claim.getClaimName() + ")",
+                    claimTransactionRef(claim.getId()),
+                    deduction,
+                    character.getCurrencyPoints());
+        }
+        characterService.saveAll(userCharacters);
+
+        return new CreateClaimResult(
+                true,
+                "Solicitacao enviada para revisao administrativa. " + cost + " ₳ foram reservados em escrow.",
+                claim);
+    }
+
+    @Transactional
+    public ReviewClaimResult approveClaim(Long claimId, String adminUsername, String adminReason) {
+        Optional<SafehouseClaimRequest> opt = safehouseClaimRequestRepository.findById(claimId);
+        if (opt.isEmpty()) {
+            return new ReviewClaimResult(false, "Solicitação não encontrada.", null);
+        }
+
+        SafehouseClaimRequest claim = opt.get();
+        if (claim.getStatus() != SafehouseClaimStatus.PENDING_REVIEW) {
+            return new ReviewClaimResult(false, "A solicitação não está pendente de revisão.", claim);
+        }
+
+        int x = Math.min(claim.getX1(), claim.getX2());
+        int y = Math.min(claim.getY1(), claim.getY2());
+        int w = Math.abs(claim.getX2() - claim.getX1());
+        int h = Math.abs(claim.getY2() - claim.getY1());
+        if (w <= 0 || h <= 0) {
+            return new ReviewClaimResult(false, "Coordenadas inválidas para criar safehouse no servidor.", claim);
+        }
+
+        String ownerCharacterName = claim.getClaimName();
+        if (ownerCharacterName == null || ownerCharacterName.isBlank() || ownerCharacterName.contains("##")) {
+            return new ReviewClaimResult(false, "Nome do personagem dono é inválido para envio ao servidor.", claim);
+        }
+
+        String requestId = "claim-" + claim.getId() + "-" + System.currentTimeMillis();
+        String command = "servermsg ##APOCBR_SH##" + requestId + "##" + ownerCharacterName +
+                "##" + x + "##" + y + "##" + w + "##" + h;
+        try {
+            serverCommandService.sendCommand(command);
+        } catch (RuntimeException e) {
+            log.error("Failed to approve safehouse claim {} via RCON command", claimId, e);
+            return new ReviewClaimResult(false,
+                    "Falha ao enviar comando para o servidor do jogo. A solicitação permanece em escrow/pendente. Erro: "
+                            + e.getMessage(),
+                    claim);
+        }
+
+        claim.setStatus(SafehouseClaimStatus.APPROVED);
+        claim.setReviewedBy(adminUsername);
+        claim.setReviewedAt(java.time.LocalDateTime.now());
+        claim.setAdminReason(adminReason != null && !adminReason.isBlank() ? adminReason.trim() : null);
+        safehouseClaimRequestRepository.save(claim);
+
+        return new ReviewClaimResult(true, "Solicitação aprovada.", claim);
+    }
+
+    @Transactional
+    public ReviewClaimResult denyClaim(Long claimId, String adminUsername, String adminReason) {
+        Optional<SafehouseClaimRequest> opt = safehouseClaimRequestRepository.findById(claimId);
+        if (opt.isEmpty()) {
+            return new ReviewClaimResult(false, "Solicitação não encontrada.", null);
+        }
+
+        SafehouseClaimRequest claim = opt.get();
+        if (claim.getStatus() != SafehouseClaimStatus.PENDING_REVIEW) {
+            return new ReviewClaimResult(false, "A solicitação não está pendente de revisão.", claim);
+        }
+
+        for (var txLog : transactionLogRepository.findByItemIdRefAndCashbackFalse(claimTransactionRef(claim.getId()))) {
+            transactionLogService.cashback(txLog.getId(), adminUsername);
+        }
+
+        claim.setStatus(SafehouseClaimStatus.DENIED);
+        claim.setReviewedBy(adminUsername);
+        claim.setReviewedAt(java.time.LocalDateTime.now());
+        claim.setAdminReason(adminReason != null && !adminReason.isBlank() ? adminReason.trim() : null);
+        safehouseClaimRequestRepository.save(claim);
+
+        return new ReviewClaimResult(true, "Solicitação negada e saldo devolvido ao jogador.", claim);
+    }
+
+    @Transactional
+    public ReviewClaimResult cancelClaim(User user, Long claimId) {
+        Optional<SafehouseClaimRequest> opt = safehouseClaimRequestRepository.findById(claimId);
+        if (opt.isEmpty()) {
+            return new ReviewClaimResult(false, "Solicitação não encontrada.", null);
+        }
+
+        SafehouseClaimRequest claim = opt.get();
+        if (!Objects.equals(claim.getUser().getId(), user.getId())) {
+            return new ReviewClaimResult(false, "Você não pode cancelar esta solicitação.", null);
+        }
+        if (claim.getStatus() != SafehouseClaimStatus.PENDING_REVIEW) {
+            return new ReviewClaimResult(false, "Apenas solicitações pendentes podem ser canceladas.", claim);
+        }
+
+        for (var txLog : transactionLogRepository.findByItemIdRefAndCashbackFalse(claimTransactionRef(claim.getId()))) {
+            transactionLogService.cashback(txLog.getId(), user.getUsername());
+        }
+
+        safehouseClaimRequestRepository.delete(claim);
+        return new ReviewClaimResult(true, "Solicitação cancelada e saldo devolvido ao jogador.", null);
     }
 
     /**
@@ -158,12 +407,71 @@ public class SafehouseService {
         return keys;
     }
 
+    private int calculateClaimCost(int area) {
+        int base = Math.max(minCost, HARD_MIN_CLAIM_COST);
+        if (area <= freeArea) {
+            return base;
+        }
+        int extra = (int) Math.ceil((area - freeArea) * areaCostFactor);
+        return base + extra;
+    }
+
+    private List<SafehouseInfo> findOverlappingSafehouses(NormalizedRect rect) {
+        List<String> warnings = new ArrayList<>();
+        List<SafehouseInfo> safehouses = mapDataService.getSafehouses(warnings);
+        return safehouses.stream()
+                .filter(sh -> rectanglesOverlap(rect.x1(), rect.y1(), rect.x2(), rect.y2(),
+                        sh.x(), sh.y(), sh.x() + sh.w(), sh.y() + sh.h()))
+                .toList();
+    }
+
+    private boolean rectanglesOverlap(int ax1, int ay1, int ax2, int ay2,
+                                      int bx1, int by1, int bx2, int by2) {
+        return ax1 < bx2 && ax2 > bx1 && ay1 < by2 && ay2 > by1;
+    }
+
+    private NormalizedRect normalizeRect(int x1, int y1, int x2, int y2) {
+        int nx1 = Math.min(x1, x2);
+        int ny1 = Math.min(y1, y2);
+        int nx2 = Math.max(x1, x2);
+        int ny2 = Math.max(y1, y2);
+        return new NormalizedRect(nx1, ny1, nx2, ny2);
+    }
+
+    private String claimTransactionRef(Long claimId) {
+        return "safehouse_claim_" + claimId;
+    }
+
     // --- Records ---
 
     public record SafehouseListResult(List<SafehouseInfo> safehouses, List<String> warnings) {
     }
 
+    public record ClaimPreview(int cost, int baseCost, int area, boolean overlapsExisting,
+                               int overlapCount, List<String> overlappingSafehouses) {
+    }
+
+    public record CreateClaimResult(boolean success, String message, SafehouseClaimRequest claim) {
+    }
+
+    public record ReviewClaimResult(boolean success, String message, SafehouseClaimRequest claim) {
+    }
+
     public record ExportResult(int safehouseCount, int totalBinKeys, int binsWritten, long totalBytes,
                                 List<String> warnings) {
+    }
+
+    private record NormalizedRect(int x1, int y1, int x2, int y2) {
+        int width() {
+            return x2 - x1;
+        }
+
+        int height() {
+            return y2 - y1;
+        }
+
+        int area() {
+            return width() * height();
+        }
     }
 }

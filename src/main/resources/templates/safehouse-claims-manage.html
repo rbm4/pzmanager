@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revisar Solicita&ccedil;&otilde;es de Safehouse</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+        }
+
+        .container {
+            max-width: 1440px;
+            margin: 0 auto;
+            margin-left: 280px;
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 18px;
+            padding: 24px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            font-size: 1.95rem;
+            background: linear-gradient(45deg, #ffb74d, #ff7043);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(160px, 1fr));
+            gap: 12px;
+            min-width: 320px;
+        }
+
+        .stat-card {
+            padding: 16px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            text-align: center;
+        }
+
+        .stat-value { font-size: 1.6rem; font-weight: 700; color: #ffb74d; }
+        .stat-label { color: #99a6ba; font-size: 0.86rem; margin-top: 4px; }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 22px;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .section-title h2 {
+            font-size: 1.15rem;
+            color: #4facfe;
+        }
+
+        .claims-grid {
+            display: grid;
+            gap: 14px;
+        }
+
+        .claim-card {
+            background: rgba(0, 0, 0, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 18px;
+        }
+
+        .claim-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 10px;
+        }
+
+        .claim-name { font-size: 1.05rem; font-weight: 700; }
+        .claim-meta {
+            color: #a1afc2;
+            font-size: 0.9rem;
+            line-height: 1.55;
+        }
+
+        .status-pill {
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 6px 10px;
+            border-radius: 999px;
+        }
+
+        .status-pill.PENDING_REVIEW { background: rgba(255, 193, 7, 0.18); color: #ffd54f; }
+        .status-pill.APPROVED { background: rgba(76, 175, 80, 0.18); color: #81c784; }
+        .status-pill.DENIED { background: rgba(244, 67, 54, 0.18); color: #ef9a9a; }
+        .status-pill.CANCELLED { background: rgba(189, 189, 189, 0.18); color: #d5d5d5; }
+
+        .tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        .tag {
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(79, 172, 254, 0.14);
+            color: #9ad1ff;
+        }
+
+        .tag.warn {
+            background: rgba(255, 152, 0, 0.16);
+            color: #ffcc80;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 14px;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 12px;
+            padding: 11px 14px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .btn:hover { transform: translateY(-1px); }
+        .btn-map { background: rgba(79, 172, 254, 0.18); color: #9ad1ff; }
+        .btn-approve { background: rgba(76, 175, 80, 0.18); color: #8bd89b; }
+        .btn-deny { background: rgba(244, 67, 54, 0.18); color: #ef9a9a; }
+        .btn-refresh { background: rgba(255, 255, 255, 0.1); color: white; }
+
+        .empty-state {
+            text-align: center;
+            padding: 20px;
+            color: #99a6ba;
+            border: 1px dashed rgba(255, 255, 255, 0.14);
+            border-radius: 14px;
+        }
+
+        .viewer-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .viewer-overlay.active { display: flex; }
+
+        .viewer-shell {
+            position: relative;
+            width: 92vw;
+            height: 86vh;
+            border-radius: 18px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 183, 77, 0.35);
+        }
+
+        .viewer-shell iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .viewer-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            z-index: 2;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.55);
+            color: white;
+            font-size: 1.15rem;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .container { margin-left: 0; padding: 20px; }
+            .header { flex-direction: column; align-items: flex-start; }
+            .stats { width: 100%; min-width: 0; }
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{header-component :: header}"></div>
+<div th:replace="~{sidebar-component :: sidebar}"></div>
+
+<div class="container">
+    <div class="header">
+        <div>
+            <h1>Revisar Solicita&ccedil;&otilde;es de Safehouse</h1>
+            <p style="color:#99a6ba; margin-top: 8px; max-width: 760px; line-height: 1.5;">
+                Analise o ret&acirc;ngulo escolhido pelo jogador, abra a &aacute;rea no mapa com zoom autom&aacute;tico e decida se a reten&ccedil;&atilde;o em escrow deve virar aprova&ccedil;&atilde;o ou reembolso.
+            </p>
+        </div>
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="pendingCount" th:text="${pendingCount}">0</div>
+                <div class="stat-label">Pendentes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalCount" th:text="${totalClaims}">0</div>
+                <div class="stat-label">Total</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">
+            <h2>Fila de Revis&atilde;o</h2>
+            <button class="btn btn-refresh" type="button" onclick="loadClaims()">Atualizar</button>
+        </div>
+        <div id="pendingClaimsContainer" class="claims-grid">
+            <div class="empty-state">Carregando solicita&ccedil;&otilde;es...</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">
+            <h2>Hist&oacute;rico Recente</h2>
+        </div>
+        <div id="recentClaimsContainer" class="claims-grid">
+            <div class="empty-state">Carregando solicita&ccedil;&otilde;es...</div>
+        </div>
+    </div>
+</div>
+
+<div class="viewer-overlay" id="viewerOverlay">
+    <div class="viewer-shell">
+        <button class="viewer-close" type="button" onclick="closeViewer()">&times;</button>
+        <iframe id="viewerFrame" src="about:blank"></iframe>
+    </div>
+</div>
+
+<script>
+    let allClaims = [];
+
+    function formatPoints(value) {
+        return Number(value || 0).toLocaleString('pt-BR') + ' ₳';
+    }
+
+    function renderClaim(claim, includeActions) {
+        const overlapTag = claim.overlapsExisting
+            ? '<span class="tag warn">Sobrepoe ' + claim.overlapCount + ' safehouse(s)</span>'
+            : '<span class="tag">Sem sobreposicao detectada</span>';
+        const reviewed = claim.reviewedBy
+            ? '<div class="claim-meta"><strong>Revisado por:</strong> ' + claim.reviewedBy + (claim.reviewedAt ? ' em ' + claim.reviewedAt.replace('T', ' ') : '') + '</div>'
+            : '';
+        const reason = claim.adminReason
+            ? '<div class="claim-meta"><strong>Observacao:</strong> ' + claim.adminReason + '</div>'
+            : '';
+        const actions = includeActions
+            ? '<div class="actions">'
+                + '<button class="btn btn-map" type="button" onclick="openViewer(' + claim.id + ')">Abrir no mapa</button>'
+                + '<button class="btn btn-approve" type="button" onclick="reviewClaim(' + claim.id + ', \'approve\')">Aprovar</button>'
+                + '<button class="btn btn-deny" type="button" onclick="reviewClaim(' + claim.id + ', \'deny\')">Negar e devolver saldo</button>'
+              + '</div>'
+            : '<div class="actions"><button class="btn btn-map" type="button" onclick="openViewer(' + claim.id + ')">Abrir no mapa</button></div>';
+        return '<div class="claim-card">'
+            + '<div class="claim-top">'
+            + '<div>'
+            + '<div class="claim-name">Dono da safehouse: ' + (claim.ownerCharacter || claim.claimName) + '</div>'
+            + '<div class="claim-meta"><strong>Jogador:</strong> ' + claim.username + ' &middot; <strong>Custo:</strong> ' + formatPoints(claim.cost) + ' &middot; <strong>Area:</strong> ' + Number(claim.area || 0).toLocaleString('pt-BR') + '</div>'
+            + '<div class="claim-meta"><strong>Coordenadas:</strong> (' + claim.x1 + ', ' + claim.y1 + ') -> (' + claim.x2 + ', ' + claim.y2 + ')</div>'
+            + '</div>'
+            + '<span class="status-pill ' + claim.status + '">' + claim.statusDisplay + '</span>'
+            + '</div>'
+            + '<div class="tags">' + overlapTag + '</div>'
+            + reviewed + reason + actions
+            + '</div>';
+    }
+
+    function renderSections() {
+        const pending = allClaims.filter(claim => claim.status === 'PENDING_REVIEW');
+        const recent = allClaims;
+
+        document.getElementById('pendingCount').textContent = pending.length;
+        document.getElementById('totalCount').textContent = recent.length;
+
+        document.getElementById('pendingClaimsContainer').innerHTML = pending.length
+            ? pending.map(claim => renderClaim(claim, true)).join('')
+            : '<div class="empty-state">Nenhuma solicitacao pendente.</div>';
+
+        document.getElementById('recentClaimsContainer').innerHTML = recent.length
+            ? recent.map(claim => renderClaim(claim, false)).join('')
+            : '<div class="empty-state">Nenhuma solicitacao encontrada.</div>';
+    }
+
+    async function loadClaims() {
+        try {
+            const response = await fetch('/admin/safehouses/api/claims');
+            allClaims = await response.json();
+            if (!Array.isArray(allClaims)) {
+                allClaims = [];
+            }
+        } catch (error) {
+            allClaims = [];
+        }
+        renderSections();
+    }
+
+    function openViewer(claimId) {
+        const claim = allClaims.find(item => item.id === claimId);
+        if (!claim) {
+            return;
+        }
+        const url = '/map-regions/viewer?x1=' + encodeURIComponent(claim.x1)
+            + '&y1=' + encodeURIComponent(claim.y1)
+            + '&x2=' + encodeURIComponent(claim.x2)
+            + '&y2=' + encodeURIComponent(claim.y2)
+            + '&name=' + encodeURIComponent(claim.claimName);
+        document.getElementById('viewerFrame').src = url;
+        document.getElementById('viewerOverlay').classList.add('active');
+    }
+
+    function closeViewer() {
+        document.getElementById('viewerOverlay').classList.remove('active');
+        document.getElementById('viewerFrame').src = 'about:blank';
+    }
+
+    async function reviewClaim(claimId, action) {
+        const reason = window.prompt(action === 'approve'
+            ? 'Observacao opcional da aprovacao:'
+            : 'Motivo opcional da negativa:') || '';
+
+        const params = new URLSearchParams();
+        if (reason.trim()) {
+            params.append('reason', reason.trim());
+        }
+
+        const response = await fetch('/admin/safehouses/api/claims/' + claimId + '/' + action, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: params.toString()
+        });
+        const result = await response.json();
+        alert(result.message || 'Solicitacao atualizada.');
+        await loadClaims();
+    }
+
+    document.getElementById('viewerOverlay').addEventListener('click', function(event) {
+        if (event.target === this) {
+            closeViewer();
+        }
+    });
+
+    loadClaims();
+</script>
+</body>
+</html>

@@ -815,7 +815,7 @@
 <!-- ==================== MAP SELECTOR MODAL ==================== -->
 <div class="map-selector-overlay" id="mapSelectorOverlay">
     <div class="map-selector-frame">
-        <iframe id="mapSelectorFrame" src="about:blank"></iframe>
+        <iframe id="mapSelectorFrame" src="about:blank" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>
     </div>
 </div>
 
@@ -1243,7 +1243,13 @@
             url += '?x1=' + encodeURIComponent(x1) + '&y1=' + encodeURIComponent(y1)
                  + '&x2=' + encodeURIComponent(x2) + '&y2=' + encodeURIComponent(y2);
         }
-        iframe.src = url;
+        // Add cache-busting parameter and force iframe reload
+        url += (url.includes('?') ? '&' : '?') + 'v=' + Date.now();
+        iframe.src = 'about:blank';
+        // Force repaint by using setTimeout to ensure iframe is cleared before reloading
+        setTimeout(() => {
+            iframe.src = url;
+        }, 10);
         overlay.classList.add('active');
     }
 
@@ -1251,6 +1257,7 @@
         const overlay = document.getElementById('mapSelectorOverlay');
         const iframe = document.getElementById('mapSelectorFrame');
         overlay.classList.remove('active');
+        // Clear iframe properly to free memory and prevent stale content
         iframe.src = 'about:blank';
     }
 

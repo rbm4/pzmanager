@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solicitar Safehouse - Apocalipse [BR]</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            margin-left: 280px;
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            padding: 24px;
+            background: rgba(79, 172, 254, 0.08);
+            border: 1px solid rgba(79, 172, 254, 0.25);
+            border-radius: 16px;
+            margin-bottom: 24px;
+            backdrop-filter: blur(10px);
+        }
+
+        .page-header h1 {
+            font-size: 2rem;
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .balance-box { text-align: right; }
+        .balance-label { color: #8da2bd; font-size: 0.85rem; }
+        .balance-value { color: #ffc107; font-size: 1.8rem; font-weight: 700; }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.9fr);
+            gap: 24px;
+            align-items: start;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+        }
+
+        .panel-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #4facfe;
+        }
+
+        .muted {
+            color: #93a0b4;
+            font-size: 0.92rem;
+            line-height: 1.5;
+        }
+
+        .form-group { margin-bottom: 18px; }
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #a7b4c7;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 14px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 0.98rem;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: rgba(79, 172, 254, 0.7);
+        }
+
+        .form-select {
+            background: #eef3fb;
+            color: #121826;
+            border-color: rgba(255, 255, 255, 0.18);
+        }
+
+        .form-select option {
+            color: #121826;
+            background: #ffffff;
+        }
+
+        .coord-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .coord-box {
+            background: rgba(0, 0, 0, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 14px;
+            text-align: center;
+        }
+
+        .coord-name {
+            color: #8da2bd;
+            font-size: 0.78rem;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .coord-value {
+            color: #ffb74d;
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 12px;
+            padding: 13px 18px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00c6ff, #0072ff);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: white;
+        }
+
+        .btn-success {
+            width: 100%;
+            background: linear-gradient(135deg, #59c173, #2e8b57);
+            color: white;
+            margin-top: 16px;
+        }
+
+        .btn:hover { transform: translateY(-1px); }
+        .btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .preview-box {
+            display: none;
+            margin-top: 18px;
+            padding: 18px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 193, 7, 0.25);
+            background: rgba(255, 193, 7, 0.08);
+        }
+
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .preview-stat {
+            background: rgba(0, 0, 0, 0.18);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .preview-stat-label {
+            color: #9db0c8;
+            font-size: 0.78rem;
+            margin-bottom: 5px;
+        }
+
+        .preview-stat-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #ffc107;
+        }
+
+        .warning {
+            margin-top: 12px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            line-height: 1.45;
+        }
+
+        .warning.info {
+            background: rgba(79, 172, 254, 0.12);
+            border: 1px solid rgba(79, 172, 254, 0.28);
+            color: #9ad1ff;
+        }
+
+        .warning.alert {
+            background: rgba(255, 152, 0, 0.14);
+            border: 1px solid rgba(255, 152, 0, 0.35);
+            color: #ffcb7f;
+        }
+
+        .warning.error {
+            background: rgba(244, 67, 54, 0.14);
+            border: 1px solid rgba(244, 67, 54, 0.35);
+            color: #ff9b95;
+        }
+
+        .request-list {
+            display: grid;
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .request-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 14px;
+        }
+
+        .request-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .request-name { font-weight: 700; color: #fff; }
+        .request-status {
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 5px 9px;
+            border-radius: 999px;
+        }
+
+        .request-status.PENDING_REVIEW { background: rgba(255, 193, 7, 0.18); color: #ffd54f; }
+        .request-status.APPROVED { background: rgba(76, 175, 80, 0.18); color: #81c784; }
+        .request-status.DENIED { background: rgba(244, 67, 54, 0.18); color: #ef9a9a; }
+        .request-status.CANCELLED { background: rgba(158, 158, 158, 0.18); color: #c7c7c7; }
+
+        .request-meta {
+            color: #97a7bc;
+            font-size: 0.86rem;
+            line-height: 1.5;
+        }
+
+        .request-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        .btn-danger-soft {
+            background: rgba(244, 67, 54, 0.14);
+            border: 1px solid rgba(244, 67, 54, 0.35);
+            color: #ff9b95;
+            padding: 9px 12px;
+        }
+
+        .empty-state {
+            color: #8da2bd;
+            font-size: 0.92rem;
+            padding: 16px;
+            text-align: center;
+            border: 1px dashed rgba(255, 255, 255, 0.14);
+            border-radius: 14px;
+        }
+
+        .map-selector-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.86);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .map-selector-overlay.active { display: flex; }
+
+        .map-selector-shell {
+            position: relative;
+            width: 92vw;
+            height: 86vh;
+            border-radius: 18px;
+            overflow: hidden;
+            border: 1px solid rgba(79, 172, 254, 0.35);
+            box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+        }
+
+        .map-selector-shell iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            font-size: 1.2rem;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        @media (max-width: 980px) {
+            .layout { grid-template-columns: 1fr; }
+            .preview-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .container { margin-left: 0; padding: 20px; }
+            .coord-grid { grid-template-columns: 1fr 1fr; }
+            .page-header { flex-direction: column; align-items: flex-start; }
+            .balance-box { text-align: left; }
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{header-component :: header}"></div>
+<div th:replace="~{sidebar-component :: sidebar}"></div>
+
+<div class="container">
+    <div class="page-header">
+        <div>
+            <h1>Solicitar Safehouse</h1>
+            <p class="muted" style="margin-top: 8px; max-width: 760px;">
+                Escolha a &aacute;rea no mapa, envie a solicita&ccedil;&atilde;o e o custo fica reservado em escrow at&eacute; a revis&atilde;o de um administrador.
+                O custo da safehouse &eacute; é m&iacute;nimo de 6.000 pontos.
+            </p>
+        </div>
+        <div class="balance-box">
+            <div class="balance-label">Seu saldo atual</div>
+            <div class="balance-value" id="balanceValue" th:text="${userBalance + ' ₳'}">0 ₳</div>
+        </div>
+    </div>
+
+    <div class="layout">
+        <div class="panel">
+            <div class="panel-title">Detalhes da Solicita&ccedil;&atilde;o</div>
+
+            <div class="form-group">
+                <label class="form-label" for="ownerCharacterId">Personagem dono da Safehouse</label>
+                <select id="ownerCharacterId" class="form-input form-select">
+                    <option value="">Selecione um personagem</option>
+                    <option th:each="character : ${userCharacters}"
+                            th:value="${character.id}"
+                            th:text="${character.playerName + ' (' + (character.currencyPoints != null ? character.currencyPoints : 0) + ' ₳)'}">
+                    </option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">&Aacute;rea Selecionada</label>
+                <div class="coord-grid">
+                    <div class="coord-box"><div class="coord-name">X1</div><div class="coord-value" id="coordX1">&mdash;</div></div>
+                    <div class="coord-box"><div class="coord-name">Y1</div><div class="coord-value" id="coordY1">&mdash;</div></div>
+                    <div class="coord-box"><div class="coord-name">X2</div><div class="coord-value" id="coordX2">&mdash;</div></div>
+                    <div class="coord-box"><div class="coord-name">Y2</div><div class="coord-value" id="coordY2">&mdash;</div></div>
+                </div>
+            </div>
+
+            <div class="btn-row">
+                <button class="btn btn-primary" type="button" onclick="openMapSelector()">Abrir mapa para selecionar</button>
+                <button class="btn btn-secondary" type="button" onclick="clearSelection()">Limpar sele&ccedil;&atilde;o</button>
+            </div>
+
+            <div class="preview-box" id="previewBox">
+                <strong style="color: #ffc107;">Resumo da cobran&ccedil;a</strong>
+                <div class="preview-grid">
+                    <div class="preview-stat">
+                        <div class="preview-stat-label">&Aacute;rea</div>
+                        <div class="preview-stat-value" id="previewArea">0</div>
+                    </div>
+                    <div class="preview-stat">
+                        <div class="preview-stat-label">Custo Base</div>
+                        <div class="preview-stat-value" id="previewBaseCost">0 ₳</div>
+                    </div>
+                    <div class="preview-stat">
+                        <div class="preview-stat-label">Custo Final</div>
+                        <div class="preview-stat-value" id="previewCost">0 ₳</div>
+                    </div>
+                </div>
+                <div id="previewInfo" class="warning info" style="display:none;"></div>
+                <div id="previewAlert" class="warning alert" style="display:none;"></div>
+                <div id="previewError" class="warning error" style="display:none;"></div>
+            </div>
+
+            <button id="submitBtn" class="btn btn-success" type="button" onclick="submitClaim()" disabled>
+                Reservar saldo e enviar para revis&atilde;o
+            </button>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title">Como Funciona</div>
+            <div class="info-card muted">
+                1. Voc&ecirc; desenha a &aacute;rea desejada no mapa.<br>
+                2. O sistema calcula o custo da safehouse de forma independente (m&iacute;nimo de 6.000).<br>
+                3. O valor fica retido em escrow at&eacute; um admin revisar.<br>
+                4. Se a solicita&ccedil;&atilde;o for negada, o saldo volta automaticamente.
+            </div>
+
+            <div class="panel-title" style="margin-top: 22px;">Minhas Solicita&ccedil;&otilde;es</div>
+            <div id="claimsList" class="request-list">
+                <div class="empty-state">Carregando solicita&ccedil;&otilde;es...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="map-selector-overlay" id="mapSelectorOverlay">
+    <div class="map-selector-shell">
+        <button class="modal-close" type="button" onclick="closeMapSelector()">&times;</button>
+        <iframe id="mapSelectorFrame" src="about:blank" sandbox="allow-same-origin allow-scripts allow-forms allow-popups"></iframe>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    let currentBalance = /*[[${userBalance}]]*/ 0;
+    let selectedCoords = null;
+    let currentPreview = null;
+
+    function formatPoints(value) {
+        return Number(value || 0).toLocaleString('pt-BR') + ' ₳';
+    }
+
+    function updateBalance() {
+        document.getElementById('balanceValue').textContent = formatPoints(currentBalance);
+    }
+
+    function openMapSelector() {
+        const overlay = document.getElementById('mapSelectorOverlay');
+        const iframe = document.getElementById('mapSelectorFrame');
+        let url = '/safehouses/map-selector';
+        if (selectedCoords) {
+            url += '?x1=' + encodeURIComponent(selectedCoords.x1)
+                + '&y1=' + encodeURIComponent(selectedCoords.y1)
+                + '&x2=' + encodeURIComponent(selectedCoords.x2)
+                + '&y2=' + encodeURIComponent(selectedCoords.y2);
+        }
+        url += (url.includes('?') ? '&' : '?') + 'v=' + Date.now();
+        iframe.src = 'about:blank';
+        setTimeout(() => { iframe.src = url; }, 10);
+        overlay.classList.add('active');
+    }
+
+    function closeMapSelector() {
+        document.getElementById('mapSelectorOverlay').classList.remove('active');
+        document.getElementById('mapSelectorFrame').src = 'about:blank';
+    }
+
+    function clearSelection() {
+        selectedCoords = null;
+        currentPreview = null;
+        ['X1', 'Y1', 'X2', 'Y2'].forEach(key => {
+            document.getElementById('coord' + key).textContent = '—';
+        });
+        document.getElementById('previewBox').style.display = 'none';
+        document.getElementById('submitBtn').disabled = true;
+    }
+
+    async function updatePreview() {
+        if (!selectedCoords) {
+            return;
+        }
+
+        const params = new URLSearchParams(selectedCoords);
+        const response = await fetch('/safehouses/api/preview?' + params.toString());
+        const result = await response.json();
+        if (!response.ok || result.error) {
+            showPreviewError(result.error || 'Falha ao calcular custo.');
+            return;
+        }
+
+        currentPreview = result;
+        currentBalance = result.balance;
+        updateBalance();
+
+        document.getElementById('previewBox').style.display = 'block';
+        document.getElementById('previewArea').textContent = Number(result.area || 0).toLocaleString('pt-BR');
+        document.getElementById('previewBaseCost').textContent = formatPoints(result.baseCost);
+        document.getElementById('previewCost').textContent = formatPoints(result.cost);
+
+        const info = document.getElementById('previewInfo');
+        const alert = document.getElementById('previewAlert');
+        const error = document.getElementById('previewError');
+        info.style.display = 'none';
+        alert.style.display = 'none';
+        error.style.display = 'none';
+
+        info.textContent = 'O valor fica retido em escrow ate a revisao do administrador (custo minimo de 6.000).';
+        info.style.display = 'block';
+
+        if (result.overlapsExisting) {
+            const names = Array.isArray(result.overlappingSafehouses) && result.overlappingSafehouses.length
+                ? ' Safehouses detectadas: ' + result.overlappingSafehouses.join(', ') + '.'
+                : '';
+            error.textContent = 'A selecao sobrepoe safehouse existente. Escolha outra area.' + names;
+            error.style.display = 'block';
+            document.getElementById('submitBtn').disabled = true;
+            return;
+        }
+
+        if (currentBalance < result.cost) {
+            error.textContent = 'Saldo insuficiente para reservar esta area.';
+            error.style.display = 'block';
+            document.getElementById('submitBtn').disabled = true;
+            return;
+        }
+
+        document.getElementById('submitBtn').disabled = !document.getElementById('ownerCharacterId').value;
+    }
+
+    function showPreviewError(message) {
+        document.getElementById('previewBox').style.display = 'block';
+        const error = document.getElementById('previewError');
+        error.textContent = message;
+        error.style.display = 'block';
+        document.getElementById('previewInfo').style.display = 'none';
+        document.getElementById('previewAlert').style.display = 'none';
+        document.getElementById('submitBtn').disabled = true;
+    }
+
+    async function submitClaim() {
+        const ownerCharacterId = document.getElementById('ownerCharacterId').value;
+        if (!ownerCharacterId) {
+            alert('Selecione o personagem dono da safehouse.');
+            return;
+        }
+        if (!selectedCoords || !currentPreview) {
+            alert('Selecione a area da safehouse no mapa.');
+            return;
+        }
+        if (currentBalance < currentPreview.cost) {
+            alert('Saldo insuficiente para enviar esta solicitacao.');
+            return;
+        }
+
+        const params = new URLSearchParams();
+        params.append('ownerCharacterId', ownerCharacterId);
+        params.append('x1', selectedCoords.x1);
+        params.append('y1', selectedCoords.y1);
+        params.append('x2', selectedCoords.x2);
+        params.append('y2', selectedCoords.y2);
+
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+
+        try {
+            const response = await fetch('/safehouses/api/claim', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: params.toString()
+            });
+            const result = await response.json();
+            alert(result.message || 'Solicitacao enviada.');
+            if (result.success) {
+                currentBalance = result.balance;
+                updateBalance();
+                document.getElementById('ownerCharacterId').value = '';
+                clearSelection();
+                await loadClaims();
+            }
+        } catch (error) {
+            alert('Falha ao enviar solicitacao: ' + error.message);
+        } finally {
+            submitBtn.disabled = false;
+            if (currentPreview && currentBalance >= currentPreview.cost && document.getElementById('ownerCharacterId').value) {
+                submitBtn.disabled = false;
+            }
+        }
+    }
+
+    async function cancelClaim(claimId) {
+        if (!window.confirm('Cancelar esta solicitacao e devolver o saldo em escrow?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/safehouses/api/claims/' + claimId + '/cancel', {
+                method: 'POST'
+            });
+            const result = await response.json();
+            alert(result.message || 'Solicitacao atualizada.');
+            if (result.success) {
+                currentBalance = result.balance;
+                updateBalance();
+                await loadClaims();
+            }
+        } catch (error) {
+            alert('Falha ao cancelar solicitacao: ' + error.message);
+        }
+    }
+
+    function renderClaimCard(claim) {
+        const reason = claim.adminReason ? '<div class="request-meta"><strong>Motivo:</strong> ' + claim.adminReason + '</div>' : '';
+        const reviewed = claim.reviewedBy ? '<div class="request-meta"><strong>Revisado por:</strong> ' + claim.reviewedBy + '</div>' : '';
+        const overlap = claim.overlapsExisting
+            ? '<div class="request-meta"><strong>Sobreposicao:</strong> ' + claim.overlapCount + ' safehouse(s)</div>'
+            : '';
+        const actions = claim.status === 'PENDING_REVIEW'
+            ? '<div class="request-actions"><button class="btn btn-danger-soft" type="button" onclick="cancelClaim(' + claim.id + ')">Cancelar</button></div>'
+            : '';
+        return '<div class="request-card">'
+            + '<div class="request-header">'
+            + '<div class="request-name">Dono: ' + (claim.ownerCharacter || claim.claimName) + '</div>'
+            + '<div class="request-status ' + claim.status + '">' + claim.statusDisplay + '</div>'
+            + '</div>'
+            + '<div class="request-meta"><strong>Coordenadas:</strong> (' + claim.x1 + ', ' + claim.y1 + ') -> (' + claim.x2 + ', ' + claim.y2 + ')</div>'
+            + '<div class="request-meta"><strong>Custo:</strong> ' + formatPoints(claim.cost) + ' <strong style="margin-left:10px;">Area:</strong> ' + Number(claim.area || 0).toLocaleString('pt-BR') + '</div>'
+            + overlap + reviewed + reason + actions
+            + '</div>';
+    }
+
+    async function loadClaims() {
+        const container = document.getElementById('claimsList');
+        try {
+            const response = await fetch('/safehouses/api/my-claims');
+            const claims = await response.json();
+            if (!Array.isArray(claims) || claims.length === 0) {
+                container.innerHTML = '<div class="empty-state">Voce ainda nao tem solicitacoes de safehouse.</div>';
+                return;
+            }
+            container.innerHTML = claims.map(renderClaimCard).join('');
+        } catch (error) {
+            container.innerHTML = '<div class="empty-state">Nao foi possivel carregar suas solicitacoes.</div>';
+        }
+    }
+
+    window.addEventListener('message', function(event) {
+        if (event.data && event.data.type === 'regionCoords') {
+            selectedCoords = {
+                x1: event.data.x1,
+                y1: event.data.y1,
+                x2: event.data.x2,
+                y2: event.data.y2
+            };
+            document.getElementById('coordX1').textContent = selectedCoords.x1;
+            document.getElementById('coordY1').textContent = selectedCoords.y1;
+            document.getElementById('coordX2').textContent = selectedCoords.x2;
+            document.getElementById('coordY2').textContent = selectedCoords.y2;
+            closeMapSelector();
+            updatePreview();
+        } else if (event.data && event.data.type === 'closeRegionSelector') {
+            closeMapSelector();
+        }
+    });
+
+    document.getElementById('mapSelectorOverlay').addEventListener('click', function(event) {
+        if (event.target === this) {
+            closeMapSelector();
+        }
+    });
+
+    document.getElementById('ownerCharacterId').addEventListener('change', function() {
+        document.getElementById('submitBtn').disabled = !(selectedCoords && currentPreview && currentBalance >= currentPreview.cost && this.value);
+    });
+
+    loadClaims();
+    updateBalance();
+    /*]]>*/
+</script>
+</body>
+</html>

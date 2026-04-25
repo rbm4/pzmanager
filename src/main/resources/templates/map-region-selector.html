@@ -252,7 +252,13 @@
             <div class="legBox" style="background:transparent; border:2px solid rgba(80,200,120,0.65)"></div>
             <div class="legTxt">Permanente</div>
         </div>
+        <div class="legRow">
+            <div class="legBox" style="background:rgba(80,200,120,0.08); border:1.5px solid rgba(80,200,120,0.55)"></div>
+            <div class="legTxt">Safehouse existente</div>
+        </div>
     </div>
+
+    <div id="shTooltip" style="position:fixed;z-index:99999;display:none;max-width:320px;background:rgba(10,17,26,0.96);border:1px solid #203044;border-radius:12px;padding:12px 14px;color:#e6eef9;box-shadow:0 10px 30px rgba(0,0,0,0.5);font-size:12px;line-height:1.4;pointer-events:none;font-family:system-ui,sans-serif;"></div>
 
     <div class="bottomBar">
         <div class="coordsPanel" id="coordsPanel">
@@ -278,6 +284,7 @@
         var MOD_MAPS_LIST = MAP_DATA_ROOT + 'mod_maps/map_list.json';
         var MOD_MAPS_ROOT = MAP_DATA_ROOT + 'mod_maps/';
         var REGIONS_API = '/map-regions/api/regions';
+        var SAFEHOUSES_API = '/safehouses/api/safehouses';
         var MIN_SEL_SIZE = 10;
 
         /* ========== URL params ========== */
@@ -291,6 +298,7 @@
         /* ========== State ========== */
         var viewer         = null;
         var regions        = [];
+        var safehouses     = [];
         var selection      = null;   // { x1, y1, x2, y2 } world coords
         var selOverlayEl   = null;   // OSD overlay DOM element
         var selLabelEl     = null;   // label inside the overlay
@@ -367,6 +375,74 @@
 
         /* ========== Regions (read-only overlays) ========== */
         var regionOverlays = [];
+        /* ========== Safehouses (read-only overlays) ========== */
+        var shTooltipEl = document.getElementById('shTooltip');
+
+        function showShTooltip(sh, mx, my) {
+            shTooltipEl.innerHTML =
+                '<b style="color:#50c878">&#x1F3E0; Safehouse</b>' +
+                '<br><span style="color:#888">Dono:</span> <b>' + escapeHtml(sh.owner || '') + '</b>' +
+                (sh.town ? '<br><span style="color:#888">Cidade:</span> ' + escapeHtml(sh.town) : '') +
+                (sh.name ? '<br><span style="color:#888">Nome:</span> ' + escapeHtml(sh.name) : '') +
+                '<br><span style="color:#888">Coords:</span> (' + sh.x + ', ' + sh.y + ') ' + sh.w + '\u00d7' + sh.h;
+            shTooltipEl.style.display = 'block';
+            var pad = 10;
+            var rect = shTooltipEl.getBoundingClientRect();
+            var x = mx + 16, y = my + 16;
+            if (x + rect.width > window.innerWidth - pad) x = window.innerWidth - pad - rect.width;
+            if (y + rect.height > window.innerHeight - pad) y = window.innerHeight - pad - rect.height;
+            shTooltipEl.style.left = Math.max(pad, x) + 'px';
+            shTooltipEl.style.top  = Math.max(pad, y) + 'px';
+        }
+        function hideShTooltip() { shTooltipEl.style.display = 'none'; }
+
+        function renderSafehouses() {
+            for (var i = 0; i < safehouses.length; i++) {
+                var sh = safehouses[i];
+                var el = document.createElement('div');
+                el.style.cssText =
+                    'background:rgba(80,200,120,0.08);border:1.5px solid rgba(80,200,120,0.55);' +
+                    'box-sizing:border-box;pointer-events:auto;cursor:pointer;';
+
+                var lbl = document.createElement('div');
+                lbl.textContent = sh.owner || '';
+                lbl.style.cssText =
+                    'position:absolute;top:2px;left:4px;color:#50c878;font-size:10px;font-weight:bold;' +
+                    'font-family:system-ui,sans-serif;text-shadow:1px 1px 2px rgba(0,0,0,0.8);' +
+                    'white-space:nowrap;pointer-events:none;overflow:hidden;text-overflow:ellipsis;max-width:calc(100% - 8px);';
+                el.appendChild(lbl);
+
+                (function (shRef, elRef) {
+                    elRef.addEventListener('mouseenter', function (e) {
+                        elRef.style.background = 'rgba(80,200,120,0.2)';
+                        showShTooltip(shRef, e.clientX, e.clientY);
+                    });
+                    elRef.addEventListener('mousemove', function (e) { showShTooltip(shRef, e.clientX, e.clientY); });
+                    elRef.addEventListener('mouseleave', function () {
+                        elRef.style.background = 'rgba(80,200,120,0.08)';
+                        hideShTooltip();
+                    });
+                })(sh, el);
+
+                var tl = pixelToViewport(sh.x, sh.y);
+                var br = pixelToViewport(sh.x + sh.w, sh.y + sh.h);
+                var rect = new OpenSeadragon.Rect(tl.x, tl.y, br.x - tl.x, br.y - tl.y);
+                viewer.addOverlay({ element: el, location: rect, placement: OpenSeadragon.Placement.TOP_LEFT });
+            }
+        }
+
+        function loadSafehouses() {
+            fetch(SAFEHOUSES_API).then(function (resp) {
+                if (!resp.ok) return;
+                return resp.json();
+            }).then(function (data) {
+                if (data) {
+                    safehouses = data;
+                    renderSafehouses();
+                }
+            }).catch(function () { /* silent */ });
+        }
+
 
         function renderRegions() {
             for (var i = 0; i < regions.length; i++) {
@@ -747,9 +823,10 @@
 
         /* ========== Init ========== */
         viewer.addHandler('open', function () {
-            loadModMaps();
-            loadRegions();
-            preloadSelection();
+              loadModMaps();
+              loadRegions();
+              loadSafehouses();
+              preloadSelection();
         });
     })();
     </script>
