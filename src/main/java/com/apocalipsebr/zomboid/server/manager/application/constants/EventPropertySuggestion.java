@@ -152,9 +152,9 @@ public enum EventPropertySuggestion {
             1.0, 0.05, 3.0, 180, "Loot", null),
 
     MELEE_XP_BOOST(
-            "XP de Combate Corpo-a-Corpo", "MultiplierConfig.Maintenance", PropertyTarget.SANDBOX,
+            "XP de Manutenção", "MultiplierConfig.Maintenance", PropertyTarget.SANDBOX,
             SandboxSetting.ConfigType.SANDBOX_VARS, ValueType.PERCENTAGE,
-            "Aumenta a experiência ganha em combate corpo-a-corpo",
+            "Aumenta a experiência ganha em manutenção, por consertos ou ataques",
             1.0, 1.0, 5.0, 490, "Experience", null),
 
     FITNESS_XP_BOOST(
