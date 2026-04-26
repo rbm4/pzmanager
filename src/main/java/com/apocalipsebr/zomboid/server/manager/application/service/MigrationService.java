@@ -1,22 +1,37 @@
 package com.apocalipsebr.zomboid.server.manager.application.service;
 
-import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Character;
-import com.apocalipsebr.zomboid.server.manager.domain.entity.app.*;
-import com.apocalipsebr.zomboid.server.manager.domain.repository.app.CharacterMigrationRepository;
-import com.apocalipsebr.zomboid.server.manager.domain.repository.app.ClaimedCarRepository;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Character;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.CharacterMigration;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.ClaimedCar;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.ClaimedCarItem;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.MigrationStatus;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Season;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
+import com.apocalipsebr.zomboid.server.manager.domain.repository.app.CharacterMigrationRepository;
+import com.apocalipsebr.zomboid.server.manager.domain.repository.app.ClaimedCarRepository;
+
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 @Service
 public class MigrationService {
@@ -35,7 +50,8 @@ public class MigrationService {
 
     /**
      * Ordered list of skill keys matching the game's `addxp` parameter names.
-     * Each entry maps a game skill name to the corresponding getter on the Character entity.
+     * Each entry maps a game skill name to the corresponding getter on the
+     * Character entity.
      */
     private static final List<SkillMapping> SKILL_MAPPINGS = List.of(
             new SkillMapping("Cooking", "skillCooking"),
@@ -72,14 +88,13 @@ public class MigrationService {
             new SkillMapping("Pottery", "skillPottery"),
             new SkillMapping("Carving", "skillCarving"),
             new SkillMapping("Butchering", "skillButchering"),
-            new SkillMapping("Glassmaking", "skillGlassmaking")
-    );
+            new SkillMapping("Glassmaking", "skillGlassmaking"));
 
     public MigrationService(CharacterMigrationRepository migrationRepository,
-                            ClaimedCarRepository claimedCarRepository,
-                            CharacterService characterService,
-                            ServerCommandService serverCommandService,
-                            SeasonService seasonService) {
+            ClaimedCarRepository claimedCarRepository,
+            CharacterService characterService,
+            ServerCommandService serverCommandService,
+            SeasonService seasonService) {
         this.migrationRepository = migrationRepository;
         this.claimedCarRepository = claimedCarRepository;
         this.characterService = characterService;
@@ -88,7 +103,7 @@ public class MigrationService {
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  CHARACTER XP MIGRATION
+    // CHARACTER XP MIGRATION
     // ─────────────────────────────────────────────────────────────
 
     /**
@@ -119,7 +134,7 @@ public class MigrationService {
         String snapshotJson;
         try {
             snapshotJson = objectMapper.writeValueAsString(snapshot);
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException("Falha ao serializar snapshot de skills", e);
         }
 
@@ -128,12 +143,15 @@ public class MigrationService {
     }
 
     /**
-     * Called from the heartbeat flow ({@code CharacterService.updateCharacterStats}).
+     * Called from the heartbeat flow
+     * ({@code CharacterService.updateCharacterStats}).
      * Checks if the character has a PENDING migration and, if so, computes the XP
      * difference and issues {@code addxp} commands via RCON.
      *
-     * @param character     the persisted character (already updated with current heartbeat data)
-     * @param currentSkills the skill map from the current heartbeat DTO (live in-game values)
+     * @param character     the persisted character (already updated with current
+     *                      heartbeat data)
+     * @param currentSkills the skill map from the current heartbeat DTO (live
+     *                      in-game values)
      */
     @Transactional
     public void processPendingMigration(Character character, Map<String, Double> currentSkills) {
@@ -150,7 +168,8 @@ public class MigrationService {
 
         try {
             Map<String, Double> snapshot = objectMapper.readValue(
-                    migration.getSnapshotSkills(), new TypeReference<Map<String, Double>>() {});
+                    migration.getSnapshotSkills(), new TypeReference<Map<String, Double>>() {
+                    });
 
             Map<String, Double> appliedDeltas = new LinkedHashMap<>();
             String playerName = character.getPlayerName();
@@ -158,7 +177,8 @@ public class MigrationService {
             for (SkillMapping mapping : SKILL_MAPPINGS) {
                 double stored = snapshot.getOrDefault(mapping.gameKey, 0.0);
                 double current = (currentSkills != null)
-                        ? currentSkills.getOrDefault(mapping.gameKey, 0.0) : 0.0;
+                        ? currentSkills.getOrDefault(mapping.gameKey, 0.0)
+                        : 0.0;
                 double delta = stored - current;
 
                 if (delta > 0) {
@@ -193,11 +213,12 @@ public class MigrationService {
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  CAR MIGRATION
+    // CAR MIGRATION
     // ─────────────────────────────────────────────────────────────
 
     /**
-     * Migrate a single claimed car: write its data to the VehicleMigration.jsonl file
+     * Migrate a single claimed car: write its data to the VehicleMigration.jsonl
+     * file
      * at the user-selected map coordinates, then delete the car from the database.
      *
      * @param user  the authenticated user
@@ -269,7 +290,7 @@ public class MigrationService {
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  QUERY HELPERS
+    // QUERY HELPERS
     // ─────────────────────────────────────────────────────────────
 
     /**
@@ -282,7 +303,8 @@ public class MigrationService {
     }
 
     /**
-     * Returns all migration records for a user, mapped by character ID for easy template lookup.
+     * Returns all migration records for a user, mapped by character ID for easy
+     * template lookup.
      */
     public Map<Long, CharacterMigration> getUserMigrationsMap(User user) {
         List<CharacterMigration> migrations = migrationRepository.findByUserId(user.getId());
@@ -308,7 +330,8 @@ public class MigrationService {
     }
 
     /**
-     * Admin: delete the migration record for a character, allowing them to migrate XP again.
+     * Admin: delete the migration record for a character, allowing them to migrate
+     * XP again.
      */
     @Transactional
     public void resetCharacterMigration(Long characterId) {
@@ -320,7 +343,8 @@ public class MigrationService {
     }
 
     /**
-     * Admin: delete ALL migration records from the table, allowing every player to migrate again.
+     * Admin: delete ALL migration records from the table, allowing every player to
+     * migrate again.
      */
     @Transactional
     public long resetAllMigrations() {
@@ -334,7 +358,7 @@ public class MigrationService {
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  SKILL SNAPSHOT
+    // SKILL SNAPSHOT
     // ─────────────────────────────────────────────────────────────
 
     /**
@@ -388,5 +412,6 @@ public class MigrationService {
     /**
      * Internal record to map game skill names to entity field names.
      */
-    private record SkillMapping(String gameKey, String fieldName) {}
+    private record SkillMapping(String gameKey, String fieldName) {
+    }
 }
