@@ -1,15 +1,5 @@
 package com.apocalipsebr.zomboid.server.manager.infrastructure.adapter;
 
-import com.apocalipsebr.zomboid.server.manager.domain.entity.ServerCommand;
-import com.apocalipsebr.zomboid.server.manager.domain.exception.ServerCommandException;
-import com.apocalipsebr.zomboid.server.manager.domain.port.ServerCommandExecutor;
-
-import org.glavo.rcon.AuthenticationException;
-import org.glavo.rcon.MalformedPacketException;
-import org.glavo.rcon.Rcon;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
@@ -20,6 +10,16 @@ import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Logger;
 
+import org.glavo.rcon.AuthenticationException;
+import org.glavo.rcon.MalformedPacketException;
+import org.glavo.rcon.Rcon;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import com.apocalipsebr.zomboid.server.manager.domain.entity.ServerCommand;
+import com.apocalipsebr.zomboid.server.manager.domain.exception.ServerCommandException;
+import com.apocalipsebr.zomboid.server.manager.domain.port.ServerCommandExecutor;
+
 @Component
 public class BashCommandExecutor implements ServerCommandExecutor {
     private static final Logger logger = Logger.getLogger(BashCommandExecutor.class.getName());
@@ -27,7 +27,8 @@ public class BashCommandExecutor implements ServerCommandExecutor {
     @Value("${rcon.ip}")
     private String rconIp;
 
-    @Override public void execute(ServerCommand command) {
+    @Override
+    public void execute(ServerCommand command) {
         Rcon rcon = null;
         try {
             rcon = new Rcon(rconIp, 27015, "PzRconPaswd44@key");
@@ -83,8 +84,8 @@ public class BashCommandExecutor implements ServerCommandExecutor {
             buffer.order(ByteOrder.LITTLE_ENDIAN);
 
             int length = buffer.getInt();
-            int requestId = buffer.getInt();
-            int type = buffer.getInt();
+            // int requestId = buffer.getInt();
+            // int type = buffer.getInt();
 
             // Payload size can be computed now that we have its length
             byte[] payload = new byte[length - 4 - 4 - 2];

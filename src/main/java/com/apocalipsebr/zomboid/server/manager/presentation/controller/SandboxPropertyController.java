@@ -1,8 +1,8 @@
 package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
-import com.apocalipsebr.zomboid.server.manager.application.service.SandboxPropertyService;
-import com.apocalipsebr.zomboid.server.manager.domain.entity.app.SandboxSetting;
-import com.apocalipsebr.zomboid.server.manager.domain.entity.app.SandboxSetting.ConfigType;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -12,9 +12,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.util.*;
+import com.apocalipsebr.zomboid.server.manager.application.service.SandboxPropertyService;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.SandboxSetting;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.SandboxSetting.ConfigType;
 
 /**
  * Controller for managing Zomboid Sandbox Settings.
@@ -50,7 +58,8 @@ public class SandboxPropertyController {
             if (configTypeStr != null && !configTypeStr.isEmpty()) {
                 try {
                     configType = ConfigType.valueOf(configTypeStr);
-                } catch (IllegalArgumentException ignored) {}
+                } catch (IllegalArgumentException ignored) {
+                }
             }
 
             Boolean overwrite = null;
@@ -58,7 +67,8 @@ public class SandboxPropertyController {
                 overwrite = Boolean.valueOf(overwriteStr);
             }
 
-            Pageable pageable = PageRequest.of(page, size, Sort.by("category").ascending().and(Sort.by("settingKey").ascending()));
+            Pageable pageable = PageRequest.of(page, size,
+                    Sort.by("category").ascending().and(Sort.by("settingKey").ascending()));
             Page<SandboxSetting> settingsPage = configType != null
                     ? sandboxPropertyService.getSettings(search, category, configType, overwrite, pageable)
                     : sandboxPropertyService.getSettings(search, category, overwrite, pageable);
@@ -112,8 +122,7 @@ public class SandboxPropertyController {
             if (newValue == null || newValue.isBlank()) {
                 return ResponseEntity.badRequest().body(Map.of(
                         "success", false,
-                        "error", "Valor não pode ser vazio"
-                ));
+                        "error", "Valor não pode ser vazio"));
             }
 
             SandboxSetting updated = sandboxPropertyService.updateSetting(id, newValue, overwrite);
@@ -121,18 +130,15 @@ public class SandboxPropertyController {
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "message", "Configuração atualizada com sucesso",
-                    "setting", settingToMap(updated)
-            ));
+                    "setting", settingToMap(updated)));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
                     "success", false,
-                    "error", e.getMessage()
-            ));
+                    "error", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                     "success", false,
-                    "error", e.getMessage()
-            ));
+                    "error", e.getMessage()));
         }
     }
 
@@ -148,18 +154,15 @@ public class SandboxPropertyController {
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "message", "Overwrite " + (updated.getOverwriteAtStartup() ? "ativado" : "desativado"),
-                    "overwriteAtStartup", updated.getOverwriteAtStartup()
-            ));
+                    "overwriteAtStartup", updated.getOverwriteAtStartup()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
                     "success", false,
-                    "error", e.getMessage()
-            ));
+                    "error", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                     "success", false,
-                    "error", e.getMessage()
-            ));
+                    "error", e.getMessage()));
         }
     }
 
@@ -170,22 +173,19 @@ public class SandboxPropertyController {
     @ResponseBody
     public ResponseEntity<Map<String, Object>> clearAppliedValue(@PathVariable Long id) {
         try {
-            SandboxSetting updated = sandboxPropertyService.clearAppliedValue(id);
+            sandboxPropertyService.clearAppliedValue(id);
 
             return ResponseEntity.ok(Map.of(
                     "success", true,
-                    "message", "Valor aplicado removido, usando valor original do ini"
-            ));
+                    "message", "Valor aplicado removido, usando valor original do ini"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
                     "success", false,
-                    "error", e.getMessage()
-            ));
+                    "error", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                     "success", false,
-                    "error", e.getMessage()
-            ));
+                    "error", e.getMessage()));
         }
     }
 

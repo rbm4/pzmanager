@@ -2,8 +2,6 @@ package com.apocalipsebr.zomboid.server.manager.application.service;
 
 import com.apocalipsebr.zomboid.server.manager.application.service.MapDataService.MapIndex;
 import com.apocalipsebr.zomboid.server.manager.application.service.MapDataService.SafehouseInfo;
-import com.apocalipsebr.zomboid.server.manager.domain.entity.app.ClaimedCar;
-import com.apocalipsebr.zomboid.server.manager.domain.repository.app.ClaimedCarRepository;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,14 +28,14 @@ public class MapCleanerService {
      * Server-side minimum margin (in tiles) around each claimed car that is always protected.
      * Cars are single points, so the margin defines the full protected radius.
      */
-    private static final int SERVER_CAR_MARGIN = 8;
+    // private static final int SERVER_CAR_MARGIN = 8;
 
     private final MapDataService mapDataService;
-    private final ClaimedCarRepository claimedCarRepository;
+    // private final ClaimedCarRepository claimedCarRepository;
 
-    public MapCleanerService(MapDataService mapDataService, ClaimedCarRepository claimedCarRepository) {
+    public MapCleanerService(MapDataService mapDataService){ //, ClaimedCarRepository claimedCarRepository) {
         this.mapDataService = mapDataService;
-        this.claimedCarRepository = claimedCarRepository;
+        // this.claimedCarRepository = claimedCarRepository;
     }
 
     // --- Public API ---
@@ -174,27 +172,27 @@ public class MapCleanerService {
      * Builds a set of "bx/by" bin keys that are protected by claimed cars.
      * Each car is a single point expanded by the given margin (in tiles) on all sides.
      */
-    private Set<String> buildProtectedCarBinKeys(List<ClaimedCar> cars, int marginTiles) {
-        Set<String> protectedKeys = new HashSet<>();
-        for (ClaimedCar car : cars) {
-            if (car.getX() == null || car.getY() == null) continue;
-            int tileX = (int) Math.floor(car.getX());
-            int tileY = (int) Math.floor(car.getY());
+    // private Set<String> buildProtectedCarBinKeys(List<ClaimedCar> cars, int marginTiles) {
+    //     Set<String> protectedKeys = new HashSet<>();
+    //     for (ClaimedCar car : cars) {
+    //         if (car.getX() == null || car.getY() == null) continue;
+    //         int tileX = (int) Math.floor(car.getX());
+    //         int tileY = (int) Math.floor(car.getY());
 
-            // Car is a point (w=0, h=0), so margin expands from the point in all directions
-            int x1 = Math.floorDiv(tileX - marginTiles, BIN_TILE_SIZE);
-            int y1 = Math.floorDiv(tileY - marginTiles, BIN_TILE_SIZE);
-            int x2 = ceilDiv(tileX + marginTiles, BIN_TILE_SIZE);
-            int y2 = ceilDiv(tileY + marginTiles, BIN_TILE_SIZE);
+    //         // Car is a point (w=0, h=0), so margin expands from the point in all directions
+    //         int x1 = Math.floorDiv(tileX - marginTiles, BIN_TILE_SIZE);
+    //         int y1 = Math.floorDiv(tileY - marginTiles, BIN_TILE_SIZE);
+    //         int x2 = ceilDiv(tileX + marginTiles, BIN_TILE_SIZE);
+    //         int y2 = ceilDiv(tileY + marginTiles, BIN_TILE_SIZE);
 
-            for (int bx = x1; bx <= x2; bx++) {
-                for (int by = y1; by <= y2; by++) {
-                    protectedKeys.add(bx + "/" + by);
-                }
-            }
-        }
-        return protectedKeys;
-    }
+    //         for (int bx = x1; bx <= x2; bx++) {
+    //             for (int by = y1; by <= y2; by++) {
+    //                 protectedKeys.add(bx + "/" + by);
+    //             }
+    //         }
+    //     }
+    //     return protectedKeys;
+    // }
 
     /** Integer ceiling division (works correctly for negative dividends). */
     private static int ceilDiv(int a, int b) {

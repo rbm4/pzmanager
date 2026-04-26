@@ -28,11 +28,8 @@ public class GameEventService {
     private static final Logger logger = Logger.getLogger(GameEventService.class.getName());
 
     private final GameEventRepository gameEventRepository;
-    private final GameEventPropertyRepository gameEventPropertyRepository;
-    private final GameEventContributionRepository gameEventContributionRepository;
     private final SandboxSettingRepository sandboxSettingRepository;
     private final RegionRepository regionRepository;
-    private final RegionCustomPropertyRepository regionCustomPropertyRepository;
     private final CharacterService characterService;
     private final TransactionLogService transactionLogService;
     private final TransactionLogRepository transactionLogRepository;
@@ -54,11 +51,8 @@ public class GameEventService {
                             TransactionLogService transactionLogService,
                             TransactionLogRepository transactionLogRepository) {
         this.gameEventRepository = gameEventRepository;
-        this.gameEventPropertyRepository = gameEventPropertyRepository;
-        this.gameEventContributionRepository = gameEventContributionRepository;
         this.sandboxSettingRepository = sandboxSettingRepository;
         this.regionRepository = regionRepository;
-        this.regionCustomPropertyRepository = regionCustomPropertyRepository;
         this.characterService = characterService;
         this.transactionLogService = transactionLogService;
         this.transactionLogRepository = transactionLogRepository;

@@ -1,14 +1,5 @@
 package com.apocalipsebr.zomboid.server.manager.infrastructure.config;
 
-import com.fincatto.documentofiscal.DFAmbiente;
-import com.fincatto.documentofiscal.DFUnidadeFederativa;
-import com.fincatto.documentofiscal.nfe.NFeConfig;
-import com.fincatto.documentofiscal.nfe.NFTipoEmissao;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -18,10 +9,19 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+
+import com.fincatto.documentofiscal.DFAmbiente;
+import com.fincatto.documentofiscal.DFUnidadeFederativa;
+import com.fincatto.documentofiscal.nfe.NFTipoEmissao;
+import com.fincatto.documentofiscal.nfe.NFeConfig;
+
 @Configuration
 public class NfeConfiguration extends NFeConfig {
 
-    private static final Logger logger = LoggerFactory.getLogger(NfeConfiguration.class);
+    // private static final Logger logger =
+    // LoggerFactory.getLogger(NfeConfiguration.class);
 
     @Value("${nfe.ambiente:HOMOLOGACAO}")
     private String ambiente;

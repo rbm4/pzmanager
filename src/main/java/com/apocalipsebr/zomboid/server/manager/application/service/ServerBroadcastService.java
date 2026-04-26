@@ -1,16 +1,14 @@
 package com.apocalipsebr.zomboid.server.manager.application.service;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 @Component
 public class ServerBroadcastService {
@@ -38,8 +36,7 @@ public class ServerBroadcastService {
             "Abates de Zumbis com efeitos de zona dão saldo extra no site!",
             "Doe para manter o servidor online! Acesse a aba de doações no site.",
             "Novidades e atualizações sao anunciadas no Discord. Fique ligado!",
-            "Áreas PVP são caracterizadas pela caveira ao lado do seu nome. Cuidado!"
-    );
+            "Áreas PVP são caracterizadas pela caveira ao lado do seu nome. Cuidado!");
 
     public ServerBroadcastService(ServerCommandService commandService) {
         this.commandService = commandService;

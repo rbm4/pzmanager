@@ -1,10 +1,8 @@
 package com.apocalipsebr.zomboid.server.manager.domain.repository.app;
 
-import com.apocalipsebr.zomboid.server.manager.domain.entity.app.ClaimedCar;
-import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
-
-import jakarta.transaction.Transactional;
-import jakarta.transaction.Transactional.TxType;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -12,9 +10,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.ClaimedCar;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
+
+import jakarta.transaction.Transactional;
 
 @Repository
 public interface ClaimedCarRepository extends JpaRepository<ClaimedCar, Long> {

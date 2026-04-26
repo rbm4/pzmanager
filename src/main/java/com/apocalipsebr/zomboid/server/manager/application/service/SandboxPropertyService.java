@@ -1,27 +1,31 @@
 package com.apocalipsebr.zomboid.server.manager.application.service;
 
-import com.apocalipsebr.zomboid.server.manager.domain.entity.app.GameEventProperty;
-import com.apocalipsebr.zomboid.server.manager.domain.entity.app.SandboxSetting;
-import com.apocalipsebr.zomboid.server.manager.domain.entity.app.SandboxSetting.ConfigType;
-import com.apocalipsebr.zomboid.server.manager.domain.repository.app.SandboxSettingRepository;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.SandboxSetting;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.SandboxSetting.ConfigType;
+import com.apocalipsebr.zomboid.server.manager.domain.repository.app.SandboxSettingRepository;
 
 /**
  * Service for managing Zomboid server settings from three configuration

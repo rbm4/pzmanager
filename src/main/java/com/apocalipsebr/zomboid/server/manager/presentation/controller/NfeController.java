@@ -1,10 +1,8 @@
 package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
-import com.apocalipsebr.zomboid.server.manager.application.service.NfeService;
-import com.apocalipsebr.zomboid.server.manager.domain.entity.app.NfeEmission;
-import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
-import com.apocalipsebr.zomboid.server.manager.presentation.dto.nfe.NfeEmissionRequestDTO;
-import jakarta.servlet.http.HttpSession;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -14,11 +12,19 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Map;
+import com.apocalipsebr.zomboid.server.manager.application.service.NfeService;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.NfeEmission;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
+import com.apocalipsebr.zomboid.server.manager.presentation.dto.nfe.NfeEmissionRequestDTO;
+
+import jakarta.servlet.http.HttpSession;
 
 @Controller
 @RequestMapping("/nfe")
@@ -39,7 +45,8 @@ public class NfeController {
     @GetMapping
     public String listEmissions(Model model, HttpSession session) {
         User user = (User) session.getAttribute("user");
-        if (user == null) return "redirect:/login";
+        if (user == null)
+            return "redirect:/login";
 
         model.addAttribute("emissions", nfeService.listarEmissoes());
         model.addAttribute("configured", nfeService.isConfigured());
@@ -52,10 +59,12 @@ public class NfeController {
     @GetMapping("/emit")
     public String emitForm(Model model, HttpSession session) {
         User user = (User) session.getAttribute("user");
-        if (user == null) return "redirect:/login";
+        if (user == null)
+            return "redirect:/login";
 
         if (!nfeService.isConfigured()) {
-            model.addAttribute("error", "NFe não está configurada. Configure o certificado digital e dados do emitente no application.properties.");
+            model.addAttribute("error",
+                    "NFe não está configurada. Configure o certificado digital e dados do emitente no application.properties.");
             return "nfe-emit";
         }
 
@@ -85,8 +94,7 @@ public class NfeController {
                     "chaveAcesso", emission.getChaveAcesso() != null ? emission.getChaveAcesso() : "",
                     "protocolo", emission.getProtocolo() != null ? emission.getProtocolo() : "",
                     "statusSefaz", emission.getStatusSefaz() != null ? emission.getStatusSefaz() : "",
-                    "motivoSefaz", emission.getMotivoSefaz() != null ? emission.getMotivoSefaz() : ""
-            ));
+                    "motivoSefaz", emission.getMotivoSefaz() != null ? emission.getMotivoSefaz() : ""));
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
@@ -102,11 +110,13 @@ public class NfeController {
     @GetMapping("/{id}")
     public String emission(@PathVariable Long id, Model model, HttpSession session) {
         User user = (User) session.getAttribute("user");
-        if (user == null) return "redirect:/login";
+        if (user == null)
+            return "redirect:/login";
 
         NfeEmission emission = nfeService.buscarEmissao(id)
                 .orElse(null);
-        if (emission == null) return "redirect:/nfe";
+        if (emission == null)
+            return "redirect:/nfe";
 
         model.addAttribute("emission", emission);
         return "nfe-detail";
@@ -118,8 +128,8 @@ public class NfeController {
     @PostMapping("/{id}/cancel")
     @ResponseBody
     public ResponseEntity<?> cancelNfe(@PathVariable Long id,
-                                       @RequestBody Map<String, String> body,
-                                       HttpSession session) {
+            @RequestBody Map<String, String> body,
+            HttpSession session) {
         User user = (User) session.getAttribute("user");
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -131,8 +141,7 @@ public class NfeController {
             NfeEmission emission = nfeService.cancelarNota(id, motivo);
             return ResponseEntity.ok(Map.of(
                     "status", emission.getStatus(),
-                    "message", "NF-e cancelada com sucesso."
-            ));
+                    "message", "NF-e cancelada com sucesso."));
         } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
@@ -148,8 +157,8 @@ public class NfeController {
     @PostMapping("/{id}/correct")
     @ResponseBody
     public ResponseEntity<?> correctNfe(@PathVariable Long id,
-                                        @RequestBody Map<String, String> body,
-                                        HttpSession session) {
+            @RequestBody Map<String, String> body,
+            HttpSession session) {
         User user = (User) session.getAttribute("user");
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -161,8 +170,7 @@ public class NfeController {
             String resultado = nfeService.corrigirNota(id, correcao);
             return ResponseEntity.ok(Map.of(
                     "message", "Carta de correção enviada com sucesso.",
-                    "resultado", resultado
-            ));
+                    "resultado", resultado));
         } catch (Exception e) {
             logger.error("Erro ao enviar carta de correção", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

@@ -1,10 +1,5 @@
 package com.apocalipsebr.zomboid.server.manager.application.service;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -13,6 +8,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 @Service
 public class ScheduledRestartService {
@@ -41,7 +39,7 @@ public class ScheduledRestartService {
     private boolean bootSequenceEnabled;
 
     public ScheduledRestartService(ServerRestartService serverRestartService,
-                                    SoftWipeService softWipeService) {
+            SoftWipeService softWipeService) {
         this.serverRestartService = serverRestartService;
         this.softWipeService = softWipeService;
     }

@@ -1,26 +1,31 @@
 package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
-import com.apocalipsebr.zomboid.server.manager.application.constants.RegionProperty;
-import com.apocalipsebr.zomboid.server.manager.application.service.RegionService;
-import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Region;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
+import com.apocalipsebr.zomboid.server.manager.application.constants.RegionProperty;
+import com.apocalipsebr.zomboid.server.manager.application.service.RegionService;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Region;
 
 @Controller
 @RequestMapping("/regions")
@@ -68,7 +73,7 @@ public class RegionWebController {
     @GetMapping("/create")
     public String showCreateForm(Model model) {
         model.addAttribute("region", new Region());
-        model.addAttribute("regionProperties",RegionProperty.values());
+        model.addAttribute("regionProperties", RegionProperty.values());
         return "region-create";
     }
 
@@ -80,8 +85,12 @@ public class RegionWebController {
             @RequestParam(value = "propValues", required = false) List<String> propValues,
             RedirectAttributes redirectAttributes) {
         try {
-            if (region.getEnabled() == null) { region.setEnabled(false); }
-            if (region.getPermanent() == null) { region.setPermanent(false); }
+            if (region.getEnabled() == null) {
+                region.setEnabled(false);
+            }
+            if (region.getPermanent() == null) {
+                region.setPermanent(false);
+            }
             regionService.createRegion(region, propNames, propValues);
             redirectAttributes.addAttribute("success", "created");
             return "redirect:/regions/manage";
@@ -115,8 +124,12 @@ public class RegionWebController {
             @RequestParam(value = "propValues", required = false) List<String> propValues,
             RedirectAttributes redirectAttributes) {
         try {
-            if (region.getEnabled() == null) { region.setEnabled(false); }
-            if (region.getPermanent() == null) { region.setPermanent(false); }
+            if (region.getEnabled() == null) {
+                region.setEnabled(false);
+            }
+            if (region.getPermanent() == null) {
+                region.setPermanent(false);
+            }
             regionService.updateRegion(id, region, propNames, propValues);
             redirectAttributes.addAttribute("success", "updated");
             return "redirect:/regions/manage";
@@ -164,15 +177,13 @@ public class RegionWebController {
         try {
             regionService.writeRegionsJsonToFile();
             return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "Regions JSON successfully written to file for mod consumption"
-            ));
+                    "success", true,
+                    "message", "Regions JSON successfully written to file for mod consumption"));
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of(
-                    "success", false,
-                    "error", "Failed to write regions file: " + e.getMessage()
-                ));
+                    .body(Map.of(
+                            "success", false,
+                            "error", "Failed to write regions file: " + e.getMessage()));
         }
     }
 

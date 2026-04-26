@@ -1,27 +1,34 @@
 package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.apocalipsebr.zomboid.server.manager.application.service.ZomboidItemService;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.ZomboidItem;
 import com.apocalipsebr.zomboid.server.manager.presentation.dto.CategoryBatchDTO;
 import com.apocalipsebr.zomboid.server.manager.presentation.dto.ItemDTO;
 import com.apocalipsebr.zomboid.server.manager.presentation.dto.SellableBatchItemDTO;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Logger;
-
 @RestController
 @RequestMapping("/api/zomboid-items")
 public class ZomboidItemController {
-    
+
     private static final Logger logger = Logger.getLogger(ZomboidItemController.class.getName());
-    
+
     private final ZomboidItemService zomboidItemService;
 
     public ZomboidItemController(ZomboidItemService zomboidItemService) {
@@ -36,7 +43,7 @@ public class ZomboidItemController {
         } catch (Exception e) {
             logger.severe("Error creating item: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("error", e.getMessage()));
+                    .body(Map.of("error", e.getMessage()));
         }
     }
 
@@ -47,10 +54,10 @@ public class ZomboidItemController {
             int created = 0;
             int updated = 0;
             int total = 0;
-            
+
             for (CategoryBatchDTO categoryBatch : categories) {
                 String category = categoryBatch.getCategory();
-                
+
                 for (ItemDTO itemDTO : categoryBatch.getItems()) {
                     ZomboidItem item = new ZomboidItem();
                     item.setCategory(category);
@@ -59,10 +66,10 @@ public class ZomboidItemController {
                     item.setPage(itemDTO.getPage());
                     item.setItemId(itemDTO.getItemId());
                     item.setSellable(false); // Default to false
-                    
+
                     boolean exists = zomboidItemService.getItemByItemId(item.getItemId()).isPresent();
                     zomboidItemService.createItem(item);
-                    
+
                     if (exists) {
                         updated++;
                     } else {
@@ -71,17 +78,16 @@ public class ZomboidItemController {
                     total++;
                 }
             }
-            
+
             return ResponseEntity.ok(Map.of(
-                "message", "Batch operation completed",
-                "created", created,
-                "updated", updated,
-                "total", total
-            ));
+                    "message", "Batch operation completed",
+                    "created", created,
+                    "updated", updated,
+                    "total", total));
         } catch (Exception e) {
             logger.severe("Error in batch creation: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("error", e.getMessage()));
+                    .body(Map.of("error", e.getMessage()));
         }
     }
 
@@ -94,15 +100,15 @@ public class ZomboidItemController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getItemById(@PathVariable Long id) {
         return zomboidItemService.getItemById(id)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/item-id/{itemId}")
     public ResponseEntity<?> getItemByItemId(@PathVariable String itemId) {
         return zomboidItemService.getItemByItemId(itemId)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/sellable")
@@ -133,21 +139,21 @@ public class ZomboidItemController {
         } catch (Exception e) {
             logger.severe("Error updating item: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("error", e.getMessage()));
+                    .body(Map.of("error", e.getMessage()));
         }
     }
 
     @PatchMapping("/{id}/sellable")
     public ResponseEntity<?> updateSellableStatus(
-            @PathVariable Long id, 
+            @PathVariable Long id,
             @RequestBody Map<String, Boolean> request) {
         try {
             Boolean sellable = request.get("sellable");
             if (sellable == null) {
                 return ResponseEntity.badRequest()
-                    .body(Map.of("error", "sellable field is required"));
+                        .body(Map.of("error", "sellable field is required"));
             }
-            
+
             ZomboidItem updated = zomboidItemService.updateSellableStatus(id, sellable);
             return ResponseEntity.ok(updated);
         } catch (IllegalArgumentException e) {
@@ -155,7 +161,7 @@ public class ZomboidItemController {
         } catch (Exception e) {
             logger.severe("Error updating sellable status: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("error", e.getMessage()));
+                    .body(Map.of("error", e.getMessage()));
         }
     }
 
@@ -165,12 +171,12 @@ public class ZomboidItemController {
         try {
             int updated = 0;
             int created = 0;
-            
+
             for (SellableBatchItemDTO dto : items) {
                 try {
                     zomboidItemService.updateSellableInfo(
-                        dto.getItemId(), dto.getSellable(), dto.getValue(), dto.getStoreDescription(),dto.getItemName(),dto.getCustom()
-                    );
+                            dto.getItemId(), dto.getSellable(), dto.getValue(), dto.getStoreDescription(),
+                            dto.getItemName(), dto.getCustom());
                     updated++;
                 } catch (IllegalArgumentException e) {
                     ZomboidItem newItem = new ZomboidItem();
@@ -178,34 +184,36 @@ public class ZomboidItemController {
                     newItem.setName(dto.getItemName());
                     newItem.setSellable(dto.getSellable() != null ? dto.getSellable() : false);
                     newItem.setCustom(dto.getCustom());
-                    if (dto.getValue() != null) newItem.setValue(dto.getValue());
-                    if (dto.getStoreDescription() != null) newItem.setStoreDescription(dto.getStoreDescription());
-                    if (dto.getCategory() != null) newItem.setCategory(dto.getCategory());
-                    if (dto.getIcon() != null) newItem.setIcon(dto.getIcon());
+                    if (dto.getValue() != null)
+                        newItem.setValue(dto.getValue());
+                    if (dto.getStoreDescription() != null)
+                        newItem.setStoreDescription(dto.getStoreDescription());
+                    if (dto.getCategory() != null)
+                        newItem.setCategory(dto.getCategory());
+                    if (dto.getIcon() != null)
+                        newItem.setIcon(dto.getIcon());
                     newItem.setPage(" ");
                     zomboidItemService.createItem(newItem);
                     created++;
                 }
             }
-            
+
             return ResponseEntity.ok(Map.of(
-                "message", "Batch sellable update completed",
-                "updated", updated,
-                "created", created,
-                "total", items.size()
-            ));
+                    "message", "Batch sellable update completed",
+                    "updated", updated,
+                    "created", created,
+                    "total", items.size()));
         } catch (Exception e) {
             logger.severe("Error in batch sellable update: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("error", e.getMessage()));
+                    .body(Map.of("error", e.getMessage()));
         }
     }
 
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> getStats() {
         return ResponseEntity.ok(Map.of(
-            "totalItems", zomboidItemService.getTotalItemCount(),
-            "sellableItems", zomboidItemService.getSellableItemCount()
-        ));
+                "totalItems", zomboidItemService.getTotalItemCount(),
+                "sellableItems", zomboidItemService.getSellableItemCount()));
     }
 }

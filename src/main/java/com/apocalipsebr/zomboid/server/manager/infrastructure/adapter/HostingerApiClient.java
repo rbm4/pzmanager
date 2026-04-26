@@ -1,16 +1,21 @@
 package com.apocalipsebr.zomboid.server.manager.infrastructure.adapter;
 
+import java.io.IOException;
+import java.time.Duration;
+import java.util.logging.Logger;
+
+import org.springframework.stereotype.Component;
+
 import com.apocalipsebr.zomboid.server.manager.infrastructure.config.HostingerConfig.HostingerProperties;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import okhttp3.*;
-import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.time.Duration;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 @Component
 public class HostingerApiClient {
@@ -59,7 +64,8 @@ public class HostingerApiClient {
         }
 
         // Build zone payload:
-        // { "overwrite": true, "zone": [{ "name": "proxy-sp", "records": [{"content": "1.2.3.4"}], "ttl": 300, "type": "A" }] }
+        // { "overwrite": true, "zone": [{ "name": "proxy-sp", "records": [{"content":
+        // "1.2.3.4"}], "ttl": 300, "type": "A" }] }
         JsonObject record = new JsonObject();
         record.addProperty("content", ip);
 
@@ -105,7 +111,8 @@ public class HostingerApiClient {
         }
 
         // To "delete" an A record, we overwrite with an empty content pointing nowhere
-        // Hostinger's API doesn't have per-record DELETE, so we update with the zone minus this record
+        // Hostinger's API doesn't have per-record DELETE, so we update with the zone
+        // minus this record
         // For simplicity: update the record to point to 0.0.0.0 (effectively dead)
         // A proper delete would require GET → filter → PUT, but this is safer
         logger.info("Clearing DNS record: " + subdomain + "." + domain);

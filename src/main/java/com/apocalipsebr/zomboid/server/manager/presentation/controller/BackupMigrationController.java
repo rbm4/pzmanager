@@ -1,23 +1,34 @@
 package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
-import com.apocalipsebr.zomboid.server.manager.application.service.BackupMigrationService;
-import com.apocalipsebr.zomboid.server.manager.domain.entity.app.ClaimedCar;
-import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
-import com.apocalipsebr.zomboid.server.manager.domain.entity.backup.BackupClaimedCar;
-import com.apocalipsebr.zomboid.server.manager.domain.repository.app.UserRepository;
-
-import jakarta.servlet.http.HttpSession;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import com.apocalipsebr.zomboid.server.manager.application.service.BackupMigrationService;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.ClaimedCar;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.backup.BackupClaimedCar;
+import com.apocalipsebr.zomboid.server.manager.domain.repository.app.UserRepository;
 
 @Controller
 @RequestMapping("/backup-migration")
@@ -28,7 +39,7 @@ public class BackupMigrationController {
     private final UserRepository userRepository;
 
     public BackupMigrationController(BackupMigrationService backupMigrationService,
-                                      UserRepository userRepository) {
+            UserRepository userRepository) {
         this.backupMigrationService = backupMigrationService;
         this.userRepository = userRepository;
     }
@@ -39,7 +50,7 @@ public class BackupMigrationController {
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public String backupMigrationPage(@RequestParam(required = false) String steamId,
-                                       Model model) {
+            Model model) {
         List<BackupClaimedCar> cars;
         if (steamId != null && !steamId.isBlank()) {
             cars = backupMigrationService.getBackupCarsForMigrationBySteamId(steamId.trim());
@@ -53,8 +64,7 @@ public class BackupMigrationController {
                 .collect(Collectors.groupingBy(
                         c -> c.getOwnerSteamId() != null ? c.getOwnerSteamId() : "unknown",
                         LinkedHashMap::new,
-                        Collectors.toList()
-                ));
+                        Collectors.toList()));
 
         // Collect unique owner Steam IDs for the filter dropdown
         Set<String> ownerSteamIds = cars.stream()
@@ -76,12 +86,13 @@ public class BackupMigrationController {
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/copy/{backupCarId}")
     public String copyCarToApp(@PathVariable Long backupCarId,
-                                RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes) {
         try {
             BackupClaimedCar backupCar = backupMigrationService.getBackupCarById(backupCarId)
                     .orElseThrow(() -> new IllegalArgumentException("Backup car not found"));
 
-            // Find or resolve target user from the owner's steam ID (±5 tolerance for Lua imprecision)
+            // Find or resolve target user from the owner's steam ID (±5 tolerance for Lua
+            // imprecision)
             long steamIdLong = Long.parseLong(backupCar.getOwnerSteamId());
             User targetUser = userRepository.findByApproximateSteamId(steamIdLong - 12, steamIdLong + 12).orElse(null);
 
@@ -95,7 +106,8 @@ public class BackupMigrationController {
     }
 
     /**
-     * REST API: returns backup car details with items as JSON (for modal detail view).
+     * REST API: returns backup car details with items as JSON (for modal detail
+     * view).
      */
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/api/car/{id}")

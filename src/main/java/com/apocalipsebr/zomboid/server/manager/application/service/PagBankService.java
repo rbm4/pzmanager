@@ -1,18 +1,5 @@
 package com.apocalipsebr.zomboid.server.manager.application.service;
 
-import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
-import com.apocalipsebr.zomboid.server.manager.presentation.dto.pagbank.PagBankOrderDTO;
-import com.apocalipsebr.zomboid.server.manager.presentation.dto.pagbank.PagBankOrderParamsDTO;
-import com.apocalipsebr.zomboid.server.manager.presentation.dto.pagbank.PagbankNotificationReturnDTO;
-import com.google.gson.Gson;
-
-import jakarta.xml.bind.JAXBContext;
-import jakarta.xml.bind.JAXBException;
-import jakarta.xml.bind.Unmarshaller;
-import okhttp3.*;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.SocketTimeoutException;
@@ -21,10 +8,25 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
+import com.apocalipsebr.zomboid.server.manager.presentation.dto.pagbank.PagBankOrderDTO;
+import com.apocalipsebr.zomboid.server.manager.presentation.dto.pagbank.PagBankOrderParamsDTO;
+import com.apocalipsebr.zomboid.server.manager.presentation.dto.pagbank.PagbankNotificationReturnDTO;
+import com.google.gson.Gson;
+
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.Unmarshaller;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 /**
  * Service to interact with PagBank API for PIX QR Code generation and order
@@ -190,7 +192,7 @@ public class PagBankService {
         Request request = new Request.Builder()
                 .url(url)
                 .addHeader("Content-Type", "application/xml")
-                .addHeader("Accept",  "*/*")
+                .addHeader("Accept", "*/*")
                 .addHeader("Authorization", token)
                 .get()
                 .build();

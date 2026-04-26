@@ -1,5 +1,24 @@
 package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 import com.apocalipsebr.zomboid.server.manager.application.service.CharacterService;
 import com.apocalipsebr.zomboid.server.manager.application.service.ServerCommandService;
 import com.apocalipsebr.zomboid.server.manager.application.service.TransactionLogService;
@@ -9,20 +28,6 @@ import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.ZomboidItem;
 
 import jakarta.servlet.http.HttpSession;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import java.util.List;
-import java.util.Map;
 
 @Controller
 @RequestMapping("/items")
@@ -219,9 +224,9 @@ public class ZomboidItemWebController {
                 // Log the transaction
                 try {
                     transactionLogService.logTransaction(
-                        user, targetCharacter, "ITEM_PURCHASE",
-                        item.getName(), item.getItemId(),
-                        item.getValue(), newTotalCurrency);
+                            user, targetCharacter, "ITEM_PURCHASE",
+                            item.getName(), item.getItemId(),
+                            item.getValue(), newTotalCurrency);
                 } catch (Exception logEx) {
                     // Don't fail the purchase if logging fails
                 }

@@ -1,9 +1,27 @@
 package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.apocalipsebr.zomboid.server.manager.application.service.ProxyService;
 import com.apocalipsebr.zomboid.server.manager.application.service.ProxyService.ActivateResult;
 import com.apocalipsebr.zomboid.server.manager.application.service.ProxyService.ExtendResult;
-import com.apocalipsebr.zomboid.server.manager.application.service.ProxyService.ProxyInfo;
 import com.apocalipsebr.zomboid.server.manager.application.service.ProxyService.StatusResult;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.ProxyActivation;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.ProxyDefinition;
@@ -13,19 +31,6 @@ import com.apocalipsebr.zomboid.server.manager.infrastructure.config.AwsProxyCon
 import com.apocalipsebr.zomboid.server.manager.infrastructure.config.HostingerConfig.HostingerProperties;
 import com.apocalipsebr.zomboid.server.manager.presentation.dto.ProxyActivateRequest;
 import com.apocalipsebr.zomboid.server.manager.presentation.dto.ProxyExtendRequest;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Logger;
 
 @RestController
 @RequestMapping("/api/proxy")
@@ -39,8 +44,8 @@ public class ProxyController {
     private final HostingerProperties hostingerProperties;
 
     public ProxyController(ProxyService proxyService, ProxyProperties proxyProperties,
-                           ProxyDefinitionRepository proxyDefinitionRepository,
-                           HostingerProperties hostingerProperties) {
+            ProxyDefinitionRepository proxyDefinitionRepository,
+            HostingerProperties hostingerProperties) {
         this.proxyService = proxyService;
         this.proxyProperties = proxyProperties;
         this.proxyDefinitionRepository = proxyDefinitionRepository;
@@ -80,9 +85,7 @@ public class ProxyController {
                         "creditsPer24h", proxyProperties.getCreditsPer24h(),
                         "minHours", proxyProperties.getMinHours(),
                         "maxHours", proxyProperties.getMaxHours(),
-                        "hourStep", proxyProperties.getHourStep()
-                )
-        ));
+                        "hourStep", proxyProperties.getHourStep())));
     }
 
     @PostMapping("/activate")
@@ -126,8 +129,7 @@ public class ProxyController {
                 "hours", activation.getHours(),
                 "creditsSpent", activation.getCreditsSpent(),
                 "expiresAt", activation.getExpiresAt(),
-                "status", activation.getStatus()
-        ));
+                "status", activation.getStatus()));
     }
 
     @PostMapping("/extend")
@@ -153,8 +155,7 @@ public class ProxyController {
                 "activationId", request.activationId(),
                 "newExpiresAt", result.newExpiresAt(),
                 "additionalCreditsSpent", result.additionalCreditsSpent(),
-                "totalHours", result.totalHours()
-        ));
+                "totalHours", result.totalHours()));
     }
 
     @GetMapping("/history")
@@ -185,8 +186,7 @@ public class ProxyController {
         return ResponseEntity.ok(Map.of(
                 "activations", items,
                 "page", activations.getNumber(),
-                "totalPages", activations.getTotalPages()
-        ));
+                "totalPages", activations.getTotalPages()));
     }
 
     private User getCurrentUser() {

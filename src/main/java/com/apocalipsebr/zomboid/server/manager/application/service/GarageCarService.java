@@ -6,7 +6,6 @@ import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.GarageCarRepository;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.CharacterRepository;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.UserRepository;
-import com.apocalipsebr.zomboid.server.manager.application.service.TransactionLogService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
@@ -28,7 +27,6 @@ public class GarageCarService {
     
     private final GarageCarRepository carRepository;
     private final CharacterRepository characterRepository;
-    private final UserRepository userRepository;
     private final ServerCommandService serverCommandService;
     private final TransactionLogService transactionLogService;
 
@@ -39,7 +37,6 @@ public class GarageCarService {
                      TransactionLogService transactionLogService) {
         this.carRepository = carRepository;
         this.characterRepository = characterRepository;
-        this.userRepository = userRepository;
         this.serverCommandService = serverCommandService;
         this.transactionLogService = transactionLogService;
     }

@@ -26,14 +26,12 @@ public class BackupMigrationService {
 
     private final BackupClaimedCarRepository backupClaimedCarRepository;
     private final ClaimedCarRepository claimedCarRepository;
-    private final UserRepository userRepository;
 
     public BackupMigrationService(BackupClaimedCarRepository backupClaimedCarRepository,
                                    ClaimedCarRepository claimedCarRepository,
                                    UserRepository userRepository) {
         this.backupClaimedCarRepository = backupClaimedCarRepository;
         this.claimedCarRepository = claimedCarRepository;
-        this.userRepository = userRepository;
     }
 
     /**

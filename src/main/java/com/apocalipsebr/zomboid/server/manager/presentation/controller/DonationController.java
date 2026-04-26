@@ -1,21 +1,28 @@
 package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
-import com.apocalipsebr.zomboid.server.manager.application.service.DonationService;
-import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
-import com.apocalipsebr.zomboid.server.manager.domain.repository.app.UserRepository;
-import com.apocalipsebr.zomboid.server.manager.presentation.dto.pagbank.DonationRequestDTO;
-import com.apocalipsebr.zomboid.server.manager.presentation.dto.pagbank.DonationStatusDTO;
-import jakarta.servlet.http.HttpSession;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.apocalipsebr.zomboid.server.manager.application.service.DonationService;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
+import com.apocalipsebr.zomboid.server.manager.presentation.dto.pagbank.DonationRequestDTO;
+import com.apocalipsebr.zomboid.server.manager.presentation.dto.pagbank.DonationStatusDTO;
+
+import jakarta.servlet.http.HttpSession;
 
 /**
  * Controller for PIX donations via PagBank.
@@ -29,11 +36,9 @@ public class DonationController {
     private static final Logger logger = Logger.getLogger(DonationController.class.getName());
 
     private final DonationService donationService;
-    private final UserRepository userRepository;
 
-    public DonationController(DonationService donationService, UserRepository userRepository) {
+    public DonationController(DonationService donationService) {
         this.donationService = donationService;
-        this.userRepository = userRepository;
     }
 
     /**
@@ -137,7 +142,7 @@ public class DonationController {
     @ResponseBody
     public ResponseEntity<Void> webhook(@RequestParam("notificationCode") String notificationCode,
             @RequestParam("notificationType") String notificationType, @RequestBody String body) {
-        donationService.processWebhook(notificationCode,notificationType);
+        donationService.processWebhook(notificationCode, notificationType);
         return ResponseEntity.noContent().build();
     }
 }

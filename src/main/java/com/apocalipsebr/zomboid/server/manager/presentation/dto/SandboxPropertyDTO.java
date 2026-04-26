@@ -1,7 +1,6 @@
 package com.apocalipsebr.zomboid.server.manager.presentation.dto;
 
 import com.apocalipsebr.zomboid.server.manager.application.constants.SandboxProperty;
-import java.util.Optional;
 
 /**
  * Data Transfer Object for Sandbox Properties
@@ -16,7 +15,8 @@ public class SandboxPropertyDTO {
     private Number maxValue;
     private String description;
 
-    public SandboxPropertyDTO() {}
+    public SandboxPropertyDTO() {
+    }
 
     public SandboxPropertyDTO(SandboxProperty property, Object currentValue) {
         this.key = property.getKey();

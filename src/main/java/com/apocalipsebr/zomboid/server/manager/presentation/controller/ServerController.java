@@ -1,28 +1,33 @@
 package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.apocalipsebr.zomboid.server.manager.application.service.ClaimedCarService;
 import com.apocalipsebr.zomboid.server.manager.application.service.InflationService;
 import com.apocalipsebr.zomboid.server.manager.application.service.MigrationService;
+import com.apocalipsebr.zomboid.server.manager.application.service.ScheduledRestartService;
 import com.apocalipsebr.zomboid.server.manager.application.service.SeasonService;
 import com.apocalipsebr.zomboid.server.manager.application.service.ServerCommandService;
 import com.apocalipsebr.zomboid.server.manager.application.service.ServerRestartService;
-import com.apocalipsebr.zomboid.server.manager.application.service.ScheduledRestartService;
 import com.apocalipsebr.zomboid.server.manager.application.service.ServerWipeService;
 import com.apocalipsebr.zomboid.server.manager.application.service.SoftWipeService;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Character;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.CharacterRepository;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.UserRepository;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/server")
@@ -39,17 +44,17 @@ public class ServerController {
     private final CharacterRepository characterRepository;
     private final UserRepository userRepository;
 
-    public ServerController(ServerCommandService serverCommandService, 
-                          ServerRestartService serverRestartService,
-                          ScheduledRestartService scheduledRestartService,
-                          ServerWipeService serverWipeService,
-                          InflationService inflationService,
-                          SeasonService seasonService,
-                          ClaimedCarService claimedCarService,
-                          SoftWipeService softWipeService,
-                          MigrationService migrationService,
-                          CharacterRepository characterRepository,
-                          UserRepository userRepository) {
+    public ServerController(ServerCommandService serverCommandService,
+            ServerRestartService serverRestartService,
+            ScheduledRestartService scheduledRestartService,
+            ServerWipeService serverWipeService,
+            InflationService inflationService,
+            SeasonService seasonService,
+            ClaimedCarService claimedCarService,
+            SoftWipeService softWipeService,
+            MigrationService migrationService,
+            CharacterRepository characterRepository,
+            UserRepository userRepository) {
         this.serverCommandService = serverCommandService;
         this.serverRestartService = serverRestartService;
         this.scheduledRestartService = scheduledRestartService;
@@ -69,18 +74,16 @@ public class ServerController {
         try {
             String result = serverCommandService.sendCommandResponse(request.getCommand());
             return ResponseEntity.ok(Map.of(
-                "success", true,
-                "command", request.getCommand(),
-                "response", result != null && !result.isEmpty() ? result : "(empty response)",
-                "message", "Command executed successfully"
-            ));
+                    "success", true,
+                    "command", request.getCommand(),
+                    "response", result != null && !result.isEmpty() ? result : "(empty response)",
+                    "message", "Command executed successfully"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of(
-                    "success", false,
-                    "command", request.getCommand(),
-                    "error", e.getMessage()
-                ));
+                    .body(Map.of(
+                            "success", false,
+                            "command", request.getCommand(),
+                            "error", e.getMessage()));
         }
     }
 
@@ -110,7 +113,8 @@ public class ServerController {
 
         try {
             serverRestartService.initiateRestart();
-            return ResponseEntity.ok("Server restart initiated. Warnings will be sent at 10, 5, 1 minute(s) and 15 seconds before restart.");
+            return ResponseEntity.ok(
+                    "Server restart initiated. Warnings will be sent at 10, 5, 1 minute(s) and 15 seconds before restart.");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to initiate restart: " + e.getMessage());
@@ -121,17 +125,15 @@ public class ServerController {
     public ResponseEntity<Map<String, Object>> getScheduledRestartInfo() {
         if (!scheduledRestartService.isScheduledRestartEnabled()) {
             return ResponseEntity.ok(Map.of(
-                "enabled", false,
-                "message", "Scheduled automatic restart is disabled"
-            ));
+                    "enabled", false,
+                    "message", "Scheduled automatic restart is disabled"));
         }
 
         LocalDateTime nextRestart = scheduledRestartService.getNextScheduledRestart();
         return ResponseEntity.ok(Map.of(
-            "enabled", true,
-            "nextRestart", nextRestart.toString(),
-            "message", "Next automatic restart scheduled for: " + nextRestart
-        ));
+                "enabled", true,
+                "nextRestart", nextRestart.toString(),
+                "message", "Next automatic restart scheduled for: " + nextRestart));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -142,26 +144,24 @@ public class ServerController {
             Optional<User> userOpt = userRepository.findByUsername(request.getUsername());
             if (userOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of(
-                        "success", false,
-                        "message", "Usuário não encontrado: " + request.getUsername()
-                    ));
+                        .body(Map.of(
+                                "success", false,
+                                "message", "Usuário não encontrado: " + request.getUsername()));
             }
 
             User user = userOpt.get();
             List<Character> userCharacters = characterRepository.findByUserOrderByZombieKillsDesc(user);
-            
+
             if (userCharacters.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of(
-                        "success", false,
-                        "message", "Nenhum personagem encontrado para o usuário: " + request.getUsername()
-                    ));
+                        .body(Map.of(
+                                "success", false,
+                                "message", "Nenhum personagem encontrado para o usuário: " + request.getUsername()));
             }
 
             // Get character with most zombie kills (already ordered by kills desc)
             Character topCharacter = userCharacters.get(0);
-            
+
             // Add currency
             int currentCurrency = topCharacter.getCurrencyPoints() != null ? topCharacter.getCurrencyPoints() : 0;
             int newCurrency = currentCurrency + request.getAmount();
@@ -169,20 +169,18 @@ public class ServerController {
             characterRepository.save(topCharacter);
 
             return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "Moeda adicionada com sucesso!",
-                "character", topCharacter.getPlayerName(),
-                "zombieKills", topCharacter.getZombieKills(),
-                "previousCurrency", currentCurrency,
-                "addedAmount", request.getAmount(),
-                "newCurrency", newCurrency
-            ));
+                    "success", true,
+                    "message", "Moeda adicionada com sucesso!",
+                    "character", topCharacter.getPlayerName(),
+                    "zombieKills", topCharacter.getZombieKills(),
+                    "previousCurrency", currentCurrency,
+                    "addedAmount", request.getAmount(),
+                    "newCurrency", newCurrency));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of(
-                    "success", false,
-                    "message", "Erro ao adicionar moeda: " + e.getMessage()
-                ));
+                    .body(Map.of(
+                            "success", false,
+                            "message", "Erro ao adicionar moeda: " + e.getMessage()));
         }
     }
 
@@ -258,27 +256,26 @@ public class ServerController {
     public ResponseEntity<Map<String, Object>> wipeServer(@RequestBody WipeRequest request) {
         if (request.getPassword() == null || request.getPassword().isBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("success", false, "message", "Password is required."));
+                    .body(Map.of("success", false, "message", "Password is required."));
         }
 
         if (!serverWipeService.validatePassword(request.getPassword())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of("success", false, "message", "Invalid wipe password."));
+                    .body(Map.of("success", false, "message", "Invalid wipe password."));
         }
 
         ServerWipeService.WipeResult result = serverWipeService.wipeServer();
 
         if (result.isSuccess()) {
             return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", result.getMessage(),
-                "backupName", result.getBackupName(),
-                "originalPath", result.getOriginalPath(),
-                "backupPath", result.getBackupPath()
-            ));
+                    "success", true,
+                    "message", result.getMessage(),
+                    "backupName", result.getBackupName(),
+                    "originalPath", result.getOriginalPath(),
+                    "backupPath", result.getBackupPath()));
         } else {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("success", false, "message", result.getMessage()));
+                    .body(Map.of("success", false, "message", result.getMessage()));
         }
     }
 
@@ -307,28 +304,25 @@ public class ServerController {
         try {
             if (request.getPercentage() <= 0) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of(
-                        "success", false,
-                        "message", "Percentage must be greater than 0"
-                    ));
+                        .body(Map.of(
+                                "success", false,
+                                "message", "Percentage must be greater than 0"));
             }
 
             InflationService.InflationResult result = inflationService.applyInflation(request.getPercentage());
 
             return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "Inflation of " + result.getPercentage() + "% applied successfully!",
-                "percentage", result.getPercentage(),
-                "carsInflated", result.getCarsInflated(),
-                "itemsInflated", result.getItemsInflated(),
-                "totalInflated", result.getTotalInflated()
-            ));
+                    "success", true,
+                    "message", "Inflation of " + result.getPercentage() + "% applied successfully!",
+                    "percentage", result.getPercentage(),
+                    "carsInflated", result.getCarsInflated(),
+                    "itemsInflated", result.getItemsInflated(),
+                    "totalInflated", result.getTotalInflated()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of(
-                    "success", false,
-                    "message", "Failed to apply inflation: " + e.getMessage()
-                ));
+                    .body(Map.of(
+                            "success", false,
+                            "message", "Failed to apply inflation: " + e.getMessage()));
         }
     }
 
@@ -357,15 +351,14 @@ public class ServerController {
         try {
             var newSeason = seasonService.createNewSeason();
             return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "Nova temporada criada com sucesso!",
-                "seasonId", newSeason.getId(),
-                "seasonName", newSeason.getName(),
-                "startDate", newSeason.getStartDate().toString()
-            ));
+                    "success", true,
+                    "message", "Nova temporada criada com sucesso!",
+                    "seasonId", newSeason.getId(),
+                    "seasonName", newSeason.getName(),
+                    "startDate", newSeason.getStartDate().toString()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("success", false, "message", "Erro ao criar temporada: " + e.getMessage()));
+                    .body(Map.of("success", false, "message", "Erro ao criar temporada: " + e.getMessage()));
         }
     }
 
@@ -375,13 +368,12 @@ public class ServerController {
         try {
             int count = claimedCarService.preserveAllCarsForMigration();
             return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "Todos os " + count + " veículos foram marcados como 'Aguardando Migração'.",
-                "preservedCount", count
-            ));
+                    "success", true,
+                    "message", "Todos os " + count + " veículos foram marcados como 'Aguardando Migração'.",
+                    "preservedCount", count));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("success", false, "message", "Erro ao preservar veículos: " + e.getMessage()));
+                    .body(Map.of("success", false, "message", "Erro ao preservar veículos: " + e.getMessage()));
         }
     }
 
@@ -391,13 +383,12 @@ public class ServerController {
         try {
             int count = claimedCarService.endMigrationPeriod();
             return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", count + " veículos preservados foram removidos. Migração encerrada.",
-                "deletedCount", count
-            ));
+                    "success", true,
+                    "message", count + " veículos preservados foram removidos. Migração encerrada.",
+                    "deletedCount", count));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("success", false, "message", "Erro ao encerrar migração: " + e.getMessage()));
+                    .body(Map.of("success", false, "message", "Erro ao encerrar migração: " + e.getMessage()));
         }
     }
 
@@ -407,12 +398,11 @@ public class ServerController {
         try {
             softWipeService.markWipesForRestart();
             return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "Soft-wipes pendentes foram marcados para execução no próximo restart."
-            ));
+                    "success", true,
+                    "message", "Soft-wipes pendentes foram marcados para execução no próximo restart."));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("success", false, "message", "Erro ao marcar soft-wipes: " + e.getMessage()));
+                    .body(Map.of("success", false, "message", "Erro ao marcar soft-wipes: " + e.getMessage()));
         }
     }
 
@@ -423,18 +413,16 @@ public class ServerController {
             long count = migrationService.resetAllMigrations();
             if (count == 0) {
                 return ResponseEntity.ok(Map.of(
-                    "success", false,
-                    "message", "Nenhuma migração encontrada para resetar."
-                ));
+                        "success", false,
+                        "message", "Nenhuma migração encontrada para resetar."));
             }
             return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", count + " migração(ões) removida(s). Todos os jogadores podem migrar novamente.",
-                "deletedCount", count
-            ));
+                    "success", true,
+                    "message", count + " migração(ões) removida(s). Todos os jogadores podem migrar novamente.",
+                    "deletedCount", count));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("success", false, "message", "Erro ao resetar migrações: " + e.getMessage()));
+                    .body(Map.of("success", false, "message", "Erro ao resetar migrações: " + e.getMessage()));
         }
     }
 
@@ -445,19 +433,19 @@ public class ServerController {
             String username = request.getUsername();
             if (username == null || username.isBlank()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("success", false, "message", "Username é obrigatório."));
+                        .body(Map.of("success", false, "message", "Username é obrigatório."));
             }
 
             Optional<User> userOpt = userRepository.findByUsername(username);
             if (userOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("success", false, "message", "Usuário não encontrado: " + username));
+                        .body(Map.of("success", false, "message", "Usuário não encontrado: " + username));
             }
 
             List<Character> characters = characterRepository.findByUserOrderByZombieKillsDesc(userOpt.get());
             if (characters.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("success", false, "message", "Nenhum personagem encontrado para: " + username));
+                        .body(Map.of("success", false, "message", "Nenhum personagem encontrado para: " + username));
             }
 
             int resetCount = 0;
@@ -472,27 +460,28 @@ public class ServerController {
 
             if (resetCount == 0) {
                 return ResponseEntity.ok(Map.of(
-                    "success", false,
-                    "message", "Nenhuma migração encontrada para os personagens de " + username
-                ));
+                        "success", false,
+                        "message", "Nenhuma migração encontrada para os personagens de " + username));
             }
 
             return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", resetCount + " migração(ões) resetada(s) para " + username + ". Personagens: " + String.join(", ", resetNames),
-                "resetCount", resetCount,
-                "characters", resetNames
-            ));
+                    "success", true,
+                    "message",
+                    resetCount + " migração(ões) resetada(s) para " + username + ". Personagens: "
+                            + String.join(", ", resetNames),
+                    "resetCount", resetCount,
+                    "characters", resetNames));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("success", false, "message", "Erro ao resetar migração: " + e.getMessage()));
+                    .body(Map.of("success", false, "message", "Erro ao resetar migração: " + e.getMessage()));
         }
     }
 
     public static class ResetMigrationRequest {
         private String username;
 
-        public ResetMigrationRequest() {}
+        public ResetMigrationRequest() {
+        }
 
         public ResetMigrationRequest(String username) {
             this.username = username;

@@ -1,5 +1,25 @@
 package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
+import java.io.File;
+import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.logging.Logger;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.apocalipsebr.zomboid.server.manager.application.service.CharacterService;
 import com.apocalipsebr.zomboid.server.manager.application.service.UserService;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Character;
@@ -9,36 +29,11 @@ import com.google.gson.Gson;
 
 import jakarta.transaction.Transactional;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.web.bind.annotation.*;
-
-import java.io.File;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
-
 @RestController
 @RequestMapping("/api/zombie-kills")
 public class ZombieKillsController {
 
     private static final Logger logger = Logger.getLogger(ZombieKillsController.class.getName());
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     private final UserService userService;
     private final CharacterService characterService;
@@ -163,12 +158,12 @@ public class ZombieKillsController {
             // Find or create user by Steam ID
             // If user hasn't logged in yet, create a minimal entry to track their stats
             // Use approximate lookup to handle byte drift from Lua precision loss
-            Optional<User> approximateUser = userService.getUserByApproximateSteamId(updateDTO.playerIdNumeric(), new BigDecimal(UserService.STEAM_ID_DEVIATION_TOLERANCE));
-            
-            User user = approximateUser.orElseGet(() -> 
-                userService.createOrGetUserBySteamId(updateDTO.playerIdNumeric())
-            );
-            
+            Optional<User> approximateUser = userService.getUserByApproximateSteamId(updateDTO.playerIdNumeric(),
+                    new BigDecimal(UserService.STEAM_ID_DEVIATION_TOLERANCE));
+
+            User user = approximateUser
+                    .orElseGet(() -> userService.createOrGetUserBySteamId(updateDTO.playerIdNumeric()));
+
             logger.info("Processing stats for user: " + user.getUsername() + " (Steam ID: " + user.getSteamId()
                     + ", Calculated: " + updateDTO.playerId() + ")");
 

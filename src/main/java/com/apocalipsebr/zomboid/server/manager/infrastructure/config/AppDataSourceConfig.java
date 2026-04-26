@@ -1,5 +1,12 @@
 package com.apocalipsebr.zomboid.server.manager.infrastructure.config;
 
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.sql.DataSource;
+
+import org.flywaydb.core.Flyway;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.jpa.EntityManagerFactoryBuilder;
@@ -12,22 +19,9 @@ import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import jakarta.annotation.PostConstruct;
-
-import org.flywaydb.core.Flyway;
-
-import javax.sql.DataSource;
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-
 @Configuration
 @EnableTransactionManagement
-@EnableJpaRepositories(
-    basePackages = "com.apocalipsebr.zomboid.server.manager.domain.repository.app",
-    entityManagerFactoryRef = "appEntityManagerFactory",
-    transactionManagerRef = "appTransactionManager"
-)
+@EnableJpaRepositories(basePackages = "com.apocalipsebr.zomboid.server.manager.domain.repository.app", entityManagerFactoryRef = "appEntityManagerFactory", transactionManagerRef = "appTransactionManager")
 public class AppDataSourceConfig {
 
     @Value("${app.datasource.url}")
@@ -45,7 +39,7 @@ public class AppDataSourceConfig {
         String dbPath = url.replace("jdbc:sqlite:", "");
         File dbFile = new File(dbPath);
         File parentDir = dbFile.getParentFile();
-        
+
         if (parentDir != null && !parentDir.exists()) {
             if (!parentDir.mkdirs()) {
                 throw new IllegalStateException("Failed to create database directory: " + parentDir);
@@ -60,7 +54,7 @@ public class AppDataSourceConfig {
 
         // Enable WAL mode for better concurrent read/write performance
         try (var conn = dataSource.getConnection();
-             var stmt = conn.createStatement()) {
+                var stmt = conn.createStatement()) {
             stmt.execute("PRAGMA journal_mode=WAL");
         } catch (Exception e) {
             throw new IllegalStateException("Failed to enable WAL mode on SQLite database", e);
@@ -74,12 +68,12 @@ public class AppDataSourceConfig {
     public LocalContainerEntityManagerFactoryBean appEntityManagerFactory(
             EntityManagerFactoryBuilder builder,
             @Qualifier("appDataSource") DataSource dataSource) {
-        
+
         Map<String, Object> properties = new HashMap<>();
         properties.put("hibernate.hbm2ddl.auto", ddlAuto); // Create/update tables automatically
         properties.put("hibernate.dialect", "org.hibernate.community.dialect.SQLiteDialect");
         properties.put("hibernate.show_sql", false);
-        
+
         return builder
                 .dataSource(dataSource)
                 .packages("com.apocalipsebr.zomboid.server.manager.domain.entity.app")

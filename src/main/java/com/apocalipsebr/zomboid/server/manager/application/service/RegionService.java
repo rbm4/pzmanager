@@ -1,21 +1,5 @@
 package com.apocalipsebr.zomboid.server.manager.application.service;
 
-import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Region;
-import com.apocalipsebr.zomboid.server.manager.domain.entity.app.RegionCustomProperty;
-import com.apocalipsebr.zomboid.server.manager.domain.repository.app.RegionCustomPropertyRepository;
-import com.apocalipsebr.zomboid.server.manager.domain.repository.app.RegionRepository;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,6 +10,21 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Region;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.RegionCustomProperty;
+import com.apocalipsebr.zomboid.server.manager.domain.repository.app.RegionCustomPropertyRepository;
+import com.apocalipsebr.zomboid.server.manager.domain.repository.app.RegionRepository;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 @Service
 public class RegionService {
@@ -39,7 +38,7 @@ public class RegionService {
     private String regionManagerFilePath;
 
     public RegionService(RegionRepository regionRepository,
-                         RegionCustomPropertyRepository customPropertyRepository) {
+            RegionCustomPropertyRepository customPropertyRepository) {
         this.regionRepository = regionRepository;
         this.customPropertyRepository = customPropertyRepository;
     }
@@ -61,8 +60,11 @@ public class RegionService {
     }
 
     public Page<Region> getRegionsPaginated(String search, Boolean enabledOnly, String category, Pageable pageable) {
-        logger.info("Getting paginated regions - search: " + search + ", enabledOnly: " + enabledOnly + ", category: " + category);
-        if (enabledOnly == null) { enabledOnly = false; }
+        logger.info("Getting paginated regions - search: " + search + ", enabledOnly: " + enabledOnly + ", category: "
+                + category);
+        if (enabledOnly == null) {
+            enabledOnly = false;
+        }
         return regionRepository.searchRegions(search, enabledOnly, category, pageable);
     }
 
@@ -78,7 +80,7 @@ public class RegionService {
     public Region updateRegion(Long id, Region updatedRegion, List<String> propNames, List<String> propValues) {
         logger.info("Updating region with id: " + id);
         Region region = regionRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Region not found with id: " + id));
+                .orElseThrow(() -> new IllegalArgumentException("Region not found with id: " + id));
 
         region.setCode(updatedRegion.getCode());
         region.setName(updatedRegion.getName());
@@ -103,7 +105,7 @@ public class RegionService {
     public void deleteRegion(Long id) {
         logger.info("Deleting region with id: " + id);
         Region region = regionRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Region not found with id: " + id));
+                .orElseThrow(() -> new IllegalArgumentException("Region not found with id: " + id));
         if (region.getPermanent() != null && region.getPermanent()) {
             throw new IllegalStateException("Cannot delete a permanent region");
         }
@@ -114,7 +116,7 @@ public class RegionService {
     public Region toggleEnabled(Long id) {
         logger.info("Toggling enabled for region with id: " + id);
         Region region = regionRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Region not found with id: " + id));
+                .orElseThrow(() -> new IllegalArgumentException("Region not found with id: " + id));
         region.setEnabled(!region.getEnabled());
         return regionRepository.save(region);
     }
@@ -147,18 +149,18 @@ public class RegionService {
     public String generateRegionsJson() {
         List<Region> enabledRegions = regionRepository.findByEnabledTrue();
         LocalDate today = LocalDate.now();
-        
+
         // Filter: include only permanent regions OR regions that haven't expired yet
         List<Region> validRegions = enabledRegions.stream()
-            .filter(region -> {
-                if (Boolean.TRUE.equals(region.getPermanent())) {
-                    return true; // Permanent regions always included
-                }
-                // Non-permanent regions must not be expired
-                return region.getExpirationDate() == null || region.getExpirationDate().isAfter(today);
-            })
-            .toList();
-        
+                .filter(region -> {
+                    if (Boolean.TRUE.equals(region.getPermanent())) {
+                        return true; // Permanent regions always included
+                    }
+                    // Non-permanent regions must not be expired
+                    return region.getExpirationDate() == null || region.getExpirationDate().isAfter(today);
+                })
+                .toList();
+
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
         JsonObject root = new JsonObject();
@@ -220,7 +222,8 @@ public class RegionService {
     }
 
     /**
-     * Writes the regions JSON directly to the configured file path where the mod expects it.
+     * Writes the regions JSON directly to the configured file path where the mod
+     * expects it.
      * Creates parent directories if they don't exist.
      * 
      * @throws IOException if there's an error writing the file
@@ -228,14 +231,14 @@ public class RegionService {
     public void writeRegionsJsonToFile() throws IOException {
         String json = generateRegionsJson();
         Path filePath = Paths.get(regionManagerFilePath);
-        
+
         // Create parent directories if they don't exist
         Path parentDir = filePath.getParent();
         if (parentDir != null && !Files.exists(parentDir)) {
             Files.createDirectories(parentDir);
             logger.info("Created directory: " + parentDir);
         }
-        
+
         // Write the JSON to the file
         Files.writeString(filePath, json);
         logger.info("Successfully wrote regions JSON to: " + regionManagerFilePath);

@@ -1,34 +1,33 @@
 package com.apocalipsebr.zomboid.server.manager.presentation.controller;
 
-import com.apocalipsebr.zomboid.server.manager.application.service.ClaimedCarService;
-import com.apocalipsebr.zomboid.server.manager.application.service.ClaimedCarItemService;
-import com.apocalipsebr.zomboid.server.manager.domain.entity.app.ClaimedCar;
-import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
-
-import jakarta.servlet.http.HttpSession;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.apocalipsebr.zomboid.server.manager.application.service.ClaimedCarService;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.ClaimedCar;
+import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
+
+import jakarta.servlet.http.HttpSession;
 
 @Controller
 @RequestMapping("/claimed-cars")
 public class ClaimedCarWebController {
 
     private final ClaimedCarService claimedCarService;
-    private final ClaimedCarItemService claimedCarItemService;
 
-    public ClaimedCarWebController(ClaimedCarService claimedCarService,
-                                    ClaimedCarItemService claimedCarItemService) {
+    public ClaimedCarWebController(ClaimedCarService claimedCarService) {
         this.claimedCarService = claimedCarService;
-        this.claimedCarItemService = claimedCarItemService;
     }
 
     // --- Player endpoints (session-based auth) ---

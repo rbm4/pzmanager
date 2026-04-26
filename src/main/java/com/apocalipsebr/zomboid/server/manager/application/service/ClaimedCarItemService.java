@@ -5,12 +5,9 @@ import com.apocalipsebr.zomboid.server.manager.domain.repository.app.ClaimedCarI
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 @Service
 public class ClaimedCarItemService {
-
-    private static final Logger logger = Logger.getLogger(ClaimedCarItemService.class.getName());
 
     private final ClaimedCarItemRepository claimedCarItemRepository;
 
