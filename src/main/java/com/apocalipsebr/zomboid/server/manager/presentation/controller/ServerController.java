@@ -91,7 +91,7 @@ public class ServerController {
     @PostMapping("/command/text")
     public ResponseEntity<String> sendCommandAsText(@RequestParam String command) {
         serverCommandService.sendCommand(command);
-        return ResponseEntity.ok("Command sent successfully: " + command);
+        return ResponseEntity.ok("Command sent successfully! ");
     }
 
     @PostMapping("/restart")

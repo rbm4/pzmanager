@@ -906,7 +906,7 @@
                     html += '<div style="text-align: center;"><span style="color: #888; font-size: 0.8rem; display: block;">X2</span><span style="color: #ffb74d; font-weight: 600; font-size: 1.1rem;">' + data.regionZone.x2 + '</span></div>';
                     html += '<div style="text-align: center;"><span style="color: #888; font-size: 0.8rem; display: block;">Y2</span><span style="color: #ffb74d; font-weight: 600; font-size: 1.1rem;">' + data.regionZone.y2 + '</span></div>';
                     html += '</div>';
-                    html += '<button onclick="openRegionViewer(' + data.regionZone.x1 + ',' + data.regionZone.y1 + ',' + data.regionZone.x2 + ',' + data.regionZone.y2 + ',\'' + (data.regionZone.name || data.title || 'Região').replace(/'/g, "\\'") + '\')" style="margin-top: 12px; width: 100%; padding: 10px; background: rgba(255, 152, 0, 0.15); border: 1px solid rgba(255, 152, 0, 0.5); color: #ffb74d; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.3s ease;">🗺️ Ver no Mapa</button>';
+                    html += '<button onclick="openRegionViewer(' + data.regionZone.x1 + ',' + data.regionZone.y1 + ',' + data.regionZone.x2 + ',' + data.regionZone.y2 + ',\'' + (data.regionZone.name || data.title || 'Região').replace(/\\/g, "\\\\").replace(/'/g, "\\'") + '\')" style="margin-top: 12px; width: 100%; padding: 10px; background: rgba(255, 152, 0, 0.15); border: 1px solid rgba(255, 152, 0, 0.5); color: #ffb74d; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.3s ease;">🗺️ Ver no Mapa</button>';
                     html += '</div>';
                 }
 
