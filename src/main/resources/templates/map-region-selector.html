@@ -502,9 +502,6 @@
             function renderSafehouses() {
                 for (var i = 0; i < safehouses.length; i++) {
                     var sh = safehouses[i];
-                    if (selectorMode === 'upgrade' && !isTargetSafehouse(sh)) {
-                        continue;
-                    }
                     var el = document.createElement('div');
                     var isTarget = isTargetSafehouse(sh);
                     el.style.cssText = isTarget

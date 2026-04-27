@@ -856,14 +856,14 @@
             alert.style.display = 'none';
             error.style.display = 'none';
 
-            info.textContent = 'O valor fica retido em escrow ate a revisao do administrador (custo minimo de 6.000).';
+            info.textContent = 'O valor fica retido em escrow até a revisão do administrador (custo mínimo de 6.000).';
             info.style.display = 'block';
 
             if (result.overlapsExisting) {
                 const names = Array.isArray(result.overlappingSafehouses) && result.overlappingSafehouses.length
                     ? ' Safehouses detectadas: ' + result.overlappingSafehouses.join(', ') + '.'
                     : '';
-                error.textContent = 'A selecao sobrepoe safehouse existente. Escolha outra area.' + names;
+                error.textContent = 'A seleção sobrepõe safehouse existente. Escolha outra área.' + names;
                 error.style.display = 'block';
                 document.getElementById('submitBtn').disabled = true;
                 return;
