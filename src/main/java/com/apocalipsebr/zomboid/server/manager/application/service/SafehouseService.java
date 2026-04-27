@@ -1,5 +1,27 @@
 package com.apocalipsebr.zomboid.server.manager.application.service;
 
+import static com.apocalipsebr.zomboid.server.manager.application.service.MapDataService.BIN_TILE_SIZE;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.apocalipsebr.zomboid.server.manager.application.service.MapDataService.SafehouseInfo;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.Character;
 import com.apocalipsebr.zomboid.server.manager.domain.entity.app.SafehouseClaimRequest;
@@ -8,22 +30,6 @@ import com.apocalipsebr.zomboid.server.manager.domain.entity.app.User;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.SafehouseClaimRequestRepository;
 import com.apocalipsebr.zomboid.server.manager.domain.repository.app.TransactionLogRepository;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-
-import static com.apocalipsebr.zomboid.server.manager.application.service.MapDataService.BIN_TILE_SIZE;
-
 @Service
 public class SafehouseService {
 
@@ -31,7 +37,10 @@ public class SafehouseService {
     private static final int DEFAULT_MARGIN = 2;
     private static final int MIN_SELECTION_SIZE = 10;
     private static final int HARD_MIN_CLAIM_COST = 6000;
-    /** Z-levels to include for each chunk: -1 (basement) through +4 (upper floors). */
+    private static final int HARD_MIN_UPGRADE_COST = 1500;
+    /**
+     * Z-levels to include for each chunk: -1 (basement) through +4 (upper floors).
+     */
     private static final int Z_MIN = -1;
     private static final int Z_MAX = 4;
 
@@ -41,6 +50,7 @@ public class SafehouseService {
     private final TransactionLogService transactionLogService;
     private final TransactionLogRepository transactionLogRepository;
     private final SafehouseClaimRequestRepository safehouseClaimRequestRepository;
+    private final EmailService emailService;
 
     @Value("${safehouse.claim.area-cost-factor:0.31}")
     private double areaCostFactor;
@@ -51,18 +61,26 @@ public class SafehouseService {
     @Value("${safehouse.claim.free-area:1600}")
     private int freeArea;
 
+    @Value("${safehouse.upgrade.min-cost:1500}")
+    private int upgradeMinCost;
+
+    @Value("${safehouse.upgrade.free-area:400}")
+    private int upgradeFreeArea;
+
     public SafehouseService(MapDataService mapDataService,
-                            CharacterService characterService,
-                            ServerCommandService serverCommandService,
-                            TransactionLogService transactionLogService,
-                            TransactionLogRepository transactionLogRepository,
-                            SafehouseClaimRequestRepository safehouseClaimRequestRepository) {
+            CharacterService characterService,
+            ServerCommandService serverCommandService,
+            TransactionLogService transactionLogService,
+            TransactionLogRepository transactionLogRepository,
+            SafehouseClaimRequestRepository safehouseClaimRequestRepository,
+            EmailService emailService) {
         this.mapDataService = mapDataService;
         this.characterService = characterService;
         this.serverCommandService = serverCommandService;
         this.transactionLogService = transactionLogService;
         this.transactionLogRepository = transactionLogRepository;
         this.safehouseClaimRequestRepository = safehouseClaimRequestRepository;
+        this.emailService = emailService;
     }
 
     public SafehouseListResult listSafehouses() {
@@ -84,8 +102,7 @@ public class SafehouseService {
                 overlaps.stream()
                         .map(sh -> sh.name() != null && !sh.name().isBlank() ? sh.name() : sh.owner())
                         .filter(Objects::nonNull)
-                        .toList()
-        );
+                        .toList());
     }
 
     public List<SafehouseClaimRequest> getUserClaims(User user) {
@@ -150,7 +167,7 @@ public class SafehouseService {
 
         SafehouseClaimRequest claim = new SafehouseClaimRequest(
                 user,
-            ownerCharacterName,
+                ownerCharacterName,
                 rect.x1(),
                 rect.y1(),
                 rect.x2(),
@@ -184,10 +201,115 @@ public class SafehouseService {
                     character.getCurrencyPoints());
         }
         characterService.saveAll(userCharacters);
+        emailService.sendTextEmail("ricardo.malafaia1994@gmail.com", "Nova solicitação de safehouse",
+                "Uma nova solicitação de safehouse foi feita para o personagem: " + ownerCharacterName);
 
         return new CreateClaimResult(
                 true,
                 "Solicitacao enviada para revisao administrativa. " + cost + " ₳ foram reservados em escrow.",
+                claim);
+    }
+
+    public ClaimPreview previewUpgrade(User user,
+            int originalX,
+            int originalY,
+            int originalW,
+            int originalH,
+            int x1,
+            int y1,
+            int x2,
+            int y2) {
+        SafehouseInfo targetSafehouse = findUpgradeableSafehouse(user, originalX, originalY, originalW, originalH);
+        NormalizedRect rect = normalizeRect(x1, y1, x2, y2);
+        UpgradeValidation validation = validateUpgradeSelection(targetSafehouse, rect);
+        int cost = calculateUpgradeCost(validation.addedArea());
+        return new ClaimPreview(cost, cost, validation.addedArea(), validation.overlapsExisting(),
+                validation.overlapCount(), validation.overlappingSafehouses());
+    }
+
+    @Transactional
+    public CreateClaimResult requestUpgrade(User user,
+            int originalX,
+            int originalY,
+            int originalW,
+            int originalH,
+            int x1,
+            int y1,
+            int x2,
+            int y2) {
+        SafehouseInfo targetSafehouse;
+        try {
+            targetSafehouse = findUpgradeableSafehouse(user, originalX, originalY, originalW, originalH);
+        } catch (IllegalArgumentException e) {
+            return new CreateClaimResult(false, e.getMessage(), null);
+        }
+
+        String ownerCharacterName = targetSafehouse.owner() != null ? targetSafehouse.owner().trim() : "";
+        if (ownerCharacterName.isBlank()) {
+            return new CreateClaimResult(false, "A safehouse alvo nao possui dono valido.", null);
+        }
+        if (ownerCharacterName.contains("##")) {
+            return new CreateClaimResult(false, "Nome do personagem invalido para envio ao servidor.", null);
+        }
+
+        NormalizedRect rect = normalizeRect(x1, y1, x2, y2);
+        UpgradeValidation validation;
+        try {
+            validation = validateUpgradeSelection(targetSafehouse, rect);
+        } catch (IllegalArgumentException e) {
+            return new CreateClaimResult(false, e.getMessage(), null);
+        }
+
+        int cost = calculateUpgradeCost(validation.addedArea());
+
+        List<Character> userCharacters = characterService.getAllUserCharacters(user);
+        int totalCurrency = userCharacters.stream()
+                .mapToInt(c -> c.getCurrencyPoints() != null ? c.getCurrencyPoints() : 0)
+                .sum();
+        if (totalCurrency < cost) {
+            return new CreateClaimResult(false,
+                    "Saldo insuficiente. Custo: " + cost + " ₳, Saldo: " + totalCurrency + " ₳", null);
+        }
+
+        SafehouseClaimRequest claim = new SafehouseClaimRequest(
+                user,
+                ownerCharacterName,
+                rect.x1(),
+                rect.y1(),
+                rect.x2(),
+                rect.y2(),
+                cost,
+                validation.overlapsExisting(),
+                validation.overlapCount());
+        claim.setClaimType("UPGRADE");
+        claim = safehouseClaimRequestRepository.save(claim);
+
+        int remainingCost = cost;
+        for (Character character : userCharacters) {
+            if (remainingCost <= 0)
+                break;
+            int currentPoints = character.getCurrencyPoints() != null ? character.getCurrencyPoints() : 0;
+            if (currentPoints <= 0)
+                continue;
+            int deduction = Math.min(currentPoints, remainingCost);
+            character.setCurrencyPoints(currentPoints - deduction);
+            remainingCost -= deduction;
+            transactionLogService.logTransaction(
+                    user, character,
+                    "SAFEHOUSE_UPGRADE",
+                    "Safehouse Upgrade (Owner: " + claim.getClaimName() + ")",
+                    claimTransactionRef(claim.getId()),
+                    deduction,
+                    character.getCurrencyPoints());
+        }
+        characterService.saveAll(userCharacters);
+        emailService.sendTextEmail("ricardo.malafaia1994@gmail.com", "Nova solicitação de upgrade de safehouse",
+                "Uma nova solicitação de upgrade de safehouse foi feita para o personagem: " + ownerCharacterName);
+
+        return new CreateClaimResult(
+                true,
+                "Solicitacao de upgrade enviada para revisao administrativa. " + cost
+                        + " ₳ foram reservados em escrow.",
                 claim);
     }
 
@@ -217,8 +339,28 @@ public class SafehouseService {
         }
 
         String requestId = "claim-" + claim.getId() + "-" + System.currentTimeMillis();
-        String command = "servermsg ##APOCBR_SH##" + requestId + "##" + ownerCharacterName +
+        String commandPrefix = "UPGRADE".equals(claim.getClaimType()) ? "APOCBR_SH_UPGRADE" : "APOCBR_SH";
+        String command = "servermsg ##" + commandPrefix + "##" + requestId + "##" + ownerCharacterName +
                 "##" + x + "##" + y + "##" + w + "##" + h;
+
+        String playersResponse;
+        try {
+            playersResponse = serverCommandService.sendCommandResponse("players");
+        } catch (RuntimeException e) {
+            log.error("Failed to check connected players before approving safehouse claim {}", claimId, e);
+            return new ReviewClaimResult(false,
+                    "Falha ao verificar jogadores conectados no servidor. A solicitação permanece em escrow/pendente. Erro: "
+                            + e.getMessage(),
+                    claim);
+        }
+
+        int connectedPlayers = extractConnectedPlayersCount(playersResponse);
+        if (connectedPlayers < 1) {
+            return new ReviewClaimResult(false,
+                    "Nao ha jogadores online para retransmitir o comando de safehouse. Tente novamente quando houver ao menos 1 jogador conectado.",
+                    claim);
+        }
+
         try {
             serverCommandService.sendCommand(command);
         } catch (RuntimeException e) {
@@ -290,14 +432,17 @@ public class SafehouseService {
      * Writes a ZIP to the given output stream containing:
      * - map_meta.bin at the root
      * - vehicles.db and vehicles.db-journal at the root (vehicle data)
-     * - map/{bx}/{by}.bin (z=0) and map/{bx}/{by}_{z}.bin (z=-1..+4) for each bin around detected safehouses
+     * - map/{bx}/{by}.bin (z=0) and map/{bx}/{by}_{z}.bin (z=-1..+4) for each bin
+     * around detected safehouses
      *
-     * @param marginTiles number of tiles around each safehouse to include (default 2)
+     * @param marginTiles number of tiles around each safehouse to include (default
+     *                    2)
      * @param out         the output stream to write the ZIP to
      * @return metadata about the export
      */
     public ExportResult exportSafehouseBinsAsZip(int marginTiles, OutputStream out) throws IOException {
-        if (marginTiles < 0) marginTiles = DEFAULT_MARGIN;
+        if (marginTiles < 0)
+            marginTiles = DEFAULT_MARGIN;
 
         Path mapDir = mapDataService.getMapDir();
         if (mapDir == null) {
@@ -316,7 +461,8 @@ public class SafehouseService {
         // Compute the set of bin keys around all safehouses
         Set<String> binKeys = buildSafehouseBinKeys(safehouses, marginTiles);
 
-        log.info("Safehouse export: {} safehouses, {} bin keys (margin={})", safehouses.size(), binKeys.size(), marginTiles);
+        log.info("Safehouse export: {} safehouses, {} bin keys (margin={})", safehouses.size(), binKeys.size(),
+                marginTiles);
 
         int binsWritten = 0;
         long totalBytes = 0;
@@ -328,10 +474,12 @@ public class SafehouseService {
             totalBytes += addRootFileToZip(zos, metaPath, "map_meta.bin", warnings);
             if (saveRoot != null) {
                 totalBytes += addRootFileToZip(zos, saveRoot.resolve("vehicles.db"), "vehicles.db", warnings);
-                totalBytes += addRootFileToZip(zos, saveRoot.resolve("vehicles.db-journal"), "vehicles.db-journal", warnings);
+                totalBytes += addRootFileToZip(zos, saveRoot.resolve("vehicles.db-journal"), "vehicles.db-journal",
+                        warnings);
             }
 
-            // Include bin files for each z-level: map/{bx}/{by}.bin (z=0), map/{bx}/{by}_{z}.bin (z!=0)
+            // Include bin files for each z-level: map/{bx}/{by}.bin (z=0),
+            // map/{bx}/{by}_{z}.bin (z!=0)
             for (String key : binKeys) {
                 String[] parts = key.split("/");
                 int bx = Integer.parseInt(parts[0]);
@@ -375,7 +523,8 @@ public class SafehouseService {
     /**
      * Adds a save-root file to the ZIP if it exists, returns bytes written.
      */
-    private long addRootFileToZip(ZipOutputStream zos, Path filePath, String zipName, List<String> warnings) throws IOException {
+    private long addRootFileToZip(ZipOutputStream zos, Path filePath, String zipName, List<String> warnings)
+            throws IOException {
         if (filePath != null && Files.exists(filePath)) {
             byte[] data = Files.readAllBytes(filePath);
             zos.putNextEntry(new ZipEntry(zipName));
@@ -388,7 +537,8 @@ public class SafehouseService {
     }
 
     /**
-     * Builds a set of "bx/by" bin keys around all safehouses expanded by the given margin.
+     * Builds a set of "bx/by" bin keys around all safehouses expanded by the given
+     * margin.
      */
     private Set<String> buildSafehouseBinKeys(List<SafehouseInfo> safehouses, int marginTiles) {
         Set<String> keys = new LinkedHashSet<>();
@@ -416,6 +566,45 @@ public class SafehouseService {
         return base + extra;
     }
 
+    private int calculateUpgradeCost(int area) {
+        int base = Math.max(upgradeMinCost, HARD_MIN_UPGRADE_COST);
+        if (area <= upgradeFreeArea) {
+            return base;
+        }
+        int extra = (int) Math.ceil((area - upgradeFreeArea) * areaCostFactor);
+        return base + extra;
+    }
+
+    private int extractConnectedPlayersCount(String playersResponse) {
+        if (playersResponse == null || playersResponse.isBlank()) {
+            return 0;
+        }
+
+        String lower = playersResponse.toLowerCase();
+        String marker = "players connected (";
+        int markerIndex = lower.indexOf(marker);
+        if (markerIndex >= 0) {
+            int countStart = markerIndex + marker.length();
+            int countEnd = lower.indexOf(')', countStart);
+            if (countEnd > countStart) {
+                String countRaw = playersResponse.substring(countStart, countEnd).trim();
+                try {
+                    return Integer.parseInt(countRaw);
+                } catch (NumberFormatException ignored) {
+                    // Fall back to line-based parsing below.
+                }
+            }
+        }
+
+        int fallbackCount = 0;
+        for (String line : playersResponse.split("\\R")) {
+            if (line != null && line.trim().startsWith("-")) {
+                fallbackCount++;
+            }
+        }
+        return fallbackCount;
+    }
+
     private List<SafehouseInfo> findOverlappingSafehouses(NormalizedRect rect) {
         List<String> warnings = new ArrayList<>();
         List<SafehouseInfo> safehouses = mapDataService.getSafehouses(warnings);
@@ -425,8 +614,76 @@ public class SafehouseService {
                 .toList();
     }
 
+    private SafehouseInfo findUpgradeableSafehouse(User user, int originalX, int originalY, int originalW,
+            int originalH) {
+        List<Character> userCharacters = characterService.getUserCharacters(user);
+        Set<String> ownerNames = new LinkedHashSet<>();
+        for (Character character : userCharacters) {
+            if (character.getPlayerName() != null && !character.getPlayerName().isBlank()) {
+                ownerNames.add(character.getPlayerName().trim());
+            }
+        }
+
+        List<String> warnings = new ArrayList<>();
+        List<SafehouseInfo> safehouses = mapDataService.getSafehouses(warnings);
+        return safehouses.stream()
+                .filter(sh -> sh.x() == originalX && sh.y() == originalY && sh.w() == originalW && sh.h() == originalH)
+                .filter(sh -> sh.owner() != null && ownerNames.contains(sh.owner().trim()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "A safehouse selecionada para upgrade nao foi encontrada ou nao pertence a esta conta."));
+    }
+
+    private UpgradeValidation validateUpgradeSelection(SafehouseInfo targetSafehouse, NormalizedRect rect) {
+        if (rect.width() < MIN_SELECTION_SIZE || rect.height() < MIN_SELECTION_SIZE) {
+            throw new IllegalArgumentException(
+                    "Area selecionada muito pequena. Tamanho minimo: " + MIN_SELECTION_SIZE + " tiles.");
+        }
+
+        int targetX1 = targetSafehouse.x();
+        int targetY1 = targetSafehouse.y();
+        int targetX2 = targetSafehouse.x() + targetSafehouse.w();
+        int targetY2 = targetSafehouse.y() + targetSafehouse.h();
+
+        if (rect.x1() > targetX1 || rect.y1() > targetY1 || rect.x2() < targetX2 || rect.y2() < targetY2) {
+            throw new IllegalArgumentException(
+                    "O upgrade deve cobrir integralmente a safehouse atual para que o servidor identifique a area correta.");
+        }
+
+        int targetArea = targetSafehouse.w() * targetSafehouse.h();
+        int newArea = rect.area();
+        int addedArea = newArea - targetArea;
+        if (addedArea <= 0) {
+            throw new IllegalArgumentException(
+                    "O upgrade precisa aumentar a area da safehouse atual. Selecione uma regiao maior que a original.");
+        }
+
+        List<SafehouseInfo> overlaps = findOverlappingSafehouses(rect).stream()
+                .filter(sh -> !sameSafehouse(sh, targetSafehouse))
+                .toList();
+        if (!overlaps.isEmpty()) {
+            List<String> names = overlaps.stream()
+                    .map(sh -> sh.name() != null && !sh.name().isBlank() ? sh.name() : sh.owner())
+                    .filter(Objects::nonNull)
+                    .toList();
+            throw new IllegalArgumentException(
+                    "O upgrade nao pode sobrepor outras safehouses. Ajuste a selecao para manter apenas a safehouse atual dentro da nova area."
+                            + (names.isEmpty() ? "" : " Conflitos: " + String.join(", ", names) + "."));
+        }
+
+        return new UpgradeValidation(addedArea, false, 0, List.of());
+    }
+
+    private boolean sameSafehouse(SafehouseInfo left, SafehouseInfo right) {
+        return left.x() == right.x()
+                && left.y() == right.y()
+                && left.w() == right.w()
+                && left.h() == right.h()
+                && Objects.equals(left.owner(), right.owner());
+    }
+
     private boolean rectanglesOverlap(int ax1, int ay1, int ax2, int ay2,
-                                      int bx1, int by1, int bx2, int by2) {
+            int bx1, int by1, int bx2, int by2) {
         return ax1 < bx2 && ax2 > bx1 && ay1 < by2 && ay2 > by1;
     }
 
@@ -448,7 +705,7 @@ public class SafehouseService {
     }
 
     public record ClaimPreview(int cost, int baseCost, int area, boolean overlapsExisting,
-                               int overlapCount, List<String> overlappingSafehouses) {
+            int overlapCount, List<String> overlappingSafehouses) {
     }
 
     public record CreateClaimResult(boolean success, String message, SafehouseClaimRequest claim) {
@@ -458,7 +715,11 @@ public class SafehouseService {
     }
 
     public record ExportResult(int safehouseCount, int totalBinKeys, int binsWritten, long totalBytes,
-                                List<String> warnings) {
+            List<String> warnings) {
+    }
+
+    private record UpgradeValidation(int addedArea, boolean overlapsExisting, int overlapCount,
+            List<String> overlappingSafehouses) {
     }
 
     private record NormalizedRect(int x1, int y1, int x2, int y2) {

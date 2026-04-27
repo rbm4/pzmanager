@@ -484,7 +484,7 @@ function updateModMapUI() {
                 warning.push(mod_map.name)
             }
             mapListContainer.innerHTML += `<button class="${state}" style="cursor: not-allowed" ` +
-                `onclick="removeMap('${mod_map.name.replace("'","\\'")}')">${mod_map.name}</button>`;
+                `onclick="removeMap('${mod_map.name.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}')">${mod_map.name}</button>`;
         }
 
         if (warning.length > 0) {

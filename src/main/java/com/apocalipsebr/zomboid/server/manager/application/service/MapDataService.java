@@ -1,10 +1,5 @@
 package com.apocalipsebr.zomboid.server.manager.application.service;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -12,16 +7,33 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.regex.Pattern;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 @Service
 public class MapDataService {
 
     private static final Logger log = LoggerFactory.getLogger(MapDataService.class);
     public static final int BIN_TILE_SIZE = 8;
-    // Matches town strings like "Muldraugh, KY", "Raven Creek, RC", "Bedford Falls, BF", etc.
+    // Matches town strings like "Muldraugh, KY", "Raven Creek, RC", "Bedford Falls,
+    // BF", etc.
     private static final Pattern TOWN_RE = Pattern.compile(".+, [A-Za-z]{2,}$");
+    private static final int MIN_SAFEHOUSE_COORD = -200000;
+    private static final int MAX_SAFEHOUSE_COORD = 200000;
 
     @Value("${server.map.folder:}")
     private String mapFolderPath;
@@ -33,15 +45,18 @@ public class MapDataService {
     }
 
     public Path getMapDir() {
-        if (mapFolderPath == null || mapFolderPath.isBlank()) return null;
+        if (mapFolderPath == null || mapFolderPath.isBlank())
+            return null;
         Path mapDir = Paths.get(mapFolderPath);
-        if (!Files.exists(mapDir) || !Files.isDirectory(mapDir)) return null;
+        if (!Files.exists(mapDir) || !Files.isDirectory(mapDir))
+            return null;
         return mapDir;
     }
 
     public Path getMetaPath() {
         Path mapDir = getMapDir();
-        if (mapDir == null) return null;
+        if (mapDir == null)
+            return null;
         Path saveRoot = mapDir.getParent();
         return saveRoot != null ? saveRoot.resolve("map_meta.bin") : mapDir.resolve("../map_meta.bin").normalize();
     }
@@ -84,8 +99,7 @@ public class MapDataService {
                 safehouses,
                 warnings,
                 (t1 - t0) / 1000.0,
-                (t2 - t1) / 1000.0
-        );
+                (t2 - t1) / 1000.0);
     }
 
     // --- Scanning ---
@@ -96,10 +110,12 @@ public class MapDataService {
 
         try (DirectoryStream<Path> folders = Files.newDirectoryStream(mapDir)) {
             for (Path folder : folders) {
-                if (!Files.isDirectory(folder)) continue;
+                if (!Files.isDirectory(folder))
+                    continue;
 
                 String folderName = folder.getFileName().toString();
-                if (!folderName.matches("\\d+")) continue;
+                if (!folderName.matches("\\d+"))
+                    continue;
 
                 List<Integer> ys = new ArrayList<>();
                 try (DirectoryStream<Path> files = Files.newDirectoryStream(folder, "*.bin")) {
@@ -131,7 +147,8 @@ public class MapDataService {
     }
 
     public List<int[]> compressToRanges(List<Integer> sorted) {
-        if (sorted.isEmpty()) return Collections.emptyList();
+        if (sorted.isEmpty())
+            return Collections.emptyList();
 
         List<int[]> ranges = new ArrayList<>();
         int a = sorted.get(0), b = sorted.get(0);
@@ -141,11 +158,11 @@ public class MapDataService {
             if (v == b + 1) {
                 b = v;
             } else {
-                ranges.add(new int[]{a, b});
+                ranges.add(new int[] { a, b });
                 a = b = v;
             }
         }
-        ranges.add(new int[]{a, b});
+        ranges.add(new int[] { a, b });
         return ranges;
     }
 
@@ -165,7 +182,6 @@ public class MapDataService {
             return Collections.emptyList();
         }
 
-        int[] ownerGaps = {8, 4, 12, 16, 0, 20};
         List<SafehouseCandidate> candidates = new ArrayList<>();
         Set<Integer> foundOffsets = new HashSet<>();
 
@@ -175,26 +191,24 @@ public class MapDataService {
             Integer w = readI32(data, i + 8);
             Integer h = readI32(data, i + 12);
 
-            if (x == null || y == null || w == null || h == null) break;
-            if (x < 0 || x > 100000 || y < 0 || y > 100000) continue;
-            if (w < 1 || w > 800 || h < 1 || h > 800) continue;
+            if (x == null || y == null || w == null || h == null)
+                break;
+            if (x < MIN_SAFEHOUSE_COORD || x > MAX_SAFEHOUSE_COORD || y < MIN_SAFEHOUSE_COORD
+                    || y > MAX_SAFEHOUSE_COORD)
+                continue;
+            if (w < 1 || w > 800 || h < 1 || h > 800)
+                continue;
 
             StringRead t1 = readUTF(data, i + 16);
-            if (t1 == null) continue;
-            if (!isReasonableName(t1.value())) continue;
+            if (t1 == null)
+                continue;
+            if (!isReasonableName(t1.value()))
+                continue;
 
-            for (int gap : ownerGaps) {
-                if (t1.nextPos() + gap + 2 > data.length) continue;
-                StringRead t2 = readUTF(data, t1.nextPos() + gap);
-                if (t2 == null) continue;
-                if (t1.value().equals(t2.value())) {
-                    if (foundOffsets.add(i)) {
-                        candidates.add(new SafehouseCandidate(i, x, y, w, h, t1.value(), t2.nextPos()));
-                        log.debug("Safehouse candidate found at offset {} (owner={}, x={}, y={}, w={}, h={}, gap={})",
-                                i, t1.value(), x, y, w, h, gap);
-                    }
-                    break;
-                }
+            if (foundOffsets.add(i)) {
+                candidates.add(new SafehouseCandidate(i, x, y, w, h, t1.value(), t1.nextPos()));
+                log.debug("Safehouse candidate found at offset {} (owner={}, x={}, y={}, w={}, h={})",
+                        i, t1.value(), x, y, w, h);
             }
         }
 
@@ -203,7 +217,10 @@ public class MapDataService {
             return Collections.emptyList();
         }
 
+        candidates.sort(Comparator.comparingInt(SafehouseCandidate::offset));
+
         List<SafehouseInfo> records = new ArrayList<>();
+        Set<String> uniqueSafehouseKeys = new HashSet<>();
 
         for (int idx = 0; idx < candidates.size(); idx++) {
             SafehouseCandidate c = candidates.get(idx);
@@ -227,7 +244,8 @@ public class MapDataService {
             String town = "";
             int townPos = -1;
             for (StringAt s : ordered) {
-                if (s.value().equals(c.owner())) continue;
+                if (s.value().equals(c.owner()))
+                    continue;
                 if (TOWN_RE.matcher(s.value()).matches()) {
                     town = s.value();
                     townPos = s.pos();
@@ -236,7 +254,8 @@ public class MapDataService {
             }
 
             if (town.isEmpty()) {
-                log.debug("Safehouse candidate at offset {} (owner={}, x={}, y={}, w={}, h={}) has no recognized town — keeping with empty town.",
+                log.debug(
+                        "Safehouse candidate at offset {} (owner={}, x={}, y={}, w={}, h={}) has no recognized town — keeping with empty town.",
                         c.offset(), c.owner(), c.x(), c.y(), c.w(), c.h());
             }
 
@@ -273,15 +292,21 @@ public class MapDataService {
             List<String> members = new ArrayList<>();
             Set<String> memberSeen = new HashSet<>();
             for (StringAt s : ordered) {
-                if (s.value().equals(c.owner()) || s.value().equals(town) || s.value().equals(name)) continue;
-                if (TOWN_RE.matcher(s.value()).matches()) continue;
+                if (s.value().equals(c.owner()) || s.value().equals(town) || s.value().equals(name))
+                    continue;
+                if (TOWN_RE.matcher(s.value()).matches())
+                    continue;
                 if (isReasonableName(s.value()) && memberSeen.add(s.value())) {
                     members.add(s.value());
                 }
-                if (townPos >= 0 && s.pos() > townPos + 300) break;
+                if (townPos >= 0 && s.pos() > townPos + 300)
+                    break;
             }
 
-            records.add(new SafehouseInfo(c.x(), c.y(), c.w(), c.h(), c.owner(), town, name, members));
+            String uniqueKey = c.x() + ":" + c.y() + ":" + c.w() + ":" + c.h() + ":" + c.owner();
+            if (uniqueSafehouseKeys.add(uniqueKey)) {
+                records.add(new SafehouseInfo(c.x(), c.y(), c.w(), c.h(), c.owner(), town, name, members));
+            }
         }
 
         if (records.isEmpty()) {
@@ -294,28 +319,36 @@ public class MapDataService {
     // --- Binary helpers ---
 
     private Integer readI32(byte[] data, int offset) {
-        if (offset + 4 > data.length) return null;
+        if (offset + 4 > data.length)
+            return null;
         return ByteBuffer.wrap(data, offset, 4).order(ByteOrder.BIG_ENDIAN).getInt();
     }
 
     private Integer readU16(byte[] data, int offset) {
-        if (offset + 2 > data.length) return null;
+        if (offset + 2 > data.length)
+            return null;
         return ByteBuffer.wrap(data, offset, 2).order(ByteOrder.BIG_ENDIAN).getShort() & 0xFFFF;
     }
 
     private StringRead readUTF(byte[] data, int offset) {
         Integer len = readU16(data, offset);
-        if (len == null) return null;
+        if (len == null)
+            return null;
         int start = offset + 2;
-        if (start + len > data.length) return null;
+        if (start + len > data.length)
+            return null;
         String value = new String(data, start, len, java.nio.charset.StandardCharsets.UTF_8);
         return new StringRead(value, start + len);
     }
 
     private boolean isReasonableName(String s) {
-        if (s == null || s.length() < 1 || s.length() > 40) return false;
+        if (s == null || s.length() < 1 || s.length() > 40)
+            return false;
+        if (s.equals("AnimalZone"))
+            return false;
         for (char c : s.toCharArray()) {
-            if (c < 32) return false;
+            if (c < 32)
+                return false;
         }
         return s.matches("[\\p{L}\\p{N}_\\-\\.\\s]{1,40}") && !s.trim().isEmpty();
     }
@@ -325,19 +358,24 @@ public class MapDataService {
         int i = start;
         while (i + 2 < end) {
             Integer len = readU16(data, i);
-            if (len == null) break;
+            if (len == null)
+                break;
             if (len > 0 && len <= maxLen && i + 2 + len <= end) {
                 byte[] raw = Arrays.copyOfRange(data, i + 2, i + 2 + len);
                 int printable = 0;
                 for (byte b : raw) {
-                    if (b >= 32 && b < 127) printable++;
+                    if (b >= 32 && b < 127)
+                        printable++;
                 }
                 if ((double) printable / Math.max(1, len) > 0.85) {
                     String s = new String(raw, java.nio.charset.StandardCharsets.UTF_8);
                     if (!s.trim().isEmpty()) {
                         boolean allPrintable = true;
                         for (char c : s.toCharArray()) {
-                            if (c < 32) { allPrintable = false; break; }
+                            if (c < 32) {
+                                allPrintable = false;
+                                break;
+                            }
                         }
                         if (allPrintable) {
                             out.add(new StringAt(i, s));
@@ -364,8 +402,7 @@ public class MapDataService {
             List<SafehouseInfo> safehouses,
             List<String> warnings,
             double scanSeconds,
-            double safehouseSeconds
-    ) {
+            double safehouseSeconds) {
         public static MapIndex error(String msg) {
             return new MapIndex(Collections.emptyMap(), 0, BIN_TILE_SIZE,
                     Collections.emptyList(), List.of(msg), 0, 0);
@@ -373,7 +410,7 @@ public class MapDataService {
     }
 
     public record SafehouseInfo(int x, int y, int w, int h, String owner, String town, String name,
-                                List<String> members) {
+            List<String> members) {
     }
 
     public record ScanResult(Map<String, List<int[]>> binsByX, int totalBins) {
@@ -387,4 +424,5 @@ public class MapDataService {
 
     private record StringAt(int pos, String value) {
     }
+
 }
