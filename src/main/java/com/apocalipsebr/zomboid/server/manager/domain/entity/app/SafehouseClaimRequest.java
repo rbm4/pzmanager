@@ -1,8 +1,18 @@
 package com.apocalipsebr.zomboid.server.manager.domain.entity.app;
 
-import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "safehouse_claim_requests")
@@ -44,6 +54,9 @@ public class SafehouseClaimRequest {
     @Column(name = "overlap_count", nullable = false)
     private Integer overlapCount = 0;
 
+    @Column(name = "claim_type", nullable = false, length = 20)
+    private String claimType = "CLAIM";
+
     @Column(name = "admin_reason", columnDefinition = "TEXT")
     private String adminReason;
 
@@ -61,7 +74,7 @@ public class SafehouseClaimRequest {
     }
 
     public SafehouseClaimRequest(User user, String claimName, int x1, int y1, int x2, int y2,
-                                 int cost, boolean overlapsExisting, int overlapCount) {
+            int cost, boolean overlapsExisting, int overlapCount) {
         this();
         this.user = user;
         this.claimName = claimName;
@@ -197,5 +210,13 @@ public class SafehouseClaimRequest {
 
     public int getArea() {
         return Math.abs(x2 - x1) * Math.abs(y2 - y1);
+    }
+
+    public String getClaimType() {
+        return claimType != null ? claimType : "CLAIM";
+    }
+
+    public void setClaimType(String claimType) {
+        this.claimType = claimType != null ? claimType : "CLAIM";
     }
 }

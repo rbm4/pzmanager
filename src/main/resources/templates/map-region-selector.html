@@ -15,9 +15,14 @@
             --accent: #00f2fe;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-        html, body {
+        html,
+        body {
             height: 100%;
             background: var(--bg);
             color: var(--text);
@@ -25,12 +30,21 @@
             overflow: hidden;
         }
 
-        #mapDiv { width: 100%; height: 100%; cursor: crosshair; }
-        #mapDiv.panning { cursor: grabbing; }
+        #mapDiv {
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        #mapDiv.panning {
+            cursor: grabbing;
+        }
 
         .topBar {
             position: absolute;
-            left: 12px; top: 12px; right: 12px;
+            left: 12px;
+            top: 12px;
+            right: 12px;
             display: flex;
             gap: 10px;
             align-items: center;
@@ -38,7 +52,10 @@
             pointer-events: none;
             z-index: 10;
         }
-        .topBar > * { pointer-events: auto; }
+
+        .topBar>* {
+            pointer-events: auto;
+        }
 
         .hud {
             display: flex;
@@ -50,8 +67,16 @@
             border-radius: 16px;
             padding: 8px 14px;
         }
-        .hud .kv { color: var(--muted); font-size: 12px; }
-        .hud .kv b { color: var(--text); font-weight: 600; }
+
+        .hud .kv {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .hud .kv b {
+            color: var(--text);
+            font-weight: 600;
+        }
 
         button {
             background: rgba(10, 17, 26, 0.9);
@@ -62,11 +87,16 @@
             cursor: pointer;
             font-size: 13px;
         }
-        button:hover { border-color: #2f4a68; }
+
+        button:hover {
+            border-color: #2f4a68;
+        }
 
         .bottomBar {
             position: absolute;
-            left: 12px; bottom: 12px; right: 12px;
+            left: 12px;
+            bottom: 12px;
+            right: 12px;
             display: flex;
             gap: 10px;
             align-items: center;
@@ -74,7 +104,10 @@
             pointer-events: none;
             z-index: 10;
         }
-        .bottomBar > * { pointer-events: auto; }
+
+        .bottomBar>* {
+            pointer-events: auto;
+        }
 
         .coordsPanel {
             background: rgba(10, 17, 26, 0.92);
@@ -86,10 +119,12 @@
             align-items: center;
             flex-wrap: wrap;
         }
+
         .coordsPanel .coord-label {
             color: var(--muted);
             font-size: 12px;
         }
+
         .coordsPanel .coord-value {
             color: var(--accent);
             font-weight: 700;
@@ -104,8 +139,16 @@
             font-weight: 600;
             font-size: 14px;
         }
-        .confirmBtn:hover { border-color: #00f2fe; background: rgba(0, 242, 254, 0.25); }
-        .confirmBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .confirmBtn:hover {
+            border-color: #00f2fe;
+            background: rgba(0, 242, 254, 0.25);
+        }
+
+        .confirmBtn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
 
         .cancelBtn {
             background: rgba(231, 76, 60, 0.12);
@@ -114,18 +157,27 @@
             padding: 10px 18px;
             font-weight: 600;
         }
-        .cancelBtn:hover { border-color: #e74c3c; color: #fff; }
+
+        .cancelBtn:hover {
+            border-color: #e74c3c;
+            color: #fff;
+        }
 
         .resetSelBtn {
             background: rgba(255, 193, 7, 0.12);
             border-color: rgba(255, 193, 7, 0.45);
             color: #ffd54f;
         }
-        .resetSelBtn:hover { border-color: #ffc107; color: #fff; }
+
+        .resetSelBtn:hover {
+            border-color: #ffc107;
+            color: #fff;
+        }
 
         .instructions {
             position: absolute;
-            left: 50%; top: 50%;
+            left: 50%;
+            top: 50%;
             transform: translate(-50%, -50%);
             background: rgba(10, 17, 26, 0.95);
             border: 1px solid var(--border);
@@ -136,13 +188,30 @@
             pointer-events: none;
             transition: opacity 0.3s;
         }
-        .instructions h3 { color: var(--accent); margin-bottom: 8px; font-size: 16px; }
-        .instructions p { color: var(--muted); font-size: 13px; line-height: 1.6; }
-        .instructions .key { background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; font-family: monospace; }
+
+        .instructions h3 {
+            color: var(--accent);
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .instructions p {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .instructions .key {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
 
         .legend {
             position: absolute;
-            right: 12px; bottom: 70px;
+            right: 12px;
+            bottom: 70px;
             width: 220px;
             background: rgba(10, 17, 26, 0.92);
             border: 1px solid var(--border);
@@ -150,10 +219,56 @@
             padding: 10px 14px;
             z-index: 10;
         }
-        .legend h3 { margin: 0 0 6px 0; font-size: 12px; color: #d8e6ff; }
-        .legRow { display: flex; gap: 8px; align-items: center; margin: 4px 0; }
-        .legBox { width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.2); flex: 0 0 auto; }
-        .legTxt { color: var(--muted); font-size: 11px; }
+
+        .legend h3 {
+            margin: 0 0 6px 0;
+            font-size: 12px;
+            color: #d8e6ff;
+        }
+
+        .legRow {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin: 4px 0;
+        }
+
+        .legBox {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            flex: 0 0 auto;
+        }
+
+        .legTxt {
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .selectionHint {
+            position: absolute;
+            right: 12px;
+            top: 72px;
+            width: min(360px, calc(100vw - 24px));
+            background: rgba(10, 17, 26, 0.92);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 12px 14px;
+            z-index: 11;
+            font-size: 12px;
+            line-height: 1.5;
+            color: var(--muted);
+        }
+
+        .selectionHint strong {
+            color: var(--text);
+        }
+
+        .selectionHint.error {
+            border-color: rgba(244, 67, 54, 0.35);
+            color: #ff9b95;
+        }
 
         /* Selection overlay rendered by OpenSeadragon */
         .selection-overlay {
@@ -162,27 +277,47 @@
             box-sizing: border-box;
             pointer-events: none;
         }
+
         .selection-overlay .sel-label {
             position: absolute;
-            top: -22px; left: 4px;
+            top: -22px;
+            left: 4px;
             color: #00f2fe;
             font-size: 12px;
             font-weight: bold;
             font-family: system-ui, sans-serif;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9);
             white-space: nowrap;
             pointer-events: none;
         }
+
         .selection-overlay .sel-corner {
             position: absolute;
-            width: 10px; height: 10px;
+            width: 10px;
+            height: 10px;
             background: #00f2fe;
             pointer-events: none;
         }
-        .selection-overlay .sel-corner.tl { top: -5px; left: -5px; }
-        .selection-overlay .sel-corner.tr { top: -5px; right: -5px; }
-        .selection-overlay .sel-corner.bl { bottom: -5px; left: -5px; }
-        .selection-overlay .sel-corner.br { bottom: -5px; right: -5px; }
+
+        .selection-overlay .sel-corner.tl {
+            top: -5px;
+            left: -5px;
+        }
+
+        .selection-overlay .sel-corner.tr {
+            top: -5px;
+            right: -5px;
+        }
+
+        .selection-overlay .sel-corner.bl {
+            bottom: -5px;
+            left: -5px;
+        }
+
+        .selection-overlay .sel-corner.br {
+            bottom: -5px;
+            right: -5px;
+        }
 
         /* Region tooltip */
         #regionTooltip {
@@ -190,12 +325,12 @@
             z-index: 99999;
             display: none;
             max-width: 360px;
-            background: rgba(10,17,26,0.96);
+            background: rgba(10, 17, 26, 0.96);
             border: 1px solid #203044;
             border-radius: 12px;
             padding: 12px 14px;
             color: #e6eef9;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             font-size: 12px;
             line-height: 1.4;
             pointer-events: none;
@@ -203,8 +338,14 @@
         }
 
         @media (max-width: 640px) {
-            .legend { display: none; }
-            .coordsPanel { flex-direction: column; gap: 8px; }
+            .legend {
+                display: none;
+            }
+
+            .coordsPanel {
+                flex-direction: column;
+                gap: 8px;
+            }
         }
     </style>
 </head>
@@ -241,24 +382,21 @@
             <div class="legTxt">Sele&ccedil;&atilde;o atual</div>
         </div>
         <div class="legRow">
-            <div class="legBox" style="background:transparent; border:2px solid rgba(200,130,255,0.65)"></div>
-            <div class="legTxt">Regi&atilde;o PVE</div>
-        </div>
-        <div class="legRow">
-            <div class="legBox" style="background:transparent; border:2px solid rgba(231,76,60,0.75)"></div>
-            <div class="legTxt">Regi&atilde;o PVP &#9760;&#65039;</div>
-        </div>
-        <div class="legRow">
-            <div class="legBox" style="background:transparent; border:2px solid rgba(80,200,120,0.65)"></div>
-            <div class="legTxt">Permanente</div>
-        </div>
-        <div class="legRow">
-            <div class="legBox" style="background:rgba(80,200,120,0.08); border:1.5px solid rgba(80,200,120,0.55)"></div>
+            <div class="legBox" style="background:rgba(80,200,120,0.08); border:1.5px solid rgba(80,200,120,0.55)">
+            </div>
             <div class="legTxt">Safehouse existente</div>
+        </div>
+        <div class="legRow" th:if="${selectorMode == 'upgrade'}">
+            <div class="legBox" style="background:rgba(255,193,7,0.14); border:2px solid rgba(255,193,7,0.88)"></div>
+            <div class="legTxt">Safehouse alvo do upgrade</div>
         </div>
     </div>
 
-    <div id="shTooltip" style="position:fixed;z-index:99999;display:none;max-width:320px;background:rgba(10,17,26,0.96);border:1px solid #203044;border-radius:12px;padding:12px 14px;color:#e6eef9;box-shadow:0 10px 30px rgba(0,0,0,0.5);font-size:12px;line-height:1.4;pointer-events:none;font-family:system-ui,sans-serif;"></div>
+    <div class="selectionHint" id="selectionHint"></div>
+
+    <div id="shTooltip"
+        style="position:fixed;z-index:99999;display:none;max-width:320px;background:rgba(10,17,26,0.96);border:1px solid #203044;border-radius:12px;padding:12px 14px;color:#e6eef9;box-shadow:0 10px 30px rgba(0,0,0,0.5);font-size:12px;line-height:1.4;pointer-events:none;font-family:system-ui,sans-serif;">
+    </div>
 
     <div class="bottomBar">
         <div class="coordsPanel" id="coordsPanel">
@@ -273,562 +411,557 @@
 
     <div id="regionTooltip"></div>
 
-    <script>
-    (function () {
-        'use strict';
+    <script th:inline="javascript">
+        (function () {
+            'use strict';
 
-        /* ========== Constants ========== */
-        var MAP_WIDTH  = 19968;
-        var MAP_DATA_ROOT = '/pzmap/map_data/';
-        var TILE_SOURCE = MAP_DATA_ROOT + 'base_top/layer0.dzi';
-        var MOD_MAPS_LIST = MAP_DATA_ROOT + 'mod_maps/map_list.json';
-        var MOD_MAPS_ROOT = MAP_DATA_ROOT + 'mod_maps/';
-        var REGIONS_API = '/map-regions/api/regions';
-        var SAFEHOUSES_API = '/safehouses/api/safehouses';
-        var MIN_SEL_SIZE = 10;
+            /* ========== Constants ========== */
+            var MAP_WIDTH = 19968;
+            var MAP_DATA_ROOT = '/pzmap/map_data/';
+            var TILE_SOURCE = MAP_DATA_ROOT + 'base_top/layer0.dzi';
+            var MOD_MAPS_LIST = MAP_DATA_ROOT + 'mod_maps/map_list.json';
+            var MOD_MAPS_ROOT = MAP_DATA_ROOT + 'mod_maps/';
+            var SAFEHOUSES_API = '/safehouses/api/safehouses';
+            var MIN_SEL_SIZE = 10;
 
-        /* ========== URL params ========== */
-        var params  = new URLSearchParams(window.location.search);
-        var initX1  = params.get('x1') !== null ? parseInt(params.get('x1')) : null;
-        var initY1  = params.get('y1') !== null ? parseInt(params.get('y1')) : null;
-        var initX2  = params.get('x2') !== null ? parseInt(params.get('x2')) : null;
-        var initY2  = params.get('y2') !== null ? parseInt(params.get('y2')) : null;
-        var excludeId = params.get('excludeId') ? parseInt(params.get('excludeId')) : null;
+            /* ========== URL params ========== */
+            var params = new URLSearchParams(window.location.search);
+            var initX1 = params.get('x1') !== null ? parseInt(params.get('x1')) : null;
+            var initY1 = params.get('y1') !== null ? parseInt(params.get('y1')) : null;
+            var initX2 = params.get('x2') !== null ? parseInt(params.get('x2')) : null;
+            var initY2 = params.get('y2') !== null ? parseInt(params.get('y2')) : null;
+            var excludeId = params.get('excludeId') ? parseInt(params.get('excludeId')) : null;
+            var selectorMode = /*[[${selectorMode}]]*/ 'claim';
+            var targetX = /*[[${targetX}]]*/ null;
+            var targetY = /*[[${targetY}]]*/ null;
+            var targetW = /*[[${targetW}]]*/ null;
+            var targetH = /*[[${targetH}]]*/ null;
 
-        /* ========== State ========== */
-        var viewer         = null;
-        var regions        = [];
-        var safehouses     = [];
-        var selection      = null;   // { x1, y1, x2, y2 } world coords
-        var selOverlayEl   = null;   // OSD overlay DOM element
-        var selLabelEl     = null;   // label inside the overlay
-        var isDrawing      = false;
-        var isPanning      = false;
-        var panStartMouse  = null;   // { x, y } screen coords
-        var panStartCenter = null;   // OSD Point (viewport center)
+            /* ========== State ========== */
+            var viewer = null;
+            var safehouses = [];
+            var targetSafehouse = null;
+            var selection = null;   // { x1, y1, x2, y2 } world coords
+            var selectionValidationMessage = '';
+            var selOverlayEl = null;   // OSD overlay DOM element
+            var selLabelEl = null;   // label inside the overlay
+            var isDrawing = false;
+            var isPanning = false;
+            var panStartMouse = null;   // { x, y } screen coords
+            var panStartCenter = null;   // OSD Point (viewport center)
 
-        /* ========== Helpers ========== */
-        function $(id) { return document.getElementById(id); }
+            /* ========== Helpers ========== */
+            function $(id) { return document.getElementById(id); }
 
-        function pixelToViewport(px, py) {
-            return new OpenSeadragon.Point(px / MAP_WIDTH, py / MAP_WIDTH);
-        }
+            function pixelToViewport(px, py) {
+                return new OpenSeadragon.Point(px / MAP_WIDTH, py / MAP_WIDTH);
+            }
 
-        function viewportToPixel(vp) {
-            return { x: vp.x * MAP_WIDTH, y: vp.y * MAP_WIDTH };
-        }
+            function viewportToPixel(vp) {
+                return { x: vp.x * MAP_WIDTH, y: vp.y * MAP_WIDTH };
+            }
 
-        function screenToWorld(sx, sy) {
-            var vp = viewer.viewport.pointFromPixel(new OpenSeadragon.Point(sx, sy));
-            return viewportToPixel(vp);
-        }
+            function screenToWorld(sx, sy) {
+                var vp = viewer.viewport.pointFromPixel(new OpenSeadragon.Point(sx, sy));
+                return viewportToPixel(vp);
+            }
 
-        function escapeHtml(s) {
-            return String(s).replace(/[&<>"]/g, function (c) {
-                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
-            });
-        }
+            function escapeHtml(s) {
+                return String(s).replace(/[&<>"]/g, function (c) {
+                    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+                });
+            }
 
-        /* ========== Region colors ========== */
-        function regionColor(rg) {
-            var cats = (rg.categories || '').toLowerCase();
-            if (cats.indexOf('pvp') >= 0)
-                return { border: 'rgba(231,76,60,0.75)', fill: 'rgba(231,76,60,0.12)', label: '#e74c3c' };
-            if (rg.permanent)
-                return { border: 'rgba(80,200,120,0.65)', fill: 'rgba(80,200,120,0.12)', label: '#50c878' };
-            return { border: 'rgba(200,130,255,0.65)', fill: 'rgba(200,130,255,0.12)', label: '#c882ff' };
-        }
+            /* ========== Safehouses (read-only overlays) ========== */
+            var shTooltipEl = document.getElementById('shTooltip');
+            var selectionHintEl = $('selectionHint');
 
-        /* ========== Tooltip ========== */
-        var tooltipEl = $('regionTooltip');
+            function showShTooltip(sh, mx, my) {
+                shTooltipEl.innerHTML =
+                    '<b style="color:#50c878">&#x1F3E0; Safehouse</b>' +
+                    '<br><span style="color:#888">Dono:</span> <b>' + escapeHtml(sh.owner || '') + '</b>' +
+                    (sh.town ? '<br><span style="color:#888">Cidade:</span> ' + escapeHtml(sh.town) : '') +
+                    (sh.name ? '<br><span style="color:#888">Nome:</span> ' + escapeHtml(sh.name) : '') +
+                    '<br><span style="color:#888">Coords:</span> (' + sh.x + ', ' + sh.y + ') ' + sh.w + '\u00d7' + sh.h;
+                shTooltipEl.style.display = 'block';
+                var pad = 10;
+                var rect = shTooltipEl.getBoundingClientRect();
+                var x = mx + 16, y = my + 16;
+                if (x + rect.width > window.innerWidth - pad) x = window.innerWidth - pad - rect.width;
+                if (y + rect.height > window.innerHeight - pad) y = window.innerHeight - pad - rect.height;
+                shTooltipEl.style.left = Math.max(pad, x) + 'px';
+                shTooltipEl.style.top = Math.max(pad, y) + 'px';
+            }
+            function hideShTooltip() { shTooltipEl.style.display = 'none'; }
 
-        function showTooltip(rg, mx, my) {
-            var c = regionColor(rg);
-            var cats = (rg.categories || '').toLowerCase();
-            var isPvp = cats.indexOf('pvp') >= 0;
-            var propsHtml = '';
-            if (rg.properties) {
-                var keys = Object.keys(rg.properties);
-                for (var i = 0; i < keys.length; i++) {
-                    propsHtml += '<br><span style="color:#888">' + escapeHtml(keys[i]) + ':</span> ' + escapeHtml(String(rg.properties[keys[i]]));
+            function isTargetSafehouse(sh) {
+                return targetX !== null && targetY !== null && targetW !== null && targetH !== null
+                    && sh.x === targetX && sh.y === targetY && sh.w === targetW && sh.h === targetH;
+            }
+
+            function renderSafehouses() {
+                for (var i = 0; i < safehouses.length; i++) {
+                    var sh = safehouses[i];
+                    if (selectorMode === 'upgrade' && !isTargetSafehouse(sh)) {
+                        continue;
+                    }
+                    var el = document.createElement('div');
+                    var isTarget = isTargetSafehouse(sh);
+                    el.style.cssText = isTarget
+                        ? 'background:rgba(255,193,7,0.14);border:2px solid rgba(255,193,7,0.88);box-sizing:border-box;pointer-events:auto;cursor:pointer;'
+                        : 'background:rgba(80,200,120,0.08);border:1.5px solid rgba(80,200,120,0.55);box-sizing:border-box;pointer-events:auto;cursor:pointer;';
+
+                    var lbl = document.createElement('div');
+                    lbl.textContent = isTarget ? ((sh.owner || '') + ' (alvo)') : (sh.owner || '');
+                    lbl.style.cssText =
+                        'position:absolute;top:2px;left:4px;color:' + (isTarget ? '#ffd54f' : '#50c878') + ';font-size:10px;font-weight:bold;' +
+                        'font-family:system-ui,sans-serif;text-shadow:1px 1px 2px rgba(0,0,0,0.8);' +
+                        'white-space:nowrap;pointer-events:none;overflow:hidden;text-overflow:ellipsis;max-width:calc(100% - 8px);';
+                    el.appendChild(lbl);
+
+                    (function (shRef, elRef) {
+                        elRef.addEventListener('mouseenter', function (e) {
+                            elRef.style.background = isTargetSafehouse(shRef) ? 'rgba(255,193,7,0.24)' : 'rgba(80,200,120,0.2)';
+                            showShTooltip(shRef, e.clientX, e.clientY);
+                        });
+                        elRef.addEventListener('mousemove', function (e) { showShTooltip(shRef, e.clientX, e.clientY); });
+                        elRef.addEventListener('mouseleave', function () {
+                            elRef.style.background = isTargetSafehouse(shRef) ? 'rgba(255,193,7,0.14)' : 'rgba(80,200,120,0.08)';
+                            hideShTooltip();
+                        });
+                    })(sh, el);
+
+                    var tl = pixelToViewport(sh.x, sh.y);
+                    var br = pixelToViewport(sh.x + sh.w, sh.y + sh.h);
+                    var rect = new OpenSeadragon.Rect(tl.x, tl.y, br.x - tl.x, br.y - tl.y);
+                    viewer.addOverlay({ element: el, location: rect, placement: OpenSeadragon.Placement.TOP_LEFT });
                 }
             }
-            tooltipEl.innerHTML =
-                '<b style="font-size:14px">' + escapeHtml(rg.name || rg.code) + '</b>' +
-                (isPvp ? ' <span style="color:#e74c3c">&#9760;&#65039; PVP</span>' : '') +
-                '<br><span style="color:#888">C\u00f3digo:</span> ' + escapeHtml(rg.code || '') +
-                (rg.categories ? '<br><span style="color:#888">Categorias:</span> ' + escapeHtml(rg.categories) : '') +
-                '<br><span style="color:#888">Coordenadas:</span> (' + rg.x1 + ', ' + rg.y1 + ') \u2192 (' + rg.x2 + ', ' + rg.y2 + ')' +
-                (rg.permanent ? '<br><span style="color:#50c878"><b>\u26A1 Permanente</b></span>' : '') +
-                propsHtml;
-            tooltipEl.style.display = 'block';
-            var pad = 10;
-            var rect = tooltipEl.getBoundingClientRect();
-            var x = mx + 16, y = my + 16;
-            if (x + rect.width > window.innerWidth - pad) x = window.innerWidth - pad - rect.width;
-            if (y + rect.height > window.innerHeight - pad) y = window.innerHeight - pad - rect.height;
-            tooltipEl.style.left = Math.max(pad, x) + 'px';
-            tooltipEl.style.top  = Math.max(pad, y) + 'px';
-        }
 
-        function hideTooltip() { tooltipEl.style.display = 'none'; }
-
-        /* ========== Regions (read-only overlays) ========== */
-        var regionOverlays = [];
-        /* ========== Safehouses (read-only overlays) ========== */
-        var shTooltipEl = document.getElementById('shTooltip');
-
-        function showShTooltip(sh, mx, my) {
-            shTooltipEl.innerHTML =
-                '<b style="color:#50c878">&#x1F3E0; Safehouse</b>' +
-                '<br><span style="color:#888">Dono:</span> <b>' + escapeHtml(sh.owner || '') + '</b>' +
-                (sh.town ? '<br><span style="color:#888">Cidade:</span> ' + escapeHtml(sh.town) : '') +
-                (sh.name ? '<br><span style="color:#888">Nome:</span> ' + escapeHtml(sh.name) : '') +
-                '<br><span style="color:#888">Coords:</span> (' + sh.x + ', ' + sh.y + ') ' + sh.w + '\u00d7' + sh.h;
-            shTooltipEl.style.display = 'block';
-            var pad = 10;
-            var rect = shTooltipEl.getBoundingClientRect();
-            var x = mx + 16, y = my + 16;
-            if (x + rect.width > window.innerWidth - pad) x = window.innerWidth - pad - rect.width;
-            if (y + rect.height > window.innerHeight - pad) y = window.innerHeight - pad - rect.height;
-            shTooltipEl.style.left = Math.max(pad, x) + 'px';
-            shTooltipEl.style.top  = Math.max(pad, y) + 'px';
-        }
-        function hideShTooltip() { shTooltipEl.style.display = 'none'; }
-
-        function renderSafehouses() {
-            for (var i = 0; i < safehouses.length; i++) {
-                var sh = safehouses[i];
-                var el = document.createElement('div');
-                el.style.cssText =
-                    'background:rgba(80,200,120,0.08);border:1.5px solid rgba(80,200,120,0.55);' +
-                    'box-sizing:border-box;pointer-events:auto;cursor:pointer;';
-
-                var lbl = document.createElement('div');
-                lbl.textContent = sh.owner || '';
-                lbl.style.cssText =
-                    'position:absolute;top:2px;left:4px;color:#50c878;font-size:10px;font-weight:bold;' +
-                    'font-family:system-ui,sans-serif;text-shadow:1px 1px 2px rgba(0,0,0,0.8);' +
-                    'white-space:nowrap;pointer-events:none;overflow:hidden;text-overflow:ellipsis;max-width:calc(100% - 8px);';
-                el.appendChild(lbl);
-
-                (function (shRef, elRef) {
-                    elRef.addEventListener('mouseenter', function (e) {
-                        elRef.style.background = 'rgba(80,200,120,0.2)';
-                        showShTooltip(shRef, e.clientX, e.clientY);
-                    });
-                    elRef.addEventListener('mousemove', function (e) { showShTooltip(shRef, e.clientX, e.clientY); });
-                    elRef.addEventListener('mouseleave', function () {
-                        elRef.style.background = 'rgba(80,200,120,0.08)';
-                        hideShTooltip();
-                    });
-                })(sh, el);
-
-                var tl = pixelToViewport(sh.x, sh.y);
-                var br = pixelToViewport(sh.x + sh.w, sh.y + sh.h);
-                var rect = new OpenSeadragon.Rect(tl.x, tl.y, br.x - tl.x, br.y - tl.y);
-                viewer.addOverlay({ element: el, location: rect, placement: OpenSeadragon.Placement.TOP_LEFT });
+            function loadSafehouses() {
+                fetch(SAFEHOUSES_API).then(function (resp) {
+                    if (!resp.ok) return;
+                    return resp.json();
+                }).then(function (data) {
+                    if (data) {
+                        safehouses = data;
+                        if (selectorMode === 'upgrade') {
+                            for (var i = 0; i < safehouses.length; i++) {
+                                if (isTargetSafehouse(safehouses[i])) {
+                                    targetSafehouse = safehouses[i];
+                                    break;
+                                }
+                            }
+                        }
+                        renderSafehouses();
+                        focusTargetSafehouse();
+                    }
+                }).catch(function () { /* silent */ });
             }
-        }
 
-        function loadSafehouses() {
-            fetch(SAFEHOUSES_API).then(function (resp) {
-                if (!resp.ok) return;
-                return resp.json();
-            }).then(function (data) {
-                if (data) {
-                    safehouses = data;
-                    renderSafehouses();
+            function updateSelectionHint() {
+                if (selectorMode !== 'upgrade') {
+                    selectionHintEl.className = 'selectionHint';
+                    selectionHintEl.innerHTML = '<strong>Modo claim</strong><br>Apenas safehouses existentes sao exibidas neste seletor.';
+                    return;
                 }
-            }).catch(function () { /* silent */ });
-        }
 
-
-        function renderRegions() {
-            for (var i = 0; i < regions.length; i++) {
-                var rg = regions[i];
-                if (excludeId !== null && rg.id === excludeId) continue;
-                var c = regionColor(rg);
-                var x1 = Math.min(rg.x1, rg.x2), y1 = Math.min(rg.y1, rg.y2);
-                var x2 = Math.max(rg.x1, rg.x2), y2 = Math.max(rg.y1, rg.y2);
-
-                var el = document.createElement('div');
-                el.style.cssText =
-                    'background:' + c.fill + ';border:2px solid ' + c.border +
-                    ';box-sizing:border-box;pointer-events:auto;cursor:pointer;transition:background 0.15s;';
-
-                // Label
-                var cats = (rg.categories || '').toLowerCase();
-                var isPvp = cats.indexOf('pvp') >= 0;
-                var lbl = document.createElement('div');
-                lbl.textContent = (rg.name || rg.code) + (isPvp ? ' \u2620\uFE0F' : '');
-                lbl.style.cssText =
-                    'position:absolute;top:2px;left:4px;color:' + c.label +
-                    ';font-size:11px;font-weight:bold;font-family:system-ui,sans-serif;' +
-                    'text-shadow:1px 1px 2px rgba(0,0,0,0.8);white-space:nowrap;pointer-events:none;' +
-                    'overflow:hidden;text-overflow:ellipsis;max-width:calc(100% - 8px);';
-                el.appendChild(lbl);
-
-                // Hover — use closure to capture rg and c
-                (function (rgRef, cRef, elRef) {
-                    elRef.addEventListener('mouseenter', function (e) {
-                        elRef.style.background = cRef.fill.replace(/[\d.]+\)$/, '0.25)');
-                        elRef.style.borderWidth = '3px';
-                        showTooltip(rgRef, e.clientX, e.clientY);
-                    });
-                    elRef.addEventListener('mousemove', function (e) { showTooltip(rgRef, e.clientX, e.clientY); });
-                    elRef.addEventListener('mouseleave', function () {
-                        elRef.style.background = cRef.fill;
-                        elRef.style.borderWidth = '2px';
-                        hideTooltip();
-                    });
-                })(rg, c, el);
-
-                var tl = pixelToViewport(x1, y1);
-                var br = pixelToViewport(x2, y2);
-                var rect = new OpenSeadragon.Rect(tl.x, tl.y, br.x - tl.x, br.y - tl.y);
-                viewer.addOverlay({ element: el, location: rect, placement: OpenSeadragon.Placement.TOP_LEFT });
-                regionOverlays.push(el);
-            }
-        }
-
-        function loadRegions() {
-            fetch(REGIONS_API).then(function (resp) {
-                if (!resp.ok) return;
-                return resp.json();
-            }).then(function (data) {
-                if (data) {
-                    regions = data;
-                    renderRegions();
+                if (!targetSafehouse) {
+                    selectionHintEl.className = 'selectionHint error';
+                    selectionHintEl.innerHTML = '<strong>Safehouse alvo nao encontrada</strong><br>Feche e reabra o upgrade a partir da safehouse desejada.';
+                    return;
                 }
-            }).catch(function () { /* silent */ });
-        }
 
-        /* ========== Selection overlay ========== */
-        function ensureSelectionOverlay() {
-            if (selOverlayEl) return;
-            selOverlayEl = document.createElement('div');
-            selOverlayEl.className = 'selection-overlay';
-            // Corner markers
-            var corners = ['tl', 'tr', 'bl', 'br'];
-            for (var i = 0; i < corners.length; i++) {
-                var corner = document.createElement('div');
-                corner.className = 'sel-corner ' + corners[i];
-                selOverlayEl.appendChild(corner);
-            }
-            // Label
-            selLabelEl = document.createElement('div');
-            selLabelEl.className = 'sel-label';
-            selOverlayEl.appendChild(selLabelEl);
-        }
-
-        function updateSelectionOverlay() {
-            if (!selection || !viewer) return;
-            var x1 = Math.min(selection.x1, selection.x2);
-            var y1 = Math.min(selection.y1, selection.y2);
-            var x2 = Math.max(selection.x1, selection.x2);
-            var y2 = Math.max(selection.y1, selection.y2);
-
-            var tl = pixelToViewport(x1, y1);
-            var br = pixelToViewport(x2, y2);
-            var rect = new OpenSeadragon.Rect(tl.x, tl.y, br.x - tl.x, br.y - tl.y);
-
-            ensureSelectionOverlay();
-            if (!selOverlayEl._added) {
-                viewer.addOverlay({ element: selOverlayEl, location: rect, placement: OpenSeadragon.Placement.TOP_LEFT });
-                selOverlayEl._added = true;
-            } else {
-                viewer.updateOverlay(selOverlayEl, rect, OpenSeadragon.Placement.TOP_LEFT);
+                var base = '<strong>Upgrade da safehouse atual</strong><br>A nova selecao deve cobrir totalmente a safehouse amarela e nao pode tocar nenhuma outra safehouse.';
+                if (selectionValidationMessage) {
+                    selectionHintEl.className = 'selectionHint error';
+                    selectionHintEl.innerHTML = base + '<br><br>' + selectionValidationMessage;
+                } else {
+                    selectionHintEl.className = 'selectionHint';
+                    selectionHintEl.innerHTML = base;
+                }
             }
 
-            if (selLabelEl) {
-                selLabelEl.textContent = '(' + Math.round(x1) + ', ' + Math.round(y1) + ') \u2192 (' + Math.round(x2) + ', ' + Math.round(y2) + ')';
-            }
-        }
+            function validateSelection() {
+                selectionValidationMessage = '';
+                if (!selection) {
+                    updateSelectionHint();
+                    return true;
+                }
 
-        function clearSelection() {
-            selection = null;
-            isDrawing = false;
-            if (selOverlayEl && selOverlayEl._added) {
-                try { viewer.removeOverlay(selOverlayEl); } catch (e) { /* ignore */ }
-                selOverlayEl._added = false;
-                selOverlayEl = null;
-                selLabelEl = null;
-            }
-            updateCoordsDisplay();
-        }
-
-        /* ========== Coords display ========== */
-        function updateCoordsDisplay() {
-            if (selection) {
                 var x1 = Math.round(Math.min(selection.x1, selection.x2));
                 var y1 = Math.round(Math.min(selection.y1, selection.y2));
                 var x2 = Math.round(Math.max(selection.x1, selection.x2));
                 var y2 = Math.round(Math.max(selection.y1, selection.y2));
-                $('cx1').textContent = x1;
-                $('cy1').textContent = y1;
-                $('cx2').textContent = x2;
-                $('cy2').textContent = y2;
-                $('btnConfirm').disabled = false;
-            } else {
-                $('cx1').textContent = $('cy1').textContent = $('cx2').textContent = $('cy2').textContent = '\u2014';
-                $('btnConfirm').disabled = true;
+
+                if (selectorMode === 'upgrade' && targetSafehouse) {
+                    var targetX2 = targetSafehouse.x + targetSafehouse.w;
+                    var targetY2 = targetSafehouse.y + targetSafehouse.h;
+                    if (x1 > targetSafehouse.x || y1 > targetSafehouse.y || x2 < targetX2 || y2 < targetY2) {
+                        selectionValidationMessage = 'A nova area precisa cobrir toda a safehouse atual.';
+                    } else if ((x2 - x1) * (y2 - y1) <= targetSafehouse.w * targetSafehouse.h) {
+                        selectionValidationMessage = 'O upgrade precisa aumentar a area da safehouse atual.';
+                    } else {
+                        for (var i = 0; i < safehouses.length; i++) {
+                            var sh = safehouses[i];
+                            if (isTargetSafehouse(sh)) continue;
+                            var shX2 = sh.x + sh.w;
+                            var shY2 = sh.y + sh.h;
+                            if (x1 < shX2 && x2 > sh.x && y1 < shY2 && y2 > sh.y) {
+                                selectionValidationMessage = 'A nova area nao pode sobrepor outras safehouses.';
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                updateSelectionHint();
+                return !selectionValidationMessage;
             }
-        }
 
-        /* ========== HUD ========== */
-        function updateHud() {
-            if (!viewer) return;
-            $('hudZoom').textContent = viewer.viewport.getZoom(true).toFixed(3);
-        }
-
-        /* ========== Init OpenSeadragon ========== */
-        viewer = OpenSeadragon({
-            element:              $('mapDiv'),
-            tileSources:          TILE_SOURCE,
-            prefixUrl:            '/pzmap/openseadragon/images/',
-            drawer:               'canvas',
-            homeFillsViewer:      true,
-            showZoomControl:      false,
-            showHomeControl:      false,
-            showFullPageControl:  false,
-            showRotationControl:  false,
-            constrainDuringPan:   true,
-            visibilityRatio:      0.5,
-            minZoomImageRatio:    0.5,
-            maxZoomPixelRatio:    32,
-            imageSmoothingEnabled: false,
-            gestureSettingsMouse: {
-                scrollToZoom:   true,
-                clickToZoom:    false,
-                dblClickToZoom: false,
-                dragToPan:      false,
-                flickEnabled:   false
-            },
-            gestureSettingsTouch: {
-                scrollToZoom:   false,
-                clickToZoom:    false,
-                dblClickToZoom: false,
-                dragToPan:      false,
-                flickEnabled:   false,
-                pinchToZoom:    true
+            function focusTargetSafehouse() {
+                if (selectorMode !== 'upgrade' || !targetSafehouse || !viewer) return;
+                var pad = 0.45;
+                var sx1 = targetSafehouse.x;
+                var sy1 = targetSafehouse.y;
+                var sx2 = targetSafehouse.x + targetSafehouse.w;
+                var sy2 = targetSafehouse.y + targetSafehouse.h;
+                var w = sx2 - sx1;
+                var h = sy2 - sy1;
+                var tl = pixelToViewport(sx1 - w * pad, sy1 - h * pad);
+                var br = pixelToViewport(sx2 + w * pad, sy2 + h * pad);
+                viewer.viewport.fitBounds(new OpenSeadragon.Rect(tl.x, tl.y, br.x - tl.x, br.y - tl.y), true);
             }
-        });
 
-        viewer.addHandler('update-viewport', updateHud);
+            /* ========== Selection overlay ========== */
+            function ensureSelectionOverlay() {
+                if (selOverlayEl) return;
+                selOverlayEl = document.createElement('div');
+                selOverlayEl.className = 'selection-overlay';
+                // Corner markers
+                var corners = ['tl', 'tr', 'bl', 'br'];
+                for (var i = 0; i < corners.length; i++) {
+                    var corner = document.createElement('div');
+                    corner.className = 'sel-corner ' + corners[i];
+                    selOverlayEl.appendChild(corner);
+                }
+                // Label
+                selLabelEl = document.createElement('div');
+                selLabelEl.className = 'sel-label';
+                selOverlayEl.appendChild(selLabelEl);
+            }
 
-        /* ========== Left-click selection (via OSD canvas events) ========== */
-        viewer.addHandler('canvas-press', function (event) {
-            // OSD canvas-press fires for the primary (left) button only
-            var world = screenToWorld(event.position.x, event.position.y);
-            clearSelection();
-            isDrawing = true;
-            selection = { x1: world.x, y1: world.y, x2: world.x, y2: world.y };
-            $('instrOverlay').style.opacity = '0';
-            updateSelectionOverlay();
-            updateCoordsDisplay();
-            event.preventDefaultAction = true;
-        });
+            function updateSelectionOverlay() {
+                if (!selection || !viewer) return;
+                var x1 = Math.min(selection.x1, selection.x2);
+                var y1 = Math.min(selection.y1, selection.y2);
+                var x2 = Math.max(selection.x1, selection.x2);
+                var y2 = Math.max(selection.y1, selection.y2);
 
-        viewer.addHandler('canvas-drag', function (event) {
-            if (isDrawing && selection) {
+                var tl = pixelToViewport(x1, y1);
+                var br = pixelToViewport(x2, y2);
+                var rect = new OpenSeadragon.Rect(tl.x, tl.y, br.x - tl.x, br.y - tl.y);
+
+                ensureSelectionOverlay();
+                if (!selOverlayEl._added) {
+                    viewer.addOverlay({ element: selOverlayEl, location: rect, placement: OpenSeadragon.Placement.TOP_LEFT });
+                    selOverlayEl._added = true;
+                } else {
+                    viewer.updateOverlay(selOverlayEl, rect, OpenSeadragon.Placement.TOP_LEFT);
+                }
+
+                if (selLabelEl) {
+                    selLabelEl.textContent = '(' + Math.round(x1) + ', ' + Math.round(y1) + ') \u2192 (' + Math.round(x2) + ', ' + Math.round(y2) + ')';
+                }
+                validateSelection();
+            }
+
+            function clearSelection() {
+                selection = null;
+                isDrawing = false;
+                if (selOverlayEl && selOverlayEl._added) {
+                    try { viewer.removeOverlay(selOverlayEl); } catch (e) { /* ignore */ }
+                    selOverlayEl._added = false;
+                    selOverlayEl = null;
+                    selLabelEl = null;
+                }
+                updateCoordsDisplay();
+                validateSelection();
+            }
+
+            /* ========== Coords display ========== */
+            function updateCoordsDisplay() {
+                if (selection) {
+                    var x1 = Math.round(Math.min(selection.x1, selection.x2));
+                    var y1 = Math.round(Math.min(selection.y1, selection.y2));
+                    var x2 = Math.round(Math.max(selection.x1, selection.x2));
+                    var y2 = Math.round(Math.max(selection.y1, selection.y2));
+                    $('cx1').textContent = x1;
+                    $('cy1').textContent = y1;
+                    $('cx2').textContent = x2;
+                    $('cy2').textContent = y2;
+                    $('btnConfirm').disabled = !validateSelection();
+                } else {
+                    $('cx1').textContent = $('cy1').textContent = $('cx2').textContent = $('cy2').textContent = '\u2014';
+                    $('btnConfirm').disabled = true;
+                    validateSelection();
+                }
+            }
+
+            /* ========== HUD ========== */
+            function updateHud() {
+                if (!viewer) return;
+                $('hudZoom').textContent = viewer.viewport.getZoom(true).toFixed(3);
+            }
+
+            /* ========== Init OpenSeadragon ========== */
+            viewer = OpenSeadragon({
+                element: $('mapDiv'),
+                tileSources: TILE_SOURCE,
+                prefixUrl: '/pzmap/openseadragon/images/',
+                drawer: 'canvas',
+                homeFillsViewer: true,
+                showZoomControl: false,
+                showHomeControl: false,
+                showFullPageControl: false,
+                showRotationControl: false,
+                constrainDuringPan: true,
+                visibilityRatio: 0.5,
+                minZoomImageRatio: 0.5,
+                maxZoomPixelRatio: 32,
+                imageSmoothingEnabled: false,
+                gestureSettingsMouse: {
+                    scrollToZoom: true,
+                    clickToZoom: false,
+                    dblClickToZoom: false,
+                    dragToPan: false,
+                    flickEnabled: false
+                },
+                gestureSettingsTouch: {
+                    scrollToZoom: false,
+                    clickToZoom: false,
+                    dblClickToZoom: false,
+                    dragToPan: false,
+                    flickEnabled: false,
+                    pinchToZoom: true
+                }
+            });
+
+            viewer.addHandler('update-viewport', updateHud);
+
+            /* ========== Left-click selection (via OSD canvas events) ========== */
+            viewer.addHandler('canvas-press', function (event) {
+                // OSD canvas-press fires for the primary (left) button only
                 var world = screenToWorld(event.position.x, event.position.y);
-                selection.x2 = world.x;
-                selection.y2 = world.y;
+                clearSelection();
+                isDrawing = true;
+                selection = { x1: world.x, y1: world.y, x2: world.x, y2: world.y };
+                $('instrOverlay').style.opacity = '0';
                 updateSelectionOverlay();
                 updateCoordsDisplay();
                 event.preventDefaultAction = true;
-            }
-        });
+            });
 
-        viewer.addHandler('canvas-release', function (event) {
-            if (isDrawing) {
-                isDrawing = false;
-                if (selection) {
-                    var dx = Math.abs(selection.x2 - selection.x1);
-                    var dy = Math.abs(selection.y2 - selection.y1);
-                    if (dx < MIN_SEL_SIZE && dy < MIN_SEL_SIZE) {
-                        clearSelection();
+            viewer.addHandler('canvas-drag', function (event) {
+                if (isDrawing && selection) {
+                    var world = screenToWorld(event.position.x, event.position.y);
+                    selection.x2 = world.x;
+                    selection.y2 = world.y;
+                    updateSelectionOverlay();
+                    updateCoordsDisplay();
+                    event.preventDefaultAction = true;
+                }
+            });
+
+            viewer.addHandler('canvas-release', function (event) {
+                if (isDrawing) {
+                    isDrawing = false;
+                    if (selection) {
+                        var dx = Math.abs(selection.x2 - selection.x1);
+                        var dy = Math.abs(selection.y2 - selection.y1);
+                        if (dx < MIN_SEL_SIZE && dy < MIN_SEL_SIZE) {
+                            clearSelection();
+                        }
+                    }
+                    updateCoordsDisplay();
+                    event.preventDefaultAction = true;
+                }
+            });
+
+            /* ========== Right-click panning ========== */
+            // OSD's MouseTracker stops propagation on pointerdown, so we must
+            // listen in the capture phase to intercept right-click before OSD.
+            var mapDiv = $('mapDiv');
+            mapDiv.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+
+            mapDiv.addEventListener('pointerdown', function (e) {
+                if (e.button === 2) {
+                    isPanning = true;
+                    panStartMouse = { x: e.clientX, y: e.clientY };
+                    panStartCenter = viewer.viewport.getCenter(true);
+                    mapDiv.classList.add('panning');
+                }
+            }, true); // capture phase
+
+            document.addEventListener('pointermove', function (e) {
+                // Update cursor HUD
+                if (viewer && viewer.viewport) {
+                    var rect = mapDiv.getBoundingClientRect();
+                    var sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+                    if (sx >= 0 && sy >= 0 && sx <= rect.width && sy <= rect.height) {
+                        var world = screenToWorld(sx, sy);
+                        $('hudCursor').textContent = Math.round(world.x) + ', ' + Math.round(world.y);
                     }
                 }
-                updateCoordsDisplay();
-                event.preventDefaultAction = true;
-            }
-        });
-
-        /* ========== Right-click panning ========== */
-        // OSD's MouseTracker stops propagation on pointerdown, so we must
-        // listen in the capture phase to intercept right-click before OSD.
-        var mapDiv = $('mapDiv');
-        mapDiv.addEventListener('contextmenu', function (e) { e.preventDefault(); });
-
-        mapDiv.addEventListener('pointerdown', function (e) {
-            if (e.button === 2) {
-                isPanning = true;
-                panStartMouse = { x: e.clientX, y: e.clientY };
-                panStartCenter = viewer.viewport.getCenter(true);
-                mapDiv.classList.add('panning');
-            }
-        }, true); // capture phase
-
-        document.addEventListener('pointermove', function (e) {
-            // Update cursor HUD
-            if (viewer && viewer.viewport) {
-                var rect = mapDiv.getBoundingClientRect();
-                var sx = e.clientX - rect.left, sy = e.clientY - rect.top;
-                if (sx >= 0 && sy >= 0 && sx <= rect.width && sy <= rect.height) {
-                    var world = screenToWorld(sx, sy);
-                    $('hudCursor').textContent = Math.round(world.x) + ', ' + Math.round(world.y);
+                // Right-click pan
+                if (isPanning && panStartMouse && panStartCenter) {
+                    var dx = e.clientX - panStartMouse.x;
+                    var dy = e.clientY - panStartMouse.y;
+                    var vDelta = viewer.viewport.deltaPointsFromPixels(new OpenSeadragon.Point(dx, dy));
+                    viewer.viewport.panTo(
+                        new OpenSeadragon.Point(panStartCenter.x - vDelta.x, panStartCenter.y - vDelta.y),
+                        true
+                    );
                 }
+            });
+
+            document.addEventListener('pointerup', function (e) {
+                if (e.button === 2 && isPanning) {
+                    isPanning = false;
+                    panStartMouse = null;
+                    panStartCenter = null;
+                    mapDiv.classList.remove('panning');
+                }
+            });
+
+            /* ========== Touch support ========== */
+            // Single-finger drag = selection (handled by OSD canvas-press/drag/release)
+            // Two-finger pinch   = zoom       (handled by OSD pinchToZoom)
+            // Two-finger drag    = pan        (manual handling below)
+            var touchPanning = false;
+            var lastTouchCenter = null;
+
+            mapDiv.addEventListener('touchstart', function (e) {
+                if (e.touches.length === 2) {
+                    touchPanning = true;
+                    var t = e.touches;
+                    lastTouchCenter = {
+                        x: (t[0].clientX + t[1].clientX) / 2,
+                        y: (t[0].clientY + t[1].clientY) / 2
+                    };
+                }
+            }, { passive: true });
+
+            mapDiv.addEventListener('touchmove', function (e) {
+                if (touchPanning && e.touches.length === 2 && lastTouchCenter) {
+                    var t = e.touches;
+                    var center = {
+                        x: (t[0].clientX + t[1].clientX) / 2,
+                        y: (t[0].clientY + t[1].clientY) / 2
+                    };
+                    var dx = center.x - lastTouchCenter.x;
+                    var dy = center.y - lastTouchCenter.y;
+                    var vDelta = viewer.viewport.deltaPointsFromPixels(new OpenSeadragon.Point(dx, dy));
+                    viewer.viewport.panBy(new OpenSeadragon.Point(-vDelta.x, -vDelta.y), true);
+                    lastTouchCenter = center;
+                }
+            }, { passive: true });
+
+            mapDiv.addEventListener('touchend', function (e) {
+                if (e.touches.length < 2) {
+                    touchPanning = false;
+                    lastTouchCenter = null;
+                }
+            }, { passive: true });
+
+            /* ========== Load mod maps (same as pzmap auto-loads them) ========== */
+            function loadModMaps() {
+                fetch(MOD_MAPS_LIST)
+                    .then(function (r) { return r.json(); })
+                    .catch(function () { return []; })
+                    .then(function (names) {
+                        if (!names || names.length === 0) return;
+                        var baseItem = viewer.world.getItemAt(0);
+                        if (!baseItem) return;
+                        for (var i = 0; i < names.length; i++) {
+                            (function (name) {
+                                fetch(MOD_MAPS_ROOT + name + '/base_top/map_info.json')
+                                    .then(function (r) { return r.json(); })
+                                    .then(function (info) {
+                                        // Position mod map relative to base map origin
+                                        var pixelX = -info.x0; // base x0 is 0
+                                        var pixelY = -info.y0;
+                                        var vp = baseItem.imageToViewportCoordinates(pixelX, pixelY);
+                                        var modScale = 1 << (info.skip || 0);
+                                        var modW = info.w * modScale;
+                                        var width = modW / MAP_WIDTH;
+                                        viewer.addTiledImage({
+                                            tileSource: MOD_MAPS_ROOT + name + '/base_top/layer0.dzi',
+                                            x: vp.x,
+                                            y: vp.y,
+                                            width: width,
+                                            opacity: 1
+                                        });
+                                    })
+                                    .catch(function () { /* silent */ });
+                            })(names[i]);
+                        }
+                    });
             }
-            // Right-click pan
-            if (isPanning && panStartMouse && panStartCenter) {
-                var dx = e.clientX - panStartMouse.x;
-                var dy = e.clientY - panStartMouse.y;
-                var vDelta = viewer.viewport.deltaPointsFromPixels(new OpenSeadragon.Point(dx, dy));
-                viewer.viewport.panTo(
-                    new OpenSeadragon.Point(panStartCenter.x - vDelta.x, panStartCenter.y - vDelta.y),
-                    true
+
+            /* ========== Pre-load selection from URL params ========== */
+            function preloadSelection() {
+                if (initX1 === null || initY1 === null || initX2 === null || initY2 === null) return;
+                selection = { x1: initX1, y1: initY1, x2: initX2, y2: initY2 };
+                updateSelectionOverlay();
+                updateCoordsDisplay();
+                $('instrOverlay').style.opacity = '0';
+
+                // Zoom to the selection with padding
+                var sx1 = Math.min(initX1, initX2), sy1 = Math.min(initY1, initY2);
+                var sx2 = Math.max(initX1, initX2), sy2 = Math.max(initY1, initY2);
+                var w = sx2 - sx1, h = sy2 - sy1;
+                var pad = 0.3;
+                var tl = pixelToViewport(sx1 - w * pad, sy1 - h * pad);
+                var br = pixelToViewport(sx2 + w * pad, sy2 + h * pad);
+                viewer.viewport.fitBounds(
+                    new OpenSeadragon.Rect(tl.x, tl.y, br.x - tl.x, br.y - tl.y), true
                 );
             }
-        });
 
-        document.addEventListener('pointerup', function (e) {
-            if (e.button === 2 && isPanning) {
-                isPanning = false;
-                panStartMouse = null;
-                panStartCenter = null;
-                mapDiv.classList.remove('panning');
-            }
-        });
+            /* ========== UI Actions ========== */
+            $('btnReset').onclick = function () { viewer.viewport.goHome(false); };
 
-        /* ========== Touch support ========== */
-        // Single-finger drag = selection (handled by OSD canvas-press/drag/release)
-        // Two-finger pinch   = zoom       (handled by OSD pinchToZoom)
-        // Two-finger drag    = pan        (manual handling below)
-        var touchPanning = false;
-        var lastTouchCenter = null;
+            $('btnClearSel').onclick = function () { clearSelection(); };
 
-        mapDiv.addEventListener('touchstart', function (e) {
-            if (e.touches.length === 2) {
-                touchPanning = true;
-                var t = e.touches;
-                lastTouchCenter = {
-                    x: (t[0].clientX + t[1].clientX) / 2,
-                    y: (t[0].clientY + t[1].clientY) / 2
-                };
-            }
-        }, { passive: true });
+            $('btnConfirm').onclick = function () {
+                if (!selection) return;
+                if (!validateSelection()) return;
+                var x1 = Math.round(Math.min(selection.x1, selection.x2));
+                var y1 = Math.round(Math.min(selection.y1, selection.y2));
+                var x2 = Math.round(Math.max(selection.x1, selection.x2));
+                var y2 = Math.round(Math.max(selection.y1, selection.y2));
+                if (window.parent !== window) {
+                    window.parent.postMessage({ type: 'regionCoords', x1: x1, y1: y1, x2: x2, y2: y2 }, '*');
+                }
+            };
 
-        mapDiv.addEventListener('touchmove', function (e) {
-            if (touchPanning && e.touches.length === 2 && lastTouchCenter) {
-                var t = e.touches;
-                var center = {
-                    x: (t[0].clientX + t[1].clientX) / 2,
-                    y: (t[0].clientY + t[1].clientY) / 2
-                };
-                var dx = center.x - lastTouchCenter.x;
-                var dy = center.y - lastTouchCenter.y;
-                var vDelta = viewer.viewport.deltaPointsFromPixels(new OpenSeadragon.Point(dx, dy));
-                viewer.viewport.panBy(new OpenSeadragon.Point(-vDelta.x, -vDelta.y), true);
-                lastTouchCenter = center;
-            }
-        }, { passive: true });
+            $('btnCancel').onclick = function () {
+                if (window.parent !== window) {
+                    window.parent.postMessage({ type: 'closeRegionSelector' }, '*');
+                } else {
+                    history.back();
+                }
+            };
 
-        mapDiv.addEventListener('touchend', function (e) {
-            if (e.touches.length < 2) {
-                touchPanning = false;
-                lastTouchCenter = null;
-            }
-        }, { passive: true });
-
-        /* ========== Load mod maps (same as pzmap auto-loads them) ========== */
-        function loadModMaps() {
-            fetch(MOD_MAPS_LIST)
-                .then(function (r) { return r.json(); })
-                .catch(function () { return []; })
-                .then(function (names) {
-                    if (!names || names.length === 0) return;
-                    var baseItem = viewer.world.getItemAt(0);
-                    if (!baseItem) return;
-                    for (var i = 0; i < names.length; i++) {
-                        (function (name) {
-                            fetch(MOD_MAPS_ROOT + name + '/base_top/map_info.json')
-                                .then(function (r) { return r.json(); })
-                                .then(function (info) {
-                                    // Position mod map relative to base map origin
-                                    var pixelX = -info.x0; // base x0 is 0
-                                    var pixelY = -info.y0;
-                                    var vp = baseItem.imageToViewportCoordinates(pixelX, pixelY);
-                                    var modScale = 1 << (info.skip || 0);
-                                    var modW = info.w * modScale;
-                                    var width = modW / MAP_WIDTH;
-                                    viewer.addTiledImage({
-                                        tileSource: MOD_MAPS_ROOT + name + '/base_top/layer0.dzi',
-                                        x: vp.x,
-                                        y: vp.y,
-                                        width: width,
-                                        opacity: 1
-                                    });
-                                })
-                                .catch(function () { /* silent */ });
-                        })(names[i]);
-                    }
-                });
-        }
-
-        /* ========== Pre-load selection from URL params ========== */
-        function preloadSelection() {
-            if (initX1 === null || initY1 === null || initX2 === null || initY2 === null) return;
-            selection = { x1: initX1, y1: initY1, x2: initX2, y2: initY2 };
-            updateSelectionOverlay();
-            updateCoordsDisplay();
-            $('instrOverlay').style.opacity = '0';
-
-            // Zoom to the selection with padding
-            var sx1 = Math.min(initX1, initX2), sy1 = Math.min(initY1, initY2);
-            var sx2 = Math.max(initX1, initX2), sy2 = Math.max(initY1, initY2);
-            var w = sx2 - sx1, h = sy2 - sy1;
-            var pad = 0.3;
-            var tl = pixelToViewport(sx1 - w * pad, sy1 - h * pad);
-            var br = pixelToViewport(sx2 + w * pad, sy2 + h * pad);
-            viewer.viewport.fitBounds(
-                new OpenSeadragon.Rect(tl.x, tl.y, br.x - tl.x, br.y - tl.y), true
-            );
-        }
-
-        /* ========== UI Actions ========== */
-        $('btnReset').onclick = function () { viewer.viewport.goHome(false); };
-
-        $('btnClearSel').onclick = function () { clearSelection(); };
-
-        $('btnConfirm').onclick = function () {
-            if (!selection) return;
-            var x1 = Math.round(Math.min(selection.x1, selection.x2));
-            var y1 = Math.round(Math.min(selection.y1, selection.y2));
-            var x2 = Math.round(Math.max(selection.x1, selection.x2));
-            var y2 = Math.round(Math.max(selection.y1, selection.y2));
-            if (window.parent !== window) {
-                window.parent.postMessage({ type: 'regionCoords', x1: x1, y1: y1, x2: x2, y2: y2 }, '*');
-            }
-        };
-
-        $('btnCancel').onclick = function () {
-            if (window.parent !== window) {
-                window.parent.postMessage({ type: 'closeRegionSelector' }, '*');
-            } else {
-                history.back();
-            }
-        };
-
-        /* ========== Init ========== */
-        viewer.addHandler('open', function () {
-              loadModMaps();
-              loadRegions();
-              loadSafehouses();
-              preloadSelection();
-        });
-    })();
+            /* ========== Init ========== */
+            viewer.addHandler('open', function () {
+                loadModMaps();
+                loadSafehouses();
+                preloadSelection();
+                updateSelectionHint();
+            });
+        })();
     </script>
 </body>
 
